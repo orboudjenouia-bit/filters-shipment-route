@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const http = require("http")
 const cors = require("cors")
-
+const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app)
@@ -38,7 +38,7 @@ app.use('/api/admin', adminRouter)
 app.use(errorHandler)
 
 
-SERVER.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
