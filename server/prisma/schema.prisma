@@ -1,0 +1,119 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserType {
+  BUSINESS
+  INDIVIDUAL
+}
+
+enum Roles {
+  USER
+  ADMIN
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique @db.VarChar(50)
+  password      String
+  phone         String   @db.VarChar(10)
+  profile_Photo String?
+  working_Time  String?
+  type          UserType
+  role          Roles
+  status        String  @default("Active")
+
+  individual    Individual?
+  business      Business?
+  subscription  Subscription?
+
+  vehicles      Vehicle[]
+  shipments     Shipment[]
+
+  resetPasswordToken String?
+  resetPasswordExpires DateTime?
+}
+
+model Individual {
+  user_ID   Int    @id
+  user      User   @relation(fields: [user_ID], references: [id])
+
+  full_Name String
+  nin       String @unique
+  location  String
+}
+
+model Business {
+  user_ID       Int      @id
+  user          User     @relation(fields: [user_ID], references: [id])
+
+  business_Name String
+  rc_Number     String   @unique
+  form          String
+  nif           Int
+  nis           Int
+  locations     String[]
+}
+
+model Vehicle {
+  plate_Number  Int     @id
+  vehicle_Name  String  
+  capacity      Int
+  photo         String
+  deleted_at    DateTime?
+  
+  user_ID       Int
+  user          User    @relation(fields: [user_ID], references: [id])
+
+  routes        Route[]
+}
+
+model Route {
+  route_ID          Int     @id @unique @default(autoincrement())
+  origin            String  
+  destination       String  
+  region            String
+  date              String  @db.VarChar(11)
+  more_Information  String?  @db.Text
+  status            String  @default("In-Stock")
+
+  user_ID           Int
+
+  vehicle_plate     Int
+  vehicle           Vehicle    @relation(fields: [vehicle_plate], references: [plate_Number])
+
+}
+
+
+model Shipment {
+  shipment_ID         Int     @id @default(autoincrement())
+  origin              String  
+  destination         String  
+  volume              Int
+  weight              Int                    
+  date                String  @db.VarChar(11) 
+  priority            String  @default("Normal")
+  special_Information String? @db.Text
+  status              String  @default("In-Stock")
+
+  user_ID             Int
+  user                User    @relation(fields: [user_ID], references: [id])
+
+}
+
+model Subscription {
+  sub_ID     Int        @id @default(autoincrement())
+  tier       String     @default("Free-Tier")
+  rest_Time  DateTime   
+  
+
+  user_ID   Int        @unique
+  user      User       @relation(fields: [user_ID], references: [id])
+
+}
