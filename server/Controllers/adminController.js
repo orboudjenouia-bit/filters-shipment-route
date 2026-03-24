@@ -100,7 +100,8 @@ const suspendUser = async (req,res,next) => {
 const getDashboardStats = async (req,res,next) => {
     const [
         totalUsers, activeUsers, suspendedUsers, totalVehicles,
-        totalShipments, totalRoutes
+        totalShipments, totalRoutes ,activeShipments,
+        activeRoutes
     ] = await Promise.all([
         prisma.user.count(),
         prisma.user.count({ where: { status: "Active" }}),
@@ -108,6 +109,8 @@ const getDashboardStats = async (req,res,next) => {
         prisma.vehicle.count(),
         prisma.shipment.count(),
         prisma.route.count(),
+        prisma.shipment.count({ where : { status: "In-stock" }}),
+        prisma.route.count({ where : { status: "In-stock" }}),
     ])
     res.status(StatusCodes.OK).json({
         activeShipments,
@@ -215,7 +218,7 @@ const exportShipmentsCSV = async (req,res,next) => {
 }
 
 const exportRoutesCSV = async (req,res,next) => {
-    const routes = await prisma.route.findMany({
+    const routes = await prisma.route.findMany({  // ✅ Changed Route → route
         orderBy: {
             route_ID: "asc"
         }

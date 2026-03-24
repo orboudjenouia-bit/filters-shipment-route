@@ -83,7 +83,7 @@ model Route {
   more_Information  String?  @db.Text
   status            String  @default("In-Stock")
 
-  user_ID           Int
+  
 
   vehicle_plate     Int
   vehicle           Vehicle    @relation(fields: [vehicle_plate], references: [plate_Number])
