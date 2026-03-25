@@ -216,6 +216,9 @@ const BusinessProfile = async (req, res, next) => {
     data: profile
   });
 };
+
+
+
 const logout = async (req, res, next) => {
   try {
     // Clear the JWT token from the client side by sending a response
@@ -225,16 +228,15 @@ const logout = async (req, res, next) => {
     res.status(StatusCodes.OK).json({
       success: true,
       msg: "Logout successful",
-      token: null  // Client should clear this
+      token: null
     });
   } catch (error) {
-    throw new AppError(
-      "Logout failed",
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      "LOGOUT_ERROR"
+    throw new AppError("Logout failed", StatusCodes.INTERNAL_SERVER_ERROR, "LOGOUT_ERROR"
     );
   }
 };
+
+
 const updateProfile = async (req, res, next) => {
   const userId = req.user.id;
 

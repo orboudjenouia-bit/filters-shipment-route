@@ -218,7 +218,7 @@ const exportShipmentsCSV = async (req,res,next) => {
 }
 
 const exportRoutesCSV = async (req,res,next) => {
-    const routes = await prisma.route.findMany({  // ✅ Changed Route → route
+    const routes = await prisma.route.findMany({
         orderBy: {
             route_ID: "asc"
         }
