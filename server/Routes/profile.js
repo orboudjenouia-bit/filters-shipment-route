@@ -5,9 +5,6 @@ const asyncHandler = require("../utils/asyncHandler");
 const { IndividualProfile, BusinessProfile } = require("../Controllers/authController");
 const { getShipmentHistory, getRouteHistory, listVehicles, createVehicle, updateVehicle, deleteVehicle, getMyProfile } = require('../Controllers/profileController')
 
-
-
-
 router.get("/me", authToken, asyncHandler(getMyProfile));
 
 router.post(
