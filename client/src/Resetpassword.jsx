@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft, Eye, EyeOff, Lock } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 import "./Resetpassword.css";
 import { resetPassword } from "./services/authService";
 
@@ -65,7 +66,7 @@ export default function ResetPassword({ token, onBack, onSuccess }) {
             <ArrowLeft size={18} strokeWidth={2.5} />
           </button>
           <h2 className="rp-page-title">Reset Password</h2>
-          <div style={{ width: 36 }} />
+          <ThemeToggle />
         </div>
 
         {!success ? (

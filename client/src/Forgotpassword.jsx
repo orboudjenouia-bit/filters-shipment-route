@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ArrowLeft, Mail } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 import "./Forgotpassword.css";
 import { forgotPassword } from "./services/authService";
 
@@ -35,7 +36,6 @@ export default function ForgotPassword({ onBack, onSuccess }) {
       const data = await forgotPassword(email);
 
       setPreviewResetLink(data?.resetLink || "");
-
       setSuccess(true);
 
     } catch (err) {
@@ -50,16 +50,14 @@ export default function ForgotPassword({ onBack, onSuccess }) {
     <div className="fp-screen">
       <div className={`fp-card ${mounted ? "fp-card--visible" : ""}`}>
 
-        {/* Header */}
         <div className="fp-header">
           <button className="fp-back-btn" onClick={onBack} type="button">
             <ArrowLeft size={18} strokeWidth={2.5} />
           </button>
           <h2 className="fp-page-title">Forgot Password</h2>
-          <div style={{ width: 36 }} />
+          <ThemeToggle />
         </div>
 
-        {/* Icon */}
         <div className="fp-icon-circle">
           <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke="#22c55e" strokeWidth="1.5"/>
@@ -69,7 +67,6 @@ export default function ForgotPassword({ onBack, onSuccess }) {
           </svg>
         </div>
 
-        {/* Title */}
         <h1 className="fp-title">Forgot Password?</h1>
         <p className="fp-subtitle">
           Don't worry! It happens. Please enter the email address associated with your account.
@@ -115,7 +112,6 @@ export default function ForgotPassword({ onBack, onSuccess }) {
 
         <div className="fp-spacer" />
 
-        {/* Back to Sign In */}
         <p className="fp-footer-text">
           Remember password?{" "}
           <button type="button" className="fp-footer-link" onClick={onBack}>

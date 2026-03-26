@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, LogIn, Truck } from "lucide-react";
 import { useGoogleLogin } from "@react-oauth/google";
+import ThemeToggle from "./ThemeToggle";
 import "./Login.css";
 import { login } from "./services/authService";
 
@@ -78,7 +79,7 @@ export default function Login({ onBack, onSuccess, onCreateAccount, onForgotPass
             <ArrowLeft size={18} strokeWidth={2.5} />
           </button>
           <h2 className="login-page-title">Login</h2>
-          <div className="login-header-spacer" />
+          <ThemeToggle />
         </div>
 
         <div className="login-logo-wrap">
@@ -118,7 +119,6 @@ export default function Login({ onBack, onSuccess, onCreateAccount, onForgotPass
             </div>
           </div>
 
-          {/* Forgot Password — now navigates to forgot screen */}
           <div className="login-forgot-wrap">
             <button type="button" className="login-forgot" onClick={onForgotPassword}>
               Forgot Password?

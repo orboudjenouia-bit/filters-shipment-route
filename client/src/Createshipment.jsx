@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import ThemeToggle from "./ThemeToggle";
 import "./Createshipment.css";
 import { createShipment } from "./services/shipmentService";
 
@@ -51,7 +52,6 @@ export default function CreateShipment({ onBack, onCreated }) {
       return;
     }
 
-
     if (!Number.isInteger(volume) || !Number.isInteger(weight)) {
       setError("Weight and volume must be whole numbers.");
       return;
@@ -95,27 +95,18 @@ export default function CreateShipment({ onBack, onCreated }) {
     <div className="cs-screen">
       <div className={`cs-container ${mounted ? "cs-container--visible" : ""}`}>
 
-        {/* Header */}
         <div className="cs-header">
           <button className="cs-back-btn" onClick={onBack} type="button">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18L9 12L15 6" stroke="#111827" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
           <h2 className="cs-title">Create Shipment</h2>
-          <button className="cs-more-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="5" r="1.5" fill="#111827"/>
-              <circle cx="12" cy="12" r="1.5" fill="#111827"/>
-              <circle cx="12" cy="19" r="1.5" fill="#111827"/>
-            </svg>
-          </button>
+          <ThemeToggle />
         </div>
 
-        {/* Body */}
         <div className="cs-body">
 
-          {/* Section: Shipment Information */}
           <div className="cs-section-header">
             <span className="cs-section-dot" />
             <span className="cs-section-label">SHIPMENT INFORMATION</span>
@@ -144,7 +135,7 @@ export default function CreateShipment({ onBack, onCreated }) {
                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
               <svg className="cs-select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M6 9l6 6 6-6" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
           </div>
@@ -189,7 +180,7 @@ export default function CreateShipment({ onBack, onCreated }) {
                 {priorities.map(priority => <option key={priority} value={priority}>{priority}</option>)}
               </select>
               <svg className="cs-select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M6 9l6 6 6-6" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
           </div>
@@ -205,7 +196,6 @@ export default function CreateShipment({ onBack, onCreated }) {
             />
           </div>
 
-          {/* Section: Logistics & Schedule */}
           <div className="cs-section-header">
             <span className="cs-section-dot" />
             <span className="cs-section-label">LOGISTICS & SCHEDULE</span>
@@ -215,8 +205,8 @@ export default function CreateShipment({ onBack, onCreated }) {
             <label className="cs-label">Pickup Location</label>
             <div className="cs-input-icon-wrap">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="cs-input-icon">
-                <circle cx="12" cy="10" r="3" stroke="#9ca3af" strokeWidth="2"/>
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="#9ca3af" strokeWidth="2"/>
+                <circle cx="12" cy="10" r="3" stroke="currentColor" strokeWidth="2"/>
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" strokeWidth="2"/>
               </svg>
               <input
                 className="cs-input cs-input--with-icon"
@@ -232,8 +222,8 @@ export default function CreateShipment({ onBack, onCreated }) {
             <label className="cs-label">Delivery Location</label>
             <div className="cs-input-icon-wrap">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="cs-input-icon">
-                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <line x1="4" y1="22" x2="4" y2="15" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <line x1="4" y1="22" x2="4" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
               <input
                 className="cs-input cs-input--with-icon"
@@ -245,7 +235,6 @@ export default function CreateShipment({ onBack, onCreated }) {
             </div>
           </div>
 
-          {/* Schedule Pickup */}
           <div className="cs-schedule-card">
             <div className="cs-schedule-header">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -280,7 +269,6 @@ export default function CreateShipment({ onBack, onCreated }) {
 
         </div>
 
-        {/* Footer */}
         <div className="cs-footer">
           {error && <div className="cs-feedback cs-feedback--error">{error}</div>}
           {success && <div className="cs-feedback cs-feedback--success">Shipment posted successfully!</div>}

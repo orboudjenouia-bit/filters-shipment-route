@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import ThemeToggle from "./ThemeToggle";
 import "./Dashboard.css";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "https://your-api.com";
@@ -117,7 +118,6 @@ export default function Dashboard({ onNavigate, userName = "User" }) {
     <div className="db-screen">
       <div className="db-container">
 
-        {/* Header */}
         <div className="db-header">
           <div className="db-logo-row">
             <div className="db-logo-box">
@@ -135,19 +135,17 @@ export default function Dashboard({ onNavigate, userName = "User" }) {
               <BellIcon />
               <span className="db-notif-dot" />
             </button>
+            <ThemeToggle />
           </div>
         </div>
 
-        {/* Body */}
         <div className="db-body">
 
-          {/* Greeting */}
           <div className="db-greeting">
             <h1 className="db-greeting-title">Hello, {userName}!</h1>
             <p className="db-greeting-sub">Welcome back to your logistics dashboard.</p>
           </div>
 
-          {/* CTA */}
           <button className="db-cta-btn" onClick={() => onNavigate("createShipment")}>
             <span className="db-cta-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -161,7 +159,6 @@ export default function Dashboard({ onNavigate, userName = "User" }) {
             </svg>
           </button>
 
-          {/* Active Shipments Card */}
           <div className="db-card" onClick={() => onNavigate("shipmentDetails")}>
             <div className="db-card-img db-card-img--containers" />
             <div className="db-card-body">
@@ -174,8 +171,8 @@ export default function Dashboard({ onNavigate, userName = "User" }) {
               </p>
               <p className="db-card-time">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{marginRight:4}}>
-                  <circle cx="12" cy="12" r="9" stroke="#9ca3af" strokeWidth="2"/>
-                  <path d="M12 7v5l3 3" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"/>
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
                 {statsError || "Live from backend"}
               </p>
@@ -183,7 +180,6 @@ export default function Dashboard({ onNavigate, userName = "User" }) {
             </div>
           </div>
 
-          {/* Active Routes Card */}
           <div className="db-card">
             <div className="db-card-img db-card-img--truck" />
             <div className="db-card-body">
@@ -193,8 +189,8 @@ export default function Dashboard({ onNavigate, userName = "User" }) {
               </p>
               <p className="db-card-time">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{marginRight:4}}>
-                  <circle cx="12" cy="12" r="9" stroke="#9ca3af" strokeWidth="2"/>
-                  <path d="M12 7v5l3 3" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"/>
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
                 {statsError || "Live from backend"}
               </p>
@@ -204,7 +200,6 @@ export default function Dashboard({ onNavigate, userName = "User" }) {
 
         </div>
 
-        {/* Bottom Nav */}
         <div className="db-bottom-nav">
           <button className={`db-nav-item ${activeTab === "home" ? "db-nav-item--active" : ""}`} onClick={() => handleNav("home")}>
             <HomeIcon active={activeTab === "home"} />

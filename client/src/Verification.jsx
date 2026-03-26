@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import ThemeToggle from "./ThemeToggle";
 import "./Verification.css";
 import myemail from "./photo/mail.svg";
 import { verifyCode } from "./services/verificationService";
@@ -87,11 +88,11 @@ export default function Verification({ onBack, onSuccess }) {
         <div className="vf-header">
           <button className="vf-back-btn" onClick={onBack} type="button">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18L9 12L15 6" stroke="#111827" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
           <span className="vf-step-label">Step 3 of 3</span>
-          <div style={{ width: 32 }} />
+          <ThemeToggle />
         </div>
 
         <div className="vf-section-tag">

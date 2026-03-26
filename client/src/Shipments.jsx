@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
+import ThemeToggle from "./ThemeToggle";
 import "./Shipments.css";
 import { getShipments } from "./services/shipmentService";
-
 
 const SearchIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -130,7 +130,6 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0 }) {
     <div className="sh-screen">
       <div className="sh-container">
 
-        {/* Header */}
         <div className="sh-header">
           <div className="sh-logo-row">
             <div className="sh-logo-box">
@@ -148,13 +147,12 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0 }) {
               <BellIcon />
               <span className="sh-notif-dot" />
             </button>
+            <ThemeToggle />
           </div>
         </div>
 
-        {/* Body */}
         <div className="sh-body">
 
-          {/* Tabs */}
           <div className="sh-tabs">
             {["all", "active", "pending"].map(tab => (
               <button
@@ -167,7 +165,6 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0 }) {
             ))}
           </div>
 
-          {/* CTA Card */}
           <div className="sh-cta-card">
             <h3 className="sh-cta-title">Have something to ship?</h3>
             <p className="sh-cta-sub">Create a new request and reach thousands of shippers nearby.</p>
@@ -180,7 +177,6 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0 }) {
             </button>
           </div>
 
-          {/* Section title */}
           <div className="sh-section-row">
             <h2 className="sh-section-title">Explore Available Shippers</h2>
             <button className="sh-filter-btn">
@@ -191,7 +187,6 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0 }) {
             </button>
           </div>
 
-          {/* Shipment Cards */}
           {isLoading ? (
             <div className="sh-empty-state">Loading shipments...</div>
           ) : error ? (
@@ -268,14 +263,12 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0 }) {
 
         </div>
 
-        {/* FAB */}
         <button className="sh-fab" onClick={() => onNavigate("createShipment")}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M12 5v14M5 12h14" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
           </svg>
         </button>
 
-        {/* Bottom Nav */}
         <div className="sh-bottom-nav">
           <button className={`sh-nav-item ${activeNav === "home" ? "sh-nav-item--active" : ""}`} onClick={() => handleNav("home")}>
             <HomeIcon active={activeNav === "home"} />

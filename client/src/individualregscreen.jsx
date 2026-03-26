@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
+import ThemeToggle from "./ThemeToggle";
 import "./individualregscreen.css";
 import { IndividualProfile } from "./services/profileService";
 
 const BackIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <path d="M15 18L9 12L15 6" stroke="#111827" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M15 18L9 12L15 6" stroke="var(--text-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 
@@ -63,7 +64,7 @@ export default function IndividualRegScreen({ onBack, onNext, onLogin }) {
         <div className="ir-header">
           <button className="ir-back-btn" onClick={onBack} type="button"><BackIcon /></button>
           <span className="ir-step-label">Step 2 of 3</span>
-          <div style={{ width: 32 }} />
+          <ThemeToggle />
         </div>
 
         <div className="ir-section-tag">
@@ -112,7 +113,6 @@ export default function IndividualRegScreen({ onBack, onNext, onLogin }) {
           {submitting ? "Saving..." : "Next"}
         </button>
 
-        {/* "Log in" goes to login screen */}
         <p className="ir-login-text">
           Already have an account?{" "}
           <button type="button" className="ir-login-link" onClick={onLogin}>Log in</button>

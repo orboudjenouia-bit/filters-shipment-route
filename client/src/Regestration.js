@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import ThemeToggle from "./ThemeToggle";
 import "./App.css";
 import "./Regestration.css";
 
@@ -11,7 +12,6 @@ export default function Regestration() {
   const [selectedRole, setSelectedRole] = useState("");
   const navigate = useNavigate();
 
-  // Function to handle sending role to backend
   async function Send() {
     if (!selectedRole) {
       alert("Choose one of the two roles or click Skip");
@@ -26,8 +26,7 @@ export default function Regestration() {
       });
 
       if (res.ok) {
-        // Redirect to next page
-        navigate("/ramzi"); // 
+        navigate("/ramzi");
       } else {
         alert("Error sending role");
       }
@@ -39,15 +38,14 @@ export default function Regestration() {
 
   return (
     <div className="container">
-      {/* HEADER */}
       <div className="header">
         <Link to="/ramzi">
           <img src={myIcon} alt="back" className="back-icon" />
         </Link>
         <h1 className="regestration">Registration</h1>
+        <ThemeToggle />
       </div>
 
-      {/* STEP SECTION */}
       <div className="step-section">
         <div className="step-top">
           <span className="account-text">Account Setup</span>
@@ -59,13 +57,11 @@ export default function Regestration() {
         </div>
       </div>
 
-      {/* TITLE */}
       <div className="title-section">
         <h1>Tell us who you are</h1>
         <p>Select the role that best describes how you will use Wesseli.</p>
       </div>
 
-      {/* TRUCKER CARD */}
       <div
         className={`card ${selectedRole === "trucker" ? "active" : ""}`}
         onClick={() => setSelectedRole("trucker")}
@@ -86,7 +82,6 @@ export default function Regestration() {
         </div>
       </div>
 
-      {/* SENDER CARD */}
       <div
         className={`card ${selectedRole === "sender" ? "active" : ""}`}
         onClick={() => setSelectedRole("sender")}
@@ -107,15 +102,10 @@ export default function Regestration() {
         </div>
       </div>
 
-      {/* BUTTON */}
-      <button
-  className="create-btn"
-  onClick={Send}   // still correct
->
-  Create Account
-</button>
+      <button className="create-btn" onClick={Send}>
+        Create Account
+      </button>
 
-      {/* SKIP LINK */}
       <Link to="/skip">
         <p className="skip">Skip for now</p>
       </Link>
