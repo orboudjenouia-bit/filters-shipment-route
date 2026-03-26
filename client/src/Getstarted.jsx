@@ -1,17 +1,18 @@
 import React from 'react';
 import { Truck, ArrowRight, CheckCircle } from 'lucide-react';
+import ThemeToggle from './ThemeToggle';
 import './Getstarted.css';
 import driverImg from './photo/driverimg.jpg';
 
 const LandingPage = ({ onGetStarted, onLogin }) => {
   return (
     <div className="gs-container">
-
       <header className="gs-header">
         <div className="gs-logo-box">
           <Truck size={20} color="white" strokeWidth={2.5} />
         </div>
         <span className="gs-brand">Wesselli</span>
+        <ThemeToggle />
       </header>
 
       <div className="gs-hero">
@@ -40,7 +41,6 @@ const LandingPage = ({ onGetStarted, onLogin }) => {
           Log In
         </button>
       </footer>
-
     </div>
   );
 };

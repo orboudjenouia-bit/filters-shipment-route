@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import ThemeToggle from "./ThemeToggle";
 import "./Shipmentdetails.css";
 import { getShipments } from "./services/shipmentService";
 
@@ -115,17 +116,11 @@ export default function ShipmentDetails({ onBack, shipmentId }) {
         <div className="sd-header">
           <button className="sd-back-btn" onClick={onBack} type="button">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18L9 12L15 6" stroke="#111827" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
           <h2 className="sd-title">Shipment Details</h2>
-          <button className="sd-more-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="5" r="1.5" fill="#111827"/>
-              <circle cx="12" cy="12" r="1.5" fill="#111827"/>
-              <circle cx="12" cy="19" r="1.5" fill="#111827"/>
-            </svg>
-          </button>
+          <ThemeToggle />
         </div>
 
         <div className="sd-body">
@@ -155,21 +150,17 @@ export default function ShipmentDetails({ onBack, shipmentId }) {
               <div className="sd-map">
                 <div className="sd-map-bg">
                   <svg width="100%" height="100%" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice">
-                    <rect width="400" height="200" fill="#e8f4f8"/>
-                    <line x1="0" y1="40" x2="400" y2="40" stroke="#d0e8f0" strokeWidth="1"/>
-                    <line x1="0" y1="80" x2="400" y2="80" stroke="#d0e8f0" strokeWidth="1"/>
-                    <line x1="0" y1="120" x2="400" y2="120" stroke="#d0e8f0" strokeWidth="1"/>
-                    <line x1="0" y1="160" x2="400" y2="160" stroke="#d0e8f0" strokeWidth="1"/>
-                    <line x1="80" y1="0" x2="80" y2="200" stroke="#d0e8f0" strokeWidth="1"/>
-                    <line x1="160" y1="0" x2="160" y2="200" stroke="#d0e8f0" strokeWidth="1"/>
-                    <line x1="240" y1="0" x2="240" y2="200" stroke="#d0e8f0" strokeWidth="1"/>
-                    <line x1="320" y1="0" x2="320" y2="200" stroke="#d0e8f0" strokeWidth="1"/>
-                    <path d="M0 100 H400" stroke="#fff" strokeWidth="8"/>
-                    <path d="M200 0 V200" stroke="#fff" strokeWidth="8"/>
-                    <path d="M100 0 V200" stroke="#fff" strokeWidth="5"/>
-                    <path d="M300 0 V200" stroke="#fff" strokeWidth="5"/>
-                    <path d="M0 60 H400" stroke="#fff" strokeWidth="5"/>
-                    <path d="M0 140 H400" stroke="#fff" strokeWidth="5"/>
+                    <rect width="400" height="200" fill="var(--bg-primary)"/>
+                    <line x1="0" y1="40" x2="400" y2="40" stroke="var(--border-color)" strokeWidth="1"/>
+                    <line x1="0" y1="80" x2="400" y2="80" stroke="var(--border-color)" strokeWidth="1"/>
+                    <line x1="0" y1="120" x2="400" y2="120" stroke="var(--border-color)" strokeWidth="1"/>
+                    <line x1="0" y1="160" x2="400" y2="160" stroke="var(--border-color)" strokeWidth="1"/>
+                    <line x1="80" y1="0" x2="80" y2="200" stroke="var(--border-color)" strokeWidth="1"/>
+                    <line x1="160" y1="0" x2="160" y2="200" stroke="var(--border-color)" strokeWidth="1"/>
+                    <line x1="240" y1="0" x2="240" y2="200" stroke="var(--border-color)" strokeWidth="1"/>
+                    <line x1="320" y1="0" x2="320" y2="200" stroke="var(--border-color)" strokeWidth="1"/>
+                    <path d="M0 100 H400" stroke="var(--border-color)" strokeWidth="8"/>
+                    <path d="M200 0 V200" stroke="var(--border-color)" strokeWidth="8"/>
                     <circle cx="200" cy="100" r="10" fill="#ef4444"/>
                     <circle cx="200" cy="100" r="5" fill="#fff"/>
                   </svg>
