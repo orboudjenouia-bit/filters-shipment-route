@@ -51,10 +51,42 @@ const getPathForScreen = (screen, { shipmentId, resetToken } = {}) => {
   }
 };
 
+const hasAuthToken = () => {
+  try {
+    return !!localStorage.getItem("token");
+  } catch {
+    return false;
+  }
+};
+
+const publicScreens = new Set([
+  "landing",
+  "create",
+  "login",
+  "verification",
+  "forgot",
+  "resetPassword",
+  "individual",
+  "business",
+]);
+
+const hasSavedSession = () => {
+  try {
+    return hasAuthToken();
+  } catch {
+    return false;
+  }
+};
+
 const resolveScreenFromPath = (pathname) => {
   const normalized = pathname.replace(/\/+$/, "") || "/";
 
-  if (normalized === "/") return { screen: "landing" };
+  if (normalized === "/") {
+    if (hasSavedSession()) {
+      return { screen: "dashboard", redirectTo: "/dashboard" };
+    }
+    return { screen: "landing" };
+  }
   if (normalized === "/login") return { screen: "login" };
   if (normalized === "/forgot-password" || normalized === "/forgot") {
     return { screen: "forgot" };
@@ -140,6 +172,21 @@ export default function App() {
   useEffect(() => {
     const routeState = resolveScreenFromPath(location.pathname);
 
+    if (routeState.redirectTo && location.pathname !== routeState.redirectTo) {
+      routerNavigate(routeState.redirectTo, { replace: true });
+      return;
+    }
+
+    if (!publicScreens.has(routeState.screen) && !hasAuthToken()) {
+      if (location.pathname !== "/login") {
+        routerNavigate("/login", { replace: true });
+      }
+      setCurrent("login");
+      setNext(null);
+      setPhase("idle");
+      return;
+    }
+
     if (routeState.screen === "resetPassword") {
       setResetToken(routeState.resetToken || "");
     }
@@ -153,7 +200,7 @@ export default function App() {
       setNext(null);
       setPhase("idle");
     }
-  }, [location.pathname, current]);
+  }, [location.pathname, current, routerNavigate]);
 
   useEffect(() => {
     if (phase === "exit") {

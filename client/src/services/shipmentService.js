@@ -50,6 +50,8 @@ export const getShipments = async (token) => {
 
   return Array.isArray(data)
     ? data
+    : Array.isArray(data?.allShipments)
+    ? data.allShipments
     : Array.isArray(data?.shipments)
     ? data.shipments
     : Array.isArray(data?.data)

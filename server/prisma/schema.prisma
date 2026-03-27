@@ -81,8 +81,8 @@ model Route {
   region            String
   date              String  @db.VarChar(11)
   more_Information  String?  @db.Text
-  status            String  @default("In-Stock")
-
+  status            String  @default("Active")
+  user_ID           Int
   
 
   vehicle_plate     Int

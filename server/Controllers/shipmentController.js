@@ -32,10 +32,8 @@ const listShipments = async (req, res,next) => {
         throw new AppError("No Shipments Created", StatusCodes.NOT_FOUND, "NO_SHIPMENTS")
     }
     const total = await prisma.shipment.count()
-    res.status(StatusCodes.OK).json(allShipments)
+    res.status(StatusCodes.OK).json({allShipments})
 }
-
-const 
 
 const makePost = async (req, res,next) => {
     const errors = validationResult(req)

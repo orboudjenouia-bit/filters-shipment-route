@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import ThemeToggle from "./ThemeToggle";
 import "./Dashboard.css";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "https://your-api.com";
-const DASHBOARD_STATS_ENDPOINT = process.env.REACT_APP_DASHBOARD_STATS_ENDPOINT || "/api/dashboard/stats";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+const DASHBOARD_STATS_ENDPOINT = "/api/dashboard/stats";
 
 const SearchIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">

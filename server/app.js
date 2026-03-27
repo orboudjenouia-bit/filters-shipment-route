@@ -21,6 +21,7 @@ const profileRouter = require("./Routes/profile")
 const shipmentsRouter  = require('./Routes/shipments')
 const routeRouter = require('./Routes/routes')
 const adminRouter = require("./Routes/admin")
+const dashboardRouter = require("./Routes/dashboard")
 
 const errorHandler = require("./Middlewares/errorHandler")
 
@@ -28,10 +29,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
-app.use('/api/auth',authRouter)
+app.use('/api/auth', authRouter)
+app.use('/api/dashboard', dashboardRouter)
 app.use('/api/profile', profileRouter)
-app.use('/api/shipments', shipmentsRouter) ; 
-app.use('/api/routes', routeRouter);
+app.use('/api/shipments', shipmentsRouter)
+app.use('/api/routes', routeRouter)
 app.use('/api/admin', adminRouter)
 
 

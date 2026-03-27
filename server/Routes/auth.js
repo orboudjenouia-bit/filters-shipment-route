@@ -4,6 +4,8 @@ const { register, login , logout  , updateProfile} = require("../Controllers/aut
 const { forgotpassword, resetpswd } = require("../Controllers/forget-password");
 const asyncHandler = require("../utils/asyncHandler");
 const checkToken = require("../Middlewares/checkToken")
+
+
 router.post(
   "/register",
   [
@@ -22,5 +24,7 @@ router.post("/reset-password/:token", asyncHandler(resetpswd))
 router.post("/forget-password", asyncHandler(forgotpassword))
 router.post("/logout", checkToken, asyncHandler(logout))
 router.put("/update-profile", checkToken, asyncHandler(updateProfile))
+
+
 module.exports = router;
 
