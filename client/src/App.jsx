@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "./ThemeContext";
 import LandingPage from "./Getstarted";
 import CreateAccountScreen from "./Createaccountscreen";
@@ -15,7 +16,90 @@ import CreateShipment from "./Createshipment";
 import { getMyProfile } from "./services/profileService";
 import "./App.css";
 
+const getPathForScreen = (screen, { shipmentId, resetToken } = {}) => {
+  switch (screen) {
+    case "landing":
+      return "/";
+    case "login":
+      return "/login";
+    case "forgot":
+      return "/forgot-password";
+    case "create":
+      return "/create-account";
+    case "individual":
+      return "/register/individual";
+    case "business":
+      return "/register/business";
+    case "verification":
+      return "/verification";
+    case "dashboard":
+      return "/dashboard";
+    case "shipments":
+      return "/shipments";
+    case "createShipment":
+      return "/shipments/create";
+    case "shipmentDetails":
+      return shipmentId != null
+        ? `/shipments/${encodeURIComponent(String(shipmentId))}`
+        : "/shipments/details";
+    case "resetPassword":
+      return resetToken
+        ? `/resetpassword/${encodeURIComponent(String(resetToken))}`
+        : "/resetpassword";
+    default:
+      return "/";
+  }
+};
+
+const resolveScreenFromPath = (pathname) => {
+  const normalized = pathname.replace(/\/+$/, "") || "/";
+
+  if (normalized === "/") return { screen: "landing" };
+  if (normalized === "/login") return { screen: "login" };
+  if (normalized === "/forgot-password" || normalized === "/forgot") {
+    return { screen: "forgot" };
+  }
+  if (normalized === "/create-account" || normalized === "/create") {
+    return { screen: "create" };
+  }
+  if (normalized === "/register/individual" || normalized === "/individual") {
+    return { screen: "individual" };
+  }
+  if (normalized === "/register/business" || normalized === "/business") {
+    return { screen: "business" };
+  }
+  if (normalized === "/verification") return { screen: "verification" };
+  if (normalized === "/dashboard") return { screen: "dashboard" };
+  if (normalized === "/shipments") return { screen: "shipments" };
+  if (normalized === "/shipments/create") return { screen: "createShipment" };
+  if (normalized === "/shipments/details") {
+    return { screen: "shipmentDetails", shipmentId: null };
+  }
+
+  if (normalized.startsWith("/shipments/")) {
+    const shipmentId = decodeURIComponent(normalized.split("/")[2] || "").trim();
+    if (shipmentId) {
+      return { screen: "shipmentDetails", shipmentId };
+    }
+  }
+
+  if (normalized.startsWith("/resetpassword/")) {
+    const resetToken = decodeURIComponent(normalized.split("/")[2] || "").trim();
+    return { screen: "resetPassword", resetToken };
+  }
+
+  if (normalized === "/resetpassword") {
+    return { screen: "resetPassword", resetToken: "" };
+  }
+
+  return { screen: "landing" };
+};
+
 export default function App() {
+  const location = useLocation();
+  const routerNavigate = useNavigate();
+  const pendingPathRef = useRef(null);
+
   const [current, setCurrent] = useState("landing");
   const [next, setNext] = useState(null);
   const [phase, setPhase] = useState("idle");
@@ -27,25 +111,49 @@ export default function App() {
   const [resetToken, setResetToken] = useState("");
 
   const clearResetPath = () => {
-    if (window.location.pathname !== "/") {
-      window.history.replaceState({}, "", "/");
-    }
+    routerNavigate("/", { replace: true });
   };
 
-  const navigate = (to, dir = "forward") => {
+  const navigate = (to, dir = "forward", payload = {}) => {
     if (phase !== "idle") return;
+
+    const nextShipmentId = payload?.shipmentId ?? selectedShipmentId;
+    const nextResetToken = payload?.token ?? resetToken;
+    const targetPath = getPathForScreen(to, {
+      shipmentId: nextShipmentId,
+      resetToken: nextResetToken,
+    });
+
+    if (payload?.shipmentId != null) {
+      setSelectedShipmentId(payload.shipmentId);
+    }
+    if (to === "resetPassword") {
+      setResetToken(nextResetToken || "");
+    }
+
+    pendingPathRef.current = targetPath;
     setDirection(dir);
     setNext(to);
     setPhase("exit");
   };
 
   useEffect(() => {
-    const parts = window.location.pathname.split("/").filter(Boolean);
-    if (parts[0] === "resetpassword" && parts[1]) {
-      setResetToken(parts[1]);
-      setCurrent("resetPassword");
+    const routeState = resolveScreenFromPath(location.pathname);
+
+    if (routeState.screen === "resetPassword") {
+      setResetToken(routeState.resetToken || "");
     }
-  }, []);
+
+    if (routeState.screen === "shipmentDetails") {
+      setSelectedShipmentId(routeState.shipmentId ?? null);
+    }
+
+    if (routeState.screen !== current) {
+      setCurrent(routeState.screen);
+      setNext(null);
+      setPhase("idle");
+    }
+  }, [location.pathname, current]);
 
   useEffect(() => {
     if (phase === "exit") {
@@ -63,6 +171,17 @@ export default function App() {
       return () => clearTimeout(t);
     }
   }, [phase, next]);
+
+  useEffect(() => {
+    const pendingPath = pendingPathRef.current;
+    if (!pendingPath) return;
+
+    if (location.pathname !== pendingPath) {
+      routerNavigate(pendingPath);
+    }
+
+    pendingPathRef.current = null;
+  }, [current, location.pathname, routerNavigate]);
 
   useEffect(() => {
     let isMounted = true;
@@ -97,8 +216,8 @@ export default function App() {
     };
   }, [current]);
 
-  const goTo = (to) => navigate(to, "forward");
-  const goBack = (to) => navigate(to, "back");
+  const goTo = (to, payload) => navigate(to, "forward", payload);
+  const goBack = (to, payload) => navigate(to, "back", payload);
 
   const cls =
     phase === "exit"
@@ -194,10 +313,7 @@ export default function App() {
           <Shipments
             refreshKey={shipmentsRefreshKey}
             onNavigate={(screen, payload) => {
-              if (screen === "shipmentDetails" && payload?.shipmentId != null) {
-                setSelectedShipmentId(payload.shipmentId);
-              }
-              goTo(screen);
+              goTo(screen, payload);
             }}
             onBack={() => goBack("dashboard")}
           />
@@ -217,7 +333,7 @@ export default function App() {
               if (shipmentId != null) {
                 setSelectedShipmentId(shipmentId);
                 setShipmentsRefreshKey((prev) => prev + 1);
-                goTo("shipmentDetails");
+                goTo("shipmentDetails", { shipmentId });
               }
             }}
           />

@@ -35,6 +35,8 @@ const listShipments = async (req, res,next) => {
     res.status(StatusCodes.OK).json(allShipments)
 }
 
+const 
+
 const makePost = async (req, res,next) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
