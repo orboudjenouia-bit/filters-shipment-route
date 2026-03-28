@@ -1,20 +1,38 @@
-const { VERIFICATION_EMAIL_TEMPLATE } = require("./emailTemplate") 
-const { mailtrapClient, sender } = require("mailtrap")
+const crypto = require("crypto")
+const { MailtrapClient } = require("mailtrap")
+const { VERIFICATION_EMAIL_TEMPLATE } = require("./emailTemplate.js")
 const AppError = require("../utils/AppError.js")
+const prisma = require("../config/prismaClient")
 
-const snedverificationemail = async (email, token) => {
-  const recipient = [{ email }]
+let mailtrapClient
+try {
+  mailtrapClient = new MailtrapClient({
+    token: process.env.MAILTRAP_TOKEN,
+  })
+} catch (err) {
+  console.log("Failed to initialize Mailtrap:", err.message)
+}
 
+const sender = {
+  email: process.env.MAILTRAP_FROM_EMAIL || "hello@example.com",
+  name: "wesseli-support"
+}
+
+const snedverificationemail = async (email, Tokenn) => {
   try {
-    const response = await mailtrapClient.send({
+    if (!mailtrapClient) {
+      throw new Error("Mailtrap client not initialized. Check MAILTRAP_TOKEN in .env");
+    }
+    await mailtrapClient.send({
       from: sender,
-      to: recipient,
+      to: [{ email: email }],
       subject: "Email Verification",
-      html: VERIFICATION_EMAIL_TEMPLATE.replace("{verificationURL}", token),
+      html: VERIFICATION_EMAIL_TEMPLATE.replace("{verificationCode}", Tokenn),
       category: "verification"
-    })
-    return response
+    });
+    console.log("✓ Verification email sent to:", email);
   } catch (error) {
+    console.error("Mailtrap error:", error.message);
     throw new AppError("Failed to send verification email", 500)
   }
 }

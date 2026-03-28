@@ -14,7 +14,7 @@ const register = async (req, res, next) => {
     throw new AppError("Validation failed", StatusCodes.BAD_REQUEST, "VALIDATION_ERROR");
   }
 
-  const { email, password, phone, type , role} = req.body;
+  const { email, password, phone, type, role } = req.body;
 
   // Check if user already exists
   const existingUser = await prisma.user.findUnique({
@@ -26,14 +26,13 @@ const register = async (req, res, next) => {
     throw new AppError("User with this email already exists", StatusCodes.CONFLICT, "USER_EXISTS");
   }
 
-
-
-
-
-
   // Hash the password
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  // Create verification token (6-digit random number) - generated server-side
+  const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+  const verificationTokenExpires = new Date(Date.now() + 1 * 60 * 60 * 1000); // 24 hours
+console.log("Generated verification token:", verificationToken); // Log the token for debugging
   // Save user in DB - try-catch for database-specific errors
   let user;
   try {
@@ -43,32 +42,35 @@ const register = async (req, res, next) => {
         password: hashedPassword,
         phone: phone,
         type: type,
-        role: role || "USER" 
+        role: role || "USER",
+        verificationToken: verificationToken,
+        verificationTokenExpires: verificationTokenExpires
       }
     });
   } catch (error) {
+      console.error("Full error object:", JSON.stringify(error, null, 2)); // ADD THIS
+  console.error("Error message:", error.message);
+  console.error("Error code:", error.code);
     if (error.code === "P2002") {
       throw new AppError("Email already exists in database", StatusCodes.CONFLICT, "DUPLICATE_EMAIL");
     }
     throw new AppError("Failed to create user", StatusCodes.INTERNAL_SERVER_ERROR, "USER_CREATION_ERROR");
+   
   }
 
-  // Sign JWT
+  // Send verification email AFTER user creation
+  await snedverificationemail(email, verificationToken);
+
+  // Sign JWT for login
   const token = jwt.sign(
     { id: user.id, email: user.email, role: user.role },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
   );
 
-// here after the token is created the email will be sent to user in order to verify hismself
-
-
-await snedverificationemail(email, token)
-
-
   res.status(StatusCodes.CREATED).json({ 
     success: true,
-    msg: "Registration successful", 
+    msg: "Registration successful. Check your email to verify.", 
     token,
     user: {
       id: user.id,
@@ -79,8 +81,6 @@ await snedverificationemail(email, token)
     }
   });
 };
-
-
 const login = async (req, res, next) => {
 
   const { email, password } = req.body;
@@ -517,9 +517,45 @@ const updateProfile = async (req, res, next) => {
     throw new AppError(error.message || "Failed to update profile", StatusCodes.INTERNAL_SERVER_ERROR, "UPDATE_FAILED");
   }
 };
+const verifyEmail = async (req, res, next) => {
+  try {
+    const { code } = req.body;
 
+    if (!code) {
+      throw new AppError("Verification code is required", StatusCodes.BAD_REQUEST, "MISSING_CODE");
+    }
 
+    const user = await prisma.user.findFirst({
+      where: {
+        verificationToken: code,
+        verificationTokenExpires: {
+          gt: new Date()
+        }
+      }
+    });
 
+    if (!user) {
+      throw new AppError("Invalid or expired verification code", StatusCodes.BAD_REQUEST, "INVALID_CODE");
+    }
 
-    
-module.exports = { register, login, IndividualProfile, BusinessProfile, logout , updateProfile };
+    const { id } = user;
+
+    await prisma.user.update({
+      where: { id },
+      data: {
+        isVerified: true,
+        verificationToken: null,
+        verificationTokenExpires: null
+      }
+    });
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      msg: "Email verified successfully"
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+module.exports = { register, login, IndividualProfile, BusinessProfile, logout, updateProfile, verifyEmail };
