@@ -28,8 +28,14 @@ export default function CreateRoute() {
   const [form, setForm] = useState({
     routeName: "",
     vehicle: "",
+    postType: "originDestination",
+    region: "",
     startLocation: "",
     endLocation: "",
+    dateMode: "day",
+    dayDate: "",
+    intervalStart: "",
+    intervalEnd: "",
     description: "",
     recurring: true,
   });
@@ -124,8 +130,38 @@ export default function CreateRoute() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.routeName || !form.vehicle || !form.startLocation || !form.endLocation) {
+    if (!form.routeName || !form.vehicle) {
       showError("Please fill in all required fields.");
+      return;
+    }
+
+    if (form.postType === "originDestination" && (!form.startLocation || !form.endLocation)) {
+      showError("Please provide both origin and destination.");
+      return;
+    }
+
+    if (form.postType === "region" && !form.region) {
+      showError("Please provide the region.");
+      return;
+    }
+
+    if (form.dateMode === "day" && !form.dayDate) {
+      showError("Please select a date.");
+      return;
+    }
+
+    if (form.dateMode === "interval" && (!form.intervalStart || !form.intervalEnd)) {
+      showError("Please provide start and end dates.");
+      return;
+    }
+
+    if (
+      form.dateMode === "interval" &&
+      form.intervalStart &&
+      form.intervalEnd &&
+      form.intervalStart > form.intervalEnd
+    ) {
+      showError("Interval start date must be before end date.");
       return;
     }
 
@@ -141,17 +177,27 @@ export default function CreateRoute() {
       return;
     }
 
-    const today = new Date().toISOString().slice(0, 10);
+    const isRegion = form.postType === "region";
+    const isInterval = form.dateMode === "interval";
+
+    const origin = isRegion ? null : form.startLocation.trim();
+    const destination = isRegion ? null : form.endLocation.trim();
+    const region = isRegion ? form.region.trim() : null;
+    const date = isInterval ? null : form.dayDate;
 
     try {
       setLoading(true);
       setError("");
 
       const payload = {
-        origin: form.startLocation.trim(),
-        destination: form.endLocation.trim(),
-        region: form.startLocation.trim(),
-        date: today,
+        origin,
+        destination,
+        region,
+        date,
+        post_type: form.postType === "region" ? "REGION" : "ORIGIN_DESTINATION",
+        date_type: form.dateMode === "interval" ? "INTERVAL" : "DAY",
+        interval_start: form.dateMode === "interval" ? form.intervalStart : null,
+        interval_end: form.dateMode === "interval" ? form.intervalEnd : null,
         vehicle_plate: vehiclePlate,
         more_Information: form.description.trim() || null,
       };
@@ -163,8 +209,14 @@ export default function CreateRoute() {
       setForm({
         routeName: "",
         vehicle: "",
+        postType: "originDestination",
+        region: "",
         startLocation: "",
         endLocation: "",
+        dateMode: "day",
+        dayDate: "",
+        intervalStart: "",
+        intervalEnd: "",
         description: "",
         recurring: true,
       });
@@ -272,32 +324,123 @@ export default function CreateRoute() {
           </div>
 
           <div className="cr-field">
-            <label className="cr-label">START LOCATION</label>
-            <div className="cr-location-input-box">
-              <Navigation size={15} className="cr-loc-icon green" />
-              <input
-                type="text"
-                className="cr-loc-input"
-                placeholder="Enter departure city"
-                value={form.startLocation}
-                onChange={handleChange("startLocation")}
-              />
+            <label className="cr-label">Post Type</label>
+            <div className="cr-segmented">
+              <button
+                type="button"
+                className={`cr-segment-btn ${form.postType === "originDestination" ? "active" : ""}`}
+                onClick={() => setForm((prev) => ({ ...prev, postType: "originDestination" }))}
+              >
+                Origin / Destination
+              </button>
+              <button
+                type="button"
+                className={`cr-segment-btn ${form.postType === "region" ? "active" : ""}`}
+                onClick={() => setForm((prev) => ({ ...prev, postType: "region" }))}
+              >
+                Region
+              </button>
             </div>
           </div>
 
           <div className="cr-field">
-            <label className="cr-label">END LOCATION</label>
-            <div className="cr-location-input-box">
-              <MapPin size={15} className="cr-loc-icon gray" />
-              <input
-                type="text"
-                className="cr-loc-input"
-                placeholder="Enter destination city"
-                value={form.endLocation}
-                onChange={handleChange("endLocation")}
-              />
+            <label className="cr-label">Date Type</label>
+            <div className="cr-segmented">
+              <button
+                type="button"
+                className={`cr-segment-btn ${form.dateMode === "day" ? "active" : ""}`}
+                onClick={() => setForm((prev) => ({ ...prev, dateMode: "day" }))}
+              >
+                Day
+              </button>
+              <button
+                type="button"
+                className={`cr-segment-btn ${form.dateMode === "interval" ? "active" : ""}`}
+                onClick={() => setForm((prev) => ({ ...prev, dateMode: "interval" }))}
+              >
+                Interval
+              </button>
             </div>
           </div>
+
+          {form.dateMode === "day" ? (
+            <div className="cr-field">
+              <label className="cr-label" htmlFor="dayDate">Date</label>
+              <input
+                id="dayDate"
+                type="date"
+                value={form.dayDate}
+                onChange={handleChange("dayDate")}
+              />
+            </div>
+          ) : (
+            <div className="cr-field cr-date-grid">
+              <div>
+                <label className="cr-label" htmlFor="intervalStart">Start Date</label>
+                <input
+                  id="intervalStart"
+                  type="date"
+                  value={form.intervalStart}
+                  onChange={handleChange("intervalStart")}
+                />
+              </div>
+              <div>
+                <label className="cr-label" htmlFor="intervalEnd">End Date</label>
+                <input
+                  id="intervalEnd"
+                  type="date"
+                  value={form.intervalEnd}
+                  onChange={handleChange("intervalEnd")}
+                />
+              </div>
+            </div>
+          )}
+
+          {form.postType === "originDestination" ? (
+            <>
+              <div className="cr-field">
+                <label className="cr-label">START LOCATION</label>
+                <div className="cr-location-input-box">
+                  <Navigation size={15} className="cr-loc-icon green" />
+                  <input
+                    type="text"
+                    className="cr-loc-input"
+                    placeholder="Enter departure city"
+                    value={form.startLocation}
+                    onChange={handleChange("startLocation")}
+                  />
+                </div>
+              </div>
+
+              <div className="cr-field">
+                <label className="cr-label">END LOCATION</label>
+                <div className="cr-location-input-box">
+                  <MapPin size={15} className="cr-loc-icon gray" />
+                  <input
+                    type="text"
+                    className="cr-loc-input"
+                    placeholder="Enter destination city"
+                    value={form.endLocation}
+                    onChange={handleChange("endLocation")}
+                  />
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="cr-field">
+              <label className="cr-label">REGION</label>
+              <div className="cr-location-input-box">
+                <MapPin size={15} className="cr-loc-icon gray" />
+                <input
+                  type="text"
+                  className="cr-loc-input"
+                  placeholder="Enter region"
+                  value={form.region}
+                  onChange={handleChange("region")}
+                />
+              </div>
+            </div>
+          )}
 
           <div className="cr-recurring-box">
             <div className="cr-recurring-left">

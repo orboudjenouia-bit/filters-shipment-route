@@ -62,12 +62,25 @@ export default function RoutesScreen({ onNavigate }) {
 
     const normalizeRoute = (item, index) => ({
       id: item?.route_ID || item?.id || `${index}-${item?.date || "route"}`,
-      name: item?.name || item?.route_Name || "Route name",
-      time: item?.createdAtLabel || "Recently",
-      price: item?.priceLabel || (item?.price != null ? `${item.price} DA` : "50,000 DA"),
+      userName:
+        item?.user?.individual?.full_Name ||
+        item?.user?.business?.business_Name ||
+        (item?.user?.email ? String(item.user.email).split("@")[0] : "Unknown user"),
+      name: item?.name || item?.route_Name || "Route",
+      time:
+        item?.date_type === "INTERVAL"
+          ? `${item?.interval_start || "-"} to ${item?.interval_end || "-"}`
+          : item?.date || item?.createdAtLabel || "No date",
+      price: item?.priceLabel || (item?.price != null ? `${item.price} DA` : ""),
+      postType: item?.post_type || "ORIGIN_DESTINATION",
       origin: item?.origin || "Origin not specified",
       destination: item?.destination || "Destination not specified",
-      capacity: item?.capacity || item?.weight || 450,
+      region: item?.region || "Region not specified",
+      capacity: item?.vehicle?.capacity ?? item?.capacity ?? item?.weight ?? null,
+      vehicleName: item?.vehicle?.vehicle_Name || "Unknown vehicle",
+      vehiclePlate: item?.vehicle?.plate_Number != null ? String(item.vehicle.plate_Number) : "-",
+      vehicleColor: item?.vehicle?.color || "No color",
+      vehicleYear: item?.vehicle?.year || "No year",
       status: normalizeStatus(item?.status),
     });
 
@@ -199,27 +212,52 @@ export default function RoutesScreen({ onNavigate }) {
                     </svg>
                   </div>
                   <div className="sh-card-info">
-                    <span className="sh-card-name">{route.name}</span>
+                    <div className="sh-card-name-row">
+                      <span className="sh-card-name">{route.userName}</span>
+                      <span className="sh-tag sh-tag--vehicle sh-tag--vehicle-inline">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                          <path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z" stroke="#0f172a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          <circle cx="5.5" cy="18.5" r="2.5" stroke="#0f172a" strokeWidth="2" />
+                          <circle cx="18.5" cy="18.5" r="2.5" stroke="#0f172a" strokeWidth="2" />
+                        </svg>
+                        <span className="sh-vehicle-tag-text">
+                          <span className="sh-vehicle-tag-name">{route.vehicleName}</span>
+                          <span className="sh-vehicle-tag-meta">{route.vehicleColor} • {route.vehicleYear}</span>
+                        </span>
+                      </span>
+                    </div>
                     <span className="sh-card-time">{route.time}</span>
                   </div>
-                  <span className="sh-card-price">{route.price}</span>
+                  {route.price && <span className="sh-card-price">{route.price}</span>}
                 </div>
 
                 <div className="sh-card-route">
-                  <div className="sh-route-row">
-                    <span className="sh-route-dot sh-route-dot--green" />
-                    <div>
-                      <span className="sh-route-label">ORIGIN</span>
-                      <span className="sh-route-val">{route.origin}</span>
+                  {route.postType === "REGION" ? (
+                    <div className="sh-route-row">
+                      <span className="sh-route-dot sh-route-dot--green" />
+                      <div>
+                        <span className="sh-route-label">REGION</span>
+                        <span className="sh-route-val">{route.region}</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="sh-route-row">
-                    <span className="sh-route-dot sh-route-dot--gray" />
-                    <div>
-                      <span className="sh-route-label">DESTINATION</span>
-                      <span className="sh-route-val">{route.destination}</span>
-                    </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="sh-route-row">
+                        <span className="sh-route-dot sh-route-dot--green" />
+                        <div>
+                          <span className="sh-route-label">ORIGIN</span>
+                          <span className="sh-route-val">{route.origin}</span>
+                        </div>
+                      </div>
+                      <div className="sh-route-row">
+                        <span className="sh-route-dot sh-route-dot--gray" />
+                        <div>
+                          <span className="sh-route-label">DESTINATION</span>
+                          <span className="sh-route-val">{route.destination}</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="sh-card-footer">
@@ -228,7 +266,7 @@ export default function RoutesScreen({ onNavigate }) {
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                         <path d="M12 2a4 4 0 0 1 4 4H8a4 4 0 0 1 4-4zM6 6h12l1 14H5L6 6z" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                      Maximum capacity : {route.capacity} kg
+                      Maximum capacity: {route.capacity != null ? `${route.capacity} kg` : "N/A"}
                     </span>
                   </div>
                   <button className="sh-details-btn" type="button">Details</button>

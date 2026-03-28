@@ -150,3 +150,23 @@ export const getVehicles = async () => {
 
   return data;
 };
+
+export const createVehicle = async ({ plate_Number, vehicle_Name, capacity, photo = null }) => {
+  const response = await fetch(`${API_URL}/profile/vehicles`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ plate_Number, vehicle_Name, capacity, photo }),
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw {
+      status: response.status,
+      code: data.code,
+      message: data.message || "Failed to create vehicle",
+    };
+  }
+
+  return data?.vehicle || data;
+};

@@ -13,6 +13,7 @@ import Dashboard from "./Dashboard";
 import Shipments from "./Shipments";
 import RoutesScreen from "./Routes";
 import Profile from "./Profile";
+import Vehicle from "./Vehicle";
 import CreateRoute from "./Createroute";
 import ShipmentDetails from "./Shipmentdetails";
 import CreateShipment from "./Createshipment";
@@ -43,6 +44,8 @@ const getPathForScreen = (screen, { shipmentId, resetToken } = {}) => {
       return "/routes";
     case "profile":
       return "/profile";
+    case "vehicle":
+      return "/vehicles/create";
     case "createRoute":
       return "/routes/create";
     case "createShipment":
@@ -114,6 +117,7 @@ const resolveScreenFromPath = (pathname) => {
   if (normalized === "/shipments") return { screen: "shipments" };
   if (normalized === "/routes") return { screen: "routes" };
   if (normalized === "/profile") return { screen: "profile" };
+  if (normalized === "/vehicles/create") return { screen: "vehicle" };
   if (normalized === "/routes/create") return { screen: "createRoute" };
   if (normalized === "/shipments/create") return { screen: "createShipment" };
   if (normalized === "/shipments/details") {
@@ -398,6 +402,15 @@ export default function App() {
 
         {current === "profile" && (
           <Profile
+            onNavigate={(screen, payload) => {
+              goTo(screen, payload);
+            }}
+          />
+        )}
+
+        {current === "vehicle" && (
+          <Vehicle
+            onBack={() => goBack("profile")}
             onNavigate={(screen, payload) => {
               goTo(screen, payload);
             }}

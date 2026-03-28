@@ -18,6 +18,16 @@ enum Roles {
   ADMIN
 }
 
+enum PostType {
+  ORIGIN_DESTINATION
+  REGION
+}
+
+enum DateType {
+  DAY
+  INTERVAL
+}
+
 model User {
   id            Int      @id @default(autoincrement())
   email         String   @unique @db.VarChar(50)
@@ -35,6 +45,7 @@ model User {
 
   vehicles      Vehicle[]
   shipments     Shipment[]
+  routes        Route[]
 
   resetPasswordToken String?
   resetPasswordExpires DateTime?
@@ -76,13 +87,20 @@ model Vehicle {
 
 model Route {
   route_ID          Int     @id @unique @default(autoincrement())
-  origin            String  
-  destination       String  
-  region            String
-  date              String  @db.VarChar(11)
+  origin            String? 
+  destination       String? 
+  region            String?
+  date              String? @db.VarChar(30)
+  post_type         PostType @default(ORIGIN_DESTINATION)
+  date_type         DateType @default(DAY)
+  interval_start    String? @db.VarChar(10)
+  interval_end      String? @db.VarChar(10)
   more_Information  String?  @db.Text
   status            String  @default("Active")
+
+  
   user_ID           Int
+  user              User    @relation(fields: [user_ID], references: [id])
   
 
   vehicle_plate     Int

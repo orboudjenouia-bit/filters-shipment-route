@@ -1,121 +1,96 @@
 import { useState } from "react";
-import { FiTrash2, FiChevronLeft } from "react-icons/fi";
+import { FiChevronLeft } from "react-icons/fi";
 import ThemeToggle from "./ThemeToggle";
+import { createVehicle } from "./services/profileService";
 import './Vehicle.css';
-
-const API_URL = process.env.REACT_APP_API_URL;
 
 const VEHICLE_TYPES = ["Select type", "Car", "Truck"];
 
-let idCounter = 2;
-const emptyVehicle = (id) => ({ id, type: "", model: "", plate: "" });
-
-function VehicleForm({ vehicle, index, onUpdate, onRemove, showDivider }) {
-  return (
-    <div className={`vehicle-card${showDivider ? "" : " no-border"}`}>
-      <div className="vehicle-card-header">
-        <h2 className="vehicle-title">Vehicle {index + 1}</h2>
-        {index > 0 && (
-          <button className="remove-btn" onClick={() => onRemove(vehicle.id)}>
-            <FiTrash2 size={15} /> Remove
-          </button>
-        )}
-      </div>
-
-      <div className="field-group">
-        <label className="field-label">Vehicle Type</label>
-        <div className="select-wrapper">
-          <select
-            className="field-input"
-            value={vehicle.type}
-            onChange={(e) => onUpdate(vehicle.id, "type", e.target.value)}
-          >
-            {VEHICLE_TYPES.map((t) => (
-              <option key={t} value={t === "Select type" ? "" : t}>{t}</option>
-            ))}
-          </select>
-          <span className="select-arrow">▾</span>
-        </div>
-      </div>
-
-      <div className="field-group">
-        <label className="field-label">Model (Vehicle name)</label>
-        <input
-          className="field-input"
-          type="text"
-          placeholder="e.g. Toyota Camry"
-          value={vehicle.model}
-          onChange={(e) => onUpdate(vehicle.id, "model", e.target.value)}
-        />
-      </div>
-
-      <div className="field-group">
-        <label className="field-label">License Plate</label>
-        <input
-          className="field-input"
-          type="text"
-          placeholder="e.g. 00123-115-58"
-          value={vehicle.plate}
-          onChange={(e) => onUpdate(vehicle.id, "plate", e.target.value)}
-        />
-      </div>
-    </div>
-  );
-}
-
-export default function Vehicle() {
-  const [vehicles, setVehicles] = useState([emptyVehicle(1)]);
+export default function Vehicle({ onBack, onNavigate }) {
+  const [form, setForm] = useState({
+    type: "",
+    model: "",
+    plate: "",
+    capacity: "",
+  });
+  const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
-  const updateVehicle = (id, field, value) =>
-    setVehicles((prev) => prev.map((v) => (v.id === id ? { ...v, [field]: value } : v)));
+  const updateField = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setError(null);
+  };
 
-  const removeVehicle = (id) =>
-    setVehicles((prev) => prev.filter((v) => v.id !== id));
+  const handlePhotosChange = (event) => {
+    const files = Array.from(event.target.files || []);
+    setPhotos(files.slice(0, 5));
+  };
 
-  const addVehicle = () =>
-    setVehicles((prev) => [...prev, emptyVehicle(idCounter++)]);
+  const fileToDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(new Error("Failed to read selected photo."));
+      reader.readAsDataURL(file);
+    });
 
   const handleBack = () => {
-    console.log("Go back");
+    if (typeof onBack === "function") {
+      onBack();
+    }
   };
 
   const skip_now = () => {
-    console.log("skip now");
+    if (typeof onNavigate === "function") {
+      onNavigate("profile");
+    }
   };
 
-  const handleNext = async () => {
-    const isValid = vehicles.every((v) => v.type && v.model && v.plate);
+  const handleAddVehicle = async () => {
+    const isValid = form.type && form.model && form.plate && form.capacity;
     if (!isValid) {
-      setError("Please fill in all fields for every vehicle.");
+      setError("Please fill in all fields.");
       return;
     }
 
-    const payload = vehicles.map(({ id, ...rest }) => rest);
+    const plateNumber = Number(form.plate);
+    const capacity = Number(form.capacity);
+
+    if (!Number.isInteger(plateNumber) || plateNumber <= 0) {
+      setError("Plate number must be a valid number.");
+      return;
+    }
+
+    if (!Number.isFinite(capacity) || capacity <= 0) {
+      setError("Capacity must be a valid number.");
+      return;
+    }
 
     try {
       setLoading(true);
       setError(null);
       setSuccess(false);
 
-      const response = await fetch(`${API_URL}/vehicles`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ vehicles: payload }),
+      const photoData = photos[0] ? await fileToDataUrl(photos[0]) : null;
+
+      await createVehicle({
+        plate_Number: plateNumber,
+        vehicle_Name: form.model.trim(),
+        capacity,
+        photo: photoData,
       });
 
-      if (!response.ok) throw new Error(`Server error: ${response.status}`);
-
-      const data = await response.json();
-      console.log("Success:", data);
       setSuccess(true);
+      setForm({ type: "", model: "", plate: "", capacity: "" });
+      setPhotos([]);
+
+      if (typeof onNavigate === "function") {
+        setTimeout(() => onNavigate("profile"), 700);
+      }
     } catch (err) {
-      console.error("Error:", err.message);
-      setError("Something went wrong. Please try again.");
+      setError(err?.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -129,38 +104,95 @@ export default function Vehicle() {
           <button className="back-btn" onClick={handleBack}>
             <FiChevronLeft size={22} />
           </button>
-          <h1 className="page-title">Add Vehicles</h1>
+          <h1 className="page-title">Add Vehicle</h1>
           <ThemeToggle />
         </header>
 
         <main className="page-body">
-          {vehicles.map((v, i) => (
-            <VehicleForm
-              key={v.id}
-              vehicle={v}
-              index={i}
-              onUpdate={updateVehicle}
-              onRemove={removeVehicle}
-              showDivider={i < vehicles.length - 1}
-            />
-          ))}
+          <div className="vehicle-card no-border">
+            <div className="vehicle-card-header">
+              <h2 className="vehicle-title">Vehicle Information</h2>
+            </div>
 
-          <button className="add-vehicle-btn" onClick={addVehicle}>
-            <span className="plus-icon">⊕</span>
-            Add Another Vehicle
-          </button>
+            <div className="field-group">
+              <label className="field-label">Vehicle Type</label>
+              <div className="select-wrapper">
+                <select
+                  className="field-input"
+                  value={form.type}
+                  onChange={(e) => updateField("type", e.target.value)}
+                >
+                  {VEHICLE_TYPES.map((t) => (
+                    <option key={t} value={t === "Select type" ? "" : t}>{t}</option>
+                  ))}
+                </select>
+                <span className="select-arrow">▾</span>
+              </div>
+            </div>
+
+            <div className="field-group">
+              <label className="field-label">Vehicle Name</label>
+              <input
+                className="field-input"
+                type="text"
+                placeholder="e.g. Mercedes Actros"
+                value={form.model}
+                onChange={(e) => updateField("model", e.target.value)}
+              />
+            </div>
+
+            <div className="field-group">
+              <label className="field-label">Plate Number</label>
+              <input
+                className="field-input"
+                type="number"
+                placeholder="e.g. 12345"
+                value={form.plate}
+                onChange={(e) => updateField("plate", e.target.value)}
+              />
+            </div>
+
+            <div className="field-group">
+              <label className="field-label">Capacity (tons)</label>
+              <input
+                className="field-input"
+                type="number"
+                placeholder="e.g. 12"
+                value={form.capacity}
+                onChange={(e) => updateField("capacity", e.target.value)}
+              />
+            </div>
+
+            <div className="field-group">
+              <label className="field-label" htmlFor="vehicle-photos">Upload Photos</label>
+              <label className="vehicle-upload-box" htmlFor="vehicle-photos">
+                <span className="vehicle-upload-main">Upload photos</span>
+              </label>
+              <input
+                id="vehicle-photos"
+                className="vehicle-file-input"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handlePhotosChange}
+              />
+              {photos.length > 0 && (
+                <p className="vehicle-upload-selected">{photos.length} photo(s) selected</p>
+              )}
+            </div>
+          </div>
         </main>
 
         {error && <div className="alert alert-error">{error}</div>}
-        {success && <div className="alert alert-success">Vehicles submitted successfully!</div>}
+        {success && <div className="alert alert-success">Vehicle added successfully!</div>}
 
         <footer className="page-footer">
           <button
-            className={`next-btn ${loading ? "loading" : ""}`}
-            onClick={handleNext}
+            className={`add-vehicle-submit-btn ${loading ? "loading" : ""}`}
+            onClick={handleAddVehicle}
             disabled={loading}
           >
-            {loading ? "Sending..." : "Next"}
+            {loading ? "Adding..." : "ADD VEHICLE"}
           </button>
           <button className="skip-btn" onClick={skip_now}>Skip for now</button>
         </footer>

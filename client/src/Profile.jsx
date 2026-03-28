@@ -3,7 +3,7 @@ import ThemeToggle from "./ThemeToggle";
 import {
   MapPin, Mail, Phone, Settings, Bell, LogOut,
   ChevronRight, Star, CheckCircle, Truck, Edit3,
-  ArrowLeft, XCircle, AlertCircle, Check, X
+  ArrowLeft, XCircle, AlertCircle, Check, X, Package
 } from "lucide-react";
 import { getMyProfile, getShipmentHistory, getRouteHistory, getVehicles } from "./services/profileService";
 import "./Profile.css";
@@ -15,13 +15,21 @@ const BellIcon = () => (
   </svg>
 );
 
+const DefaultAvatar = () => (
+  <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+    <circle cx="50" cy="50" r="50" fill="#f5f5f5" />
+    <circle cx="50" cy="38" r="17" fill="#b3b3b3" />
+    <path d="M16 87c5-16 19-24 34-24s29 8 34 24" fill="#b3b3b3" />
+  </svg>
+);
+
 const statusStyles = {
   COMPLETED:   { color: "#00c46a", bg: "#e8faf2", border: "#b2f0d4" },
-  ACTIVE:      { color: "#00c46a", bg: "#e8faf2", border: "#b2f0d4" },
-  "IN DELIVERY": { color: "#00c46a", bg: "#e8faf2", border: "#b2f0d4" },
-  "IN STOCK": { color: "#00c46a", bg: "#e8faf2", border: "#b2f0d4" },
+  ACTIVE:      { color: "#f59e0b", bg: "#fff7ed", border: "#fde68a" },
+  "IN DELIVERY": { color: "#f59e0b", bg: "#fff7ed", border: "#fde68a" },
+  "IN STOCK": { color: "#64748b", bg: "#f8fafc", border: "#cbd5e1" },
   PENDING:     { color: "#f59e0b", bg: "#fff7ed", border: "#fde68a" },
-  Available:   { color: "#888",    bg: "#f5f5f5", border: "#ddd" },
+  Available:   { color: "#64748b", bg: "#f8fafc", border: "#cbd5e1" },
   FAILED:      { color: "#ef4444", bg: "#fff0f0", border: "#fecaca" },
   CANCELLED:   { color: "#ef4444", bg: "#fff0f0", border: "#fecaca" },
   Maintenance: { color: "#f59e0b", bg: "#fff7ed", border: "#fde68a" },
@@ -42,6 +50,7 @@ function HistoryIconBox({ type }) {
   const configs = {
     check: { bg: "#e8faf2", icon: <CheckCircle size={20} color="#00c46a" /> },
     truck: { bg: "#fff3e0", icon: <Truck size={20} color="#f59e0b" /> },
+    box: { bg: "#94a3b8", icon: <Package size={20} color="#ffffff" /> },
     alert: { bg: "#fff0f0", icon: <AlertCircle size={20} color="#ef4444" /> },
   };
   const c = configs[type];
@@ -79,6 +88,13 @@ const ProfileIcon = ({ active }) => (
   </svg>
 );
 
+const getHistoryIconType = (status) => {
+  if (status === "FAILED" || status === "CANCELLED") return "alert";
+  if (status === "IN STOCK") return "box";
+  if (status === "IN DELIVERY" || status === "ACTIVE" || status === "PENDING") return "truck";
+  return "check";
+};
+
 export default function Profile({ onNavigate }) {
   const [page, setPage] = useState("profile");
   const [activeNav, setActiveNav] = useState("profile");
@@ -91,6 +107,7 @@ export default function Profile({ onNavigate }) {
     reviews: 0,
     email: "",
     phone: "",
+    profilePhoto: "",
   });
   const [historyItems, setHistoryItems] = useState([]);
   const [truckItems, setTruckItems] = useState([]);
@@ -156,6 +173,7 @@ export default function Profile({ onNavigate }) {
           reviews: Number(profile?.reviews ?? 0),
           email: profile?.email || "",
           phone: profile?.phone || "",
+          profilePhoto: typeof profile?.profile_Photo === "string" ? profile.profile_Photo.trim() : "",
         });
 
         const shipments = Array.isArray(historyResponse?.shipments)
@@ -177,13 +195,9 @@ export default function Profile({ onNavigate }) {
             type: "shipment",
             title: shipmentName,
             date: item?.date || "Unknown date",
+            kindLabel: "SHIPMENT",
             status: normalizedStatus,
-            icon:
-              normalizedStatus === "IN DELIVERY" || normalizedStatus === "ACTIVE"
-                ? "truck"
-                : normalizedStatus === "FAILED" || normalizedStatus === "CANCELLED"
-                ? "alert"
-                : "check",
+            icon: getHistoryIconType(normalizedStatus),
           };
         });
 
@@ -196,22 +210,29 @@ export default function Profile({ onNavigate }) {
         const normalizedRouteHistory = routes.map((item) => {
           const normalizedStatus = toHistoryStatusLabel(item?.status);
           const routeId = item?.route_ID || item?.id || null;
+          const isRegionPost =
+            String(item?.post_type || "").toUpperCase() === "REGION" ||
+            (!item?.origin && !item?.destination && !!item?.region);
+          const routeDate =
+            String(item?.date_type || "").toUpperCase() === "INTERVAL"
+              ? `${item?.interval_start || "Unknown start"} to ${item?.interval_end || "Unknown end"}`
+              : item?.date || "Unknown date";
           const routeTitle =
-            item?.name ||
-            item?.route_Name ||
-            `${item?.origin || "Unknown origin"} -> ${item?.destination || "Unknown destination"}`;
+            isRegionPost
+              ? `Region: ${item?.region || "Unknown region"}`
+              : item?.name ||
+                item?.route_Name ||
+                `${item?.origin || "Unknown origin"} -> ${item?.destination || "Unknown destination"}`;
 
           return {
             id: routeId || `R-${Math.random().toString(36).slice(2, 7)}`,
             rawId: routeId,
             type: "route",
             title: routeTitle,
-            date: item?.date || "Unknown date",
+            date: routeDate,
+            kindLabel: isRegionPost ? "REGION POST" : "ORIGIN/DESTINATION",
             status: normalizedStatus,
-            icon:
-              normalizedStatus === "FAILED" || normalizedStatus === "CANCELLED"
-                ? "alert"
-                : "truck",
+            icon: getHistoryIconType(normalizedStatus),
           };
         });
 
@@ -241,13 +262,14 @@ export default function Profile({ onNavigate }) {
             ? vehicle.routes.some((route) => String(route?.status || "").toLowerCase() === "active")
             : false;
 
+          const photo = typeof vehicle?.photo === "string" ? vehicle.photo.trim() : "";
+
           return {
             name: vehicle?.vehicle_Name || `Vehicle ${index + 1}`,
             capacity: `${vehicle?.capacity ?? "-"} Tons`,
             status: hasActiveRoute ? "Active" : "Available",
-            img:
-              vehicle?.photo ||
-              "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=80&h=80&fit=crop",
+            img: photo,
+            hasPhoto: Boolean(photo),
             year: vehicle?.year || "-",
             plate: vehicle?.plate_Number || "-",
             driver: "-",
@@ -306,7 +328,9 @@ export default function Profile({ onNavigate }) {
             <HistoryIconBox type={item.icon} />
             <div>
               <div style={{ fontWeight: 600, fontSize: 14, color: "var(--text-primary)" }}>{item.title}</div>
-              <div style={{ fontSize: 12, marginTop: 2, color: "var(--text-secondary)" }}>{item.date} • #{item.id}</div>
+              <div style={{ fontSize: 12, marginTop: 2, color: "var(--text-secondary)" }}>
+                {item.date}{item.kindLabel ? ` • ${item.kindLabel}` : ""} • #{item.id}
+              </div>
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -331,7 +355,13 @@ export default function Profile({ onNavigate }) {
           style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", cursor: "pointer", ...(i < truckItems.length - 1 ? { borderBottom: "1px solid var(--border-color)" } : {}) }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <img src={truck.img} alt={truck.name} style={{ width: 52, height: 52, borderRadius: 13, objectFit: "cover", flexShrink: 0 }} />
+            {truck.hasPhoto ? (
+              <img src={truck.img} alt={truck.name} style={{ width: 52, height: 52, borderRadius: 13, objectFit: "cover", flexShrink: 0 }} />
+            ) : (
+              <div style={{ width: 52, height: 52, borderRadius: 13, background: "rgba(148, 163, 184, 0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Truck size={24} color="#94a3b8" />
+              </div>
+            )}
             <div>
               <div style={{ fontWeight: 600, fontSize: 14, color: "var(--text-primary)" }}>{truck.name}</div>
               <div style={{ fontSize: 12, marginTop: 2, color: "var(--text-secondary)" }}>Capacity: {truck.capacity}</div>
@@ -425,7 +455,13 @@ export default function Profile({ onNavigate }) {
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "28px 20px 30px", gap: 10 }}>
             <div style={{ position: "relative" }}>
               <div style={{ width: 100, height: 100, borderRadius: "50%", padding: 3, border: `3px solid ${verified ? "#22c55e" : "#ef4444"}` }}>
-                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=face" alt="profile" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                {userData.profilePhoto ? (
+                  <img src={userData.profilePhoto} alt="profile" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                ) : (
+                  <div style={{ width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden" }}>
+                    <DefaultAvatar />
+                  </div>
+                )}
               </div>
               <div
                 style={{
@@ -506,7 +542,9 @@ export default function Profile({ onNavigate }) {
                 <HistoryIconBox type={item.icon} />
                 <div>
                   <div style={{ fontWeight: 600, fontSize: 14, color: "var(--text-primary)" }}>{item.title}</div>
-                  <div style={{ fontSize: 12, marginTop: 2, color: "var(--text-secondary)" }}>{item.date} • #{item.id}</div>
+                  <div style={{ fontSize: 12, marginTop: 2, color: "var(--text-secondary)" }}>
+                    {item.date}{item.kindLabel ? ` • ${item.kindLabel}` : ""} • #{item.id}
+                  </div>
                 </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -533,7 +571,13 @@ export default function Profile({ onNavigate }) {
               onClick={() => { setSelectedTruck(truck); setPage("truckDetail"); }}
               style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderTop: "1px solid var(--border-color)", cursor: "pointer" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <img src={truck.img} alt={truck.name} style={{ width: 52, height: 52, borderRadius: 13, objectFit: "cover", flexShrink: 0 }} />
+                {truck.hasPhoto ? (
+                  <img src={truck.img} alt={truck.name} style={{ width: 52, height: 52, borderRadius: 13, objectFit: "cover", flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: 52, height: 52, borderRadius: 13, background: "rgba(148, 163, 184, 0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Truck size={24} color="#94a3b8" />
+                  </div>
+                )}
                 <div>
                   <div style={{ fontWeight: 600, fontSize: 14, color: "var(--text-primary)" }}>{truck.name}</div>
                   <div style={{ fontSize: 12, marginTop: 2, color: "var(--text-secondary)" }}>Capacity: {truck.capacity}</div>
@@ -545,6 +589,24 @@ export default function Profile({ onNavigate }) {
               </div>
             </div>
           ))}
+          <button
+            style={{
+              width: "100%",
+              marginTop: 14,
+              background: "#22c55e",
+              border: "none",
+              color: "#ffffff",
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+              padding: "12px 14px",
+              borderRadius: 12,
+              letterSpacing: "0.6px",
+            }}
+            onClick={() => onNavigate?.("vehicle")}
+          >
+            ADD VEHICLE
+          </button>
         </div>
 
         <div style={{ height: 10 }} />

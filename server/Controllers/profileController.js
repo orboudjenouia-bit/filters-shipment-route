@@ -115,8 +115,12 @@ const createVehicle = async (req, res, next) => {
       plate_Number,
       vehicle_Name,
       capacity,
-      photo,
-      user_ID: userId
+      photo: photo || "",
+      user: {
+        connect: {
+          id: userId,
+        },
+      },
     },
   });
 

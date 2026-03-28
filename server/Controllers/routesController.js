@@ -5,12 +5,38 @@ const { StatusCodes } = require("http-status-codes");
 
 
 const listRoutes = async (req,res,next) => {
-    const routes = await prisma.route.findMany()
+    
+    const routes = await prisma.route.findMany({
+        include: {
+            vehicle: {
+                select: {
+                    plate_Number: true,
+                    vehicle_Name: true,
+                    capacity: true,
+                },
+            },
+            user: {
+                select: {
+                    individual: {
+                        select: {
+                            full_Name: true,
+                        },
+                    },
+                    business: {
+                        select: {
+                            business_Name: true,
+                        },
+                    },
+                },
+            },
+        },
+    })
     if (!routes) {
         throw new AppError("No Routes Created", StatusCodes.NOT_FOUND, "No_ROUTES")
     }
     const total = await prisma.route.count()
     res.status(StatusCodes.OK).json({routes, total})
+    
 }
 
 const postRoute = async (req,res,next) => {

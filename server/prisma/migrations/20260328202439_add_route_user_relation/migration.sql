@@ -1,0 +1,2 @@
+-- AddForeignKey
+ALTER TABLE "Route" ADD CONSTRAINT "Route_user_ID_fkey" FOREIGN KEY ("user_ID") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
