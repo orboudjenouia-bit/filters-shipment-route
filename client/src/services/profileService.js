@@ -113,6 +113,25 @@ export const getShipmentHistory = async () => {
   return data;
 };
 
+export const getRouteHistory = async () => {
+  const response = await fetch(`${API_URL}/profile/historyRoutes`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw {
+      status: response.status,
+      code: data.code,
+      message: data.message || "Failed to fetch route history",
+    };
+  }
+
+  return data;
+};
+
 export const getVehicles = async () => {
   const response = await fetch(`${API_URL}/profile/vehicles`, {
     method: "GET",

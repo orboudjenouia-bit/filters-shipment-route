@@ -5,7 +5,7 @@ import {
   ChevronRight, Star, CheckCircle, Truck, Edit3,
   ArrowLeft, XCircle, AlertCircle, Check, X
 } from "lucide-react";
-import { getMyProfile, getShipmentHistory, getVehicles } from "./services/profileService";
+import { getMyProfile, getShipmentHistory, getRouteHistory, getVehicles } from "./services/profileService";
 import "./Profile.css";
 
 const BellIcon = () => (
@@ -106,6 +106,22 @@ export default function Profile({ onNavigate }) {
     if (tab === "profile") onNavigate("profile");
   };
 
+  const handleHistoryItemClick = (item) => {
+    if (!onNavigate || !item) return;
+
+    if (item.type === "shipment") {
+      if (item.rawId != null) {
+        onNavigate("shipmentDetails", { shipmentId: item.rawId });
+        return;
+      }
+
+      onNavigate("shipments");
+      return;
+    }
+
+    onNavigate("routes");
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -123,9 +139,10 @@ export default function Profile({ onNavigate }) {
 
     const loadProfileData = async () => {
       try {
-        const [profile, historyResponse, vehiclesResponse] = await Promise.all([
+        const [profile, historyResponse, routeHistoryResponse, vehiclesResponse] = await Promise.all([
           getMyProfile(),
           getShipmentHistory(),
+          getRouteHistory(),
           getVehicles(),
         ]);
 
@@ -149,14 +166,16 @@ export default function Profile({ onNavigate }) {
 
         const normalizedHistory = shipments.map((item) => {
           const normalizedStatus = toHistoryStatusLabel(item?.status);
+          const shipmentName =
+            item?.shipmentName ||
+            "NO NAME";
+          const shipmentId = item?.shipment_ID || item?.id || null;
+
           return {
-            id: item?.shipment_ID || item?.id || `ID-${Math.random().toString(36).slice(2, 7)}`,
-            title:
-              normalizedStatus === "IN DELIVERY" || normalizedStatus === "ACTIVE"
-                ? "In Delivery"
-                : normalizedStatus === "FAILED" || normalizedStatus === "CANCELLED"
-                ? "Delivery Failed"
-                : "Package Delivered",
+            id: shipmentId || `ID-${Math.random().toString(36).slice(2, 7)}`,
+            rawId: shipmentId,
+            type: "shipment",
+            title: shipmentName,
             date: item?.date || "Unknown date",
             status: normalizedStatus,
             icon:
@@ -168,7 +187,48 @@ export default function Profile({ onNavigate }) {
           };
         });
 
-        setHistoryItems(normalizedHistory);
+        const routes = Array.isArray(routeHistoryResponse?.routes)
+          ? routeHistoryResponse.routes
+          : Array.isArray(routeHistoryResponse?.data)
+          ? routeHistoryResponse.data
+          : [];
+
+        const normalizedRouteHistory = routes.map((item) => {
+          const normalizedStatus = toHistoryStatusLabel(item?.status);
+          const routeId = item?.route_ID || item?.id || null;
+          const routeTitle =
+            item?.name ||
+            item?.route_Name ||
+            `${item?.origin || "Unknown origin"} -> ${item?.destination || "Unknown destination"}`;
+
+          return {
+            id: routeId || `R-${Math.random().toString(36).slice(2, 7)}`,
+            rawId: routeId,
+            type: "route",
+            title: routeTitle,
+            date: item?.date || "Unknown date",
+            status: normalizedStatus,
+            icon:
+              normalizedStatus === "FAILED" || normalizedStatus === "CANCELLED"
+                ? "alert"
+                : "truck",
+          };
+        });
+
+        const mergedHistory = [...normalizedHistory, ...normalizedRouteHistory].sort((a, b) => {
+          const aDate = Date.parse(a?.date || "");
+          const bDate = Date.parse(b?.date || "");
+
+          if (!Number.isNaN(aDate) && !Number.isNaN(bDate)) return bDate - aDate;
+
+          const aId = Number(a?.rawId);
+          const bId = Number(b?.rawId);
+          if (!Number.isNaN(aId) && !Number.isNaN(bId)) return bId - aId;
+
+          return 0;
+        });
+
+        setHistoryItems(mergedHistory);
 
         const vehicles = Array.isArray(vehiclesResponse?.vehicles)
           ? vehiclesResponse.vehicles
@@ -237,7 +297,11 @@ export default function Profile({ onNavigate }) {
           No history
         </div>
       ) : historyItems.map((item, i) => (
-        <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", ...(i < historyItems.length - 1 ? { borderBottom: "1px solid var(--border-color)" } : {}) }}>
+        <div
+          key={i}
+          onClick={() => handleHistoryItemClick(item)}
+          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", cursor: "pointer", ...(i < historyItems.length - 1 ? { borderBottom: "1px solid var(--border-color)" } : {}) }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <HistoryIconBox type={item.icon} />
             <div>
@@ -245,7 +309,10 @@ export default function Profile({ onNavigate }) {
               <div style={{ fontSize: 12, marginTop: 2, color: "var(--text-secondary)" }}>{item.date} • #{item.id}</div>
             </div>
           </div>
-          <StatusBadge status={item.status} />
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <StatusBadge status={item.status} />
+            <ChevronRight size={14} color="var(--text-secondary)" />
+          </div>
         </div>
       ))}
     </div>
@@ -430,7 +497,11 @@ export default function Profile({ onNavigate }) {
               No history
             </div>
           ) : previewHistory.map((item, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderTop: "1px solid var(--border-color)" }}>
+            <div
+              key={i}
+              onClick={() => handleHistoryItemClick(item)}
+              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderTop: "1px solid var(--border-color)", cursor: "pointer" }}
+            >
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <HistoryIconBox type={item.icon} />
                 <div>
@@ -438,7 +509,10 @@ export default function Profile({ onNavigate }) {
                   <div style={{ fontSize: 12, marginTop: 2, color: "var(--text-secondary)" }}>{item.date} • #{item.id}</div>
                 </div>
               </div>
-              <StatusBadge status={item.status} />
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <StatusBadge status={item.status} />
+                <ChevronRight size={14} color="var(--text-secondary)" />
+              </div>
             </div>
           ))}
         </div>

@@ -150,6 +150,7 @@ export default function App() {
   const [direction, setDirection] = useState("forward");
   const [role, setRole] = useState("Individual");
   const [selectedShipmentId, setSelectedShipmentId] = useState(null);
+  const [shipmentDetailsBackScreen, setShipmentDetailsBackScreen] = useState("shipments");
   const [shipmentsRefreshKey, setShipmentsRefreshKey] = useState(0);
   const [displayName, setDisplayName] = useState("User");
   const [resetToken, setResetToken] = useState("");
@@ -163,6 +164,15 @@ export default function App() {
 
     const nextShipmentId = payload?.shipmentId ?? selectedShipmentId;
     const nextResetToken = payload?.token ?? resetToken;
+
+    if (to === "shipmentDetails") {
+      const previousScreen =
+        payload?.from ||
+        (current === "shipmentDetails" ? shipmentDetailsBackScreen : current) ||
+        "shipments";
+      setShipmentDetailsBackScreen(previousScreen);
+    }
+
     const targetPath = getPathForScreen(to, {
       shipmentId: nextShipmentId,
       resetToken: nextResetToken,
@@ -401,7 +411,7 @@ export default function App() {
         {current === "shipmentDetails" && (
           <ShipmentDetails
             shipmentId={selectedShipmentId}
-            onBack={() => goBack("shipments")}
+            onBack={() => goBack(shipmentDetailsBackScreen || "shipments")}
           />
         )}
 
