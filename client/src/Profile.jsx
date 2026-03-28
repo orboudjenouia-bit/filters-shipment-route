@@ -3,7 +3,7 @@ import ThemeToggle from "./ThemeToggle";
 import {
   MapPin, Mail, Phone, Settings, Bell, LogOut,
   ChevronRight, Star, CheckCircle, Truck, Edit3,
-  ArrowLeft, XCircle, AlertCircle
+  ArrowLeft, XCircle, AlertCircle, Check, X
 } from "lucide-react";
 import { getMyProfile, getShipmentHistory, getVehicles } from "./services/profileService";
 import "./Profile.css";
@@ -360,8 +360,22 @@ export default function Profile({ onNavigate }) {
               <div style={{ width: 100, height: 100, borderRadius: "50%", padding: 3, border: `3px solid ${verified ? "#22c55e" : "#ef4444"}` }}>
                 <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=face" alt="profile" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
               </div>
-              <div style={{ position: "absolute", bottom: 2, right: 2, borderRadius: "50%", padding: 1, background: "var(--bg-secondary)" }}>
-                {verified ? <CheckCircle size={22} color="#22c55e" fill="#22c55e" /> : <XCircle size={22} color="#ef4444" fill="#ef4444" />}
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: 2,
+                  right: 2,
+                  width: 22,
+                  height: 22,
+                  borderRadius: "50%",
+                  background: verified ? "#22c55e" : "#ef4444",
+                  border: "2px solid var(--bg-secondary)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {verified ? <Check size={13} color="#ffffff" strokeWidth={3} /> : <X size={13} color="#ffffff" strokeWidth={3} />}
               </div>
             </div>
             <div style={{ borderRadius: 20, padding: "3px 12px", display: "flex", alignItems: "center", gap: 5, background: verified ? "#e8faf2" : "#fff0f0" }}>

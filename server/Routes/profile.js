@@ -1,15 +1,15 @@
 const router = require("express").Router();
 const { check } = require("express-validator");
-const authToken = require("../Middlewares/checkToken");
+const checkToken = require("../Middlewares/checkToken");
 const asyncHandler = require("../utils/asyncHandler");
 const { IndividualProfile, BusinessProfile } = require("../Controllers/authController");
 const { getShipmentHistory, getRouteHistory, listVehicles, createVehicle, updateVehicle, deleteVehicle, getMyProfile } = require('../Controllers/profileController')
 
-router.get("/me", authToken, asyncHandler(getMyProfile));
+router.get("/me", checkToken, asyncHandler(getMyProfile));
 
 router.post(
   "/individual",
-  authToken,
+  checkToken,
   [
     check("full_Name", "Full name is required").notEmpty().isString(),
     check("nin", "National ID is required").notEmpty().isString(),
@@ -20,7 +20,7 @@ router.post(
 
 router.post(
   "/business",
-  authToken,
+  checkToken,
   [
     check("business_Name", "Business name is required").notEmpty().isString(),
     check("rc_Number", "RC number is required").notEmpty().isString(),
@@ -33,15 +33,15 @@ router.post(
 );
 
 
-router.get('/historyShipments', asyncHandler(getShipmentHistory) )
-router.get('/historyRoutes', asyncHandler(getRouteHistory) )
+router.get('/historyShipments', checkToken, asyncHandler(getShipmentHistory) )
+router.get('/historyRoutes', checkToken, asyncHandler(getRouteHistory) )
 
 
-router.get('/vehicles', asyncHandler(listVehicles) )
+router.get('/vehicles', checkToken, asyncHandler(listVehicles) )
 // router.get('/vehicles/:id')
-router.post('/vehicles', asyncHandler(createVehicle) )
-router.patch('/vehicles', asyncHandler(updateVehicle) )
-router.delete('/vehicles', asyncHandler(deleteVehicle) )
+router.post('/vehicles', checkToken, asyncHandler(createVehicle) )
+router.patch('/vehicles', checkToken, asyncHandler(updateVehicle) )
+router.delete('/vehicles', checkToken, asyncHandler(deleteVehicle) )
 
 
 module.exports = router;
