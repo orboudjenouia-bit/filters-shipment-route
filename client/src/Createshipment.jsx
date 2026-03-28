@@ -11,6 +11,7 @@ export default function CreateShipment({ onBack, onCreated }) {
     title: "", category: "", weight: "", volume: "",
     pickup: "", delivery: "", date: "", time: "", priority: "Normal", description: "",
   });
+  const [photos, setPhotos] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -24,6 +25,11 @@ export default function CreateShipment({ onBack, onCreated }) {
   const handleChange = (field, value) => {
     setForm(p => ({ ...p, [field]: value }));
     setError("");
+  };
+
+  const handlePhotosChange = (event) => {
+    const files = Array.from(event.target.files || []);
+    setPhotos(files.slice(0, 5));
   };
 
   const handleSubmit = async () => {
@@ -79,6 +85,7 @@ export default function CreateShipment({ onBack, onCreated }) {
         title: "", category: "", weight: "", volume: "",
         pickup: "", delivery: "", date: "", time: "", priority: "Normal", description: "",
       });
+      setPhotos([]);
 
       const createdId = createdShipment?.shipment_ID ?? createdShipment?.id ?? createdShipment?._id;
       if (onCreated && createdId != null) {
@@ -194,6 +201,24 @@ export default function CreateShipment({ onBack, onCreated }) {
               value={form.description}
               onChange={e => handleChange("description", e.target.value)}
             />
+          </div>
+
+          <div className="cs-field">
+            <label className="cs-label" htmlFor="cs-photos">Photos</label>
+            <label className="cs-upload-box" htmlFor="cs-photos">
+              <span className="cs-upload-main">Upload photos</span>
+            </label>
+            <input
+              id="cs-photos"
+              className="cs-file-input"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handlePhotosChange}
+            />
+            {photos.length > 0 && (
+              <p className="cs-upload-selected">{photos.length} photo(s) selected</p>
+            )}
           </div>
 
           <div className="cs-section-header">

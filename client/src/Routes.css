@@ -1,4 +1,4 @@
-/* Shipments.css - Dark mode compatible */
+
 .sh-screen {
   min-height: 100vh;
   background: var(--bg-primary);
@@ -75,9 +75,9 @@
 }
 
 .sh-cta-card {
-  background: rgba(34, 197, 94, 0.1); border-radius: 14px;
+  background: #ffffff; border-radius: 14px;
   padding: 18px; margin-bottom: 24px;
-  border: 1px solid rgba(34, 197, 94, 0.3);
+  border: 1px solid var(--border-color);
   transition: background 0.3s ease, border-color 0.3s ease;
 }
 
@@ -90,13 +90,14 @@
 .sh-cta-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.5; transition: color 0.3s ease; }
 
 .sh-cta-btn {
-  background: #22c55e; color: #fff; border: none; border-radius: 10px;
+  width: 100%;
+  background: #22c55e; color: #111827; border: none; border-radius: 10px;
   padding: 10px 18px; font-size: 14px; font-weight: 700; cursor: pointer;
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
   font-family: 'DM Sans', sans-serif;
   transition: background 0.15s ease, transform 0.1s ease;
 }
-.sh-cta-btn:hover { background: #16a34a; }
+.sh-cta-btn:hover { background: #16a34a; color: #111827; }
 .sh-cta-btn:active { transform: scale(0.97); }
 
 .sh-section-row {

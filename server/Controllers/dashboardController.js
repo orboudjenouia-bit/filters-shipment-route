@@ -4,8 +4,8 @@ const AppError = require("../utils/AppError");
 
 
 const getStats = async (req,res,next) => {
+        
     const id = Number(req.user?.id)
-
 
     const [allShipments, activeShipments, allRoutes, activeRoutes, allVehicles] = await Promise.all([
         prisma.shipment.count({

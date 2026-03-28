@@ -11,6 +11,9 @@ import ForgotPassword from "./Forgotpassword";
 import ResetPassword from "./Resetpassword";
 import Dashboard from "./Dashboard";
 import Shipments from "./Shipments";
+import RoutesScreen from "./Routes";
+import Profile from "./Profile";
+import CreateRoute from "./Createroute";
 import ShipmentDetails from "./Shipmentdetails";
 import CreateShipment from "./Createshipment";
 import { getMyProfile } from "./services/profileService";
@@ -36,6 +39,12 @@ const getPathForScreen = (screen, { shipmentId, resetToken } = {}) => {
       return "/dashboard";
     case "shipments":
       return "/shipments";
+    case "routes":
+      return "/routes";
+    case "profile":
+      return "/profile";
+    case "createRoute":
+      return "/routes/create";
     case "createShipment":
       return "/shipments/create";
     case "shipmentDetails":
@@ -103,6 +112,9 @@ const resolveScreenFromPath = (pathname) => {
   if (normalized === "/verification") return { screen: "verification" };
   if (normalized === "/dashboard") return { screen: "dashboard" };
   if (normalized === "/shipments") return { screen: "shipments" };
+  if (normalized === "/routes") return { screen: "routes" };
+  if (normalized === "/profile") return { screen: "profile" };
+  if (normalized === "/routes/create") return { screen: "createRoute" };
   if (normalized === "/shipments/create") return { screen: "createShipment" };
   if (normalized === "/shipments/details") {
     return { screen: "shipmentDetails", shipmentId: null };
@@ -364,6 +376,26 @@ export default function App() {
             }}
             onBack={() => goBack("dashboard")}
           />
+        )}
+
+        {current === "routes" && (
+          <RoutesScreen
+            onNavigate={(screen, payload) => {
+              goTo(screen, payload);
+            }}
+          />
+        )}
+
+        {current === "profile" && (
+          <Profile
+            onNavigate={(screen, payload) => {
+              goTo(screen, payload);
+            }}
+          />
+        )}
+
+        {current === "createRoute" && (
+          <CreateRoute />
         )}
 
         {current === "shipmentDetails" && (

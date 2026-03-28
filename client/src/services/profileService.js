@@ -93,3 +93,41 @@ export const getMyProfile = async () => {
 
   return data?.data || data;
 };
+
+export const getShipmentHistory = async () => {
+  const response = await fetch(`${API_URL}/profile/historyShipments`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw {
+      status: response.status,
+      code: data.code,
+      message: data.message || "Failed to fetch shipment history",
+    };
+  }
+
+  return data;
+};
+
+export const getVehicles = async () => {
+  const response = await fetch(`${API_URL}/profile/vehicles`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw {
+      status: response.status,
+      code: data.code,
+      message: data.message || "Failed to fetch vehicles",
+    };
+  }
+
+  return data;
+};

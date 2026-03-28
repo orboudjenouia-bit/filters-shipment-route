@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import ThemeToggle from "./ThemeToggle";
 import "./Dashboard.css";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
-const DASHBOARD_STATS_ENDPOINT = "/api/dashboard/stats";
+const API_URL = process.env.REACT_APP_API_URL;
+const DASHBOARD_STATS_ENDPOINT = "/dashboard/stats";
 
 const SearchIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -62,7 +62,7 @@ export default function Dashboard({ onNavigate, userName = "User" }) {
 
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch(`${API_BASE_URL}${DASHBOARD_STATS_ENDPOINT}`, {
+        const response = await fetch(`${API_URL}${DASHBOARD_STATS_ENDPOINT}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -109,6 +109,8 @@ export default function Dashboard({ onNavigate, userName = "User" }) {
   const handleNav = (tab) => {
     setActiveTab(tab);
     if (tab === "shipments") onNavigate("shipments");
+    if (tab === "routes") onNavigate("routes");
+    if (tab === "profile") onNavigate("profile");
   };
 
   const shipmentLabel = activeShipments === 1 ? "shipment" : "shipments";

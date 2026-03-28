@@ -124,6 +124,8 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0 }) {
   const handleNav = (tab) => {
     setActiveNav(tab);
     if (tab === "home") onNavigate("dashboard");
+    if (tab === "routes") onNavigate("routes");
+    if (tab === "profile") onNavigate("profile");
   };
 
   return (
@@ -152,7 +154,6 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0 }) {
         </div>
 
         <div className="sh-body">
-
           <div className="sh-tabs">
             {["all", "active", "pending"].map(tab => (
               <button
@@ -178,7 +179,7 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0 }) {
           </div>
 
           <div className="sh-section-row">
-            <h2 className="sh-section-title">Explore Available Shippers</h2>
+            <h2 className="sh-section-title">Explore Available Shipments</h2>
             <button className="sh-filter-btn">
               Filter
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
