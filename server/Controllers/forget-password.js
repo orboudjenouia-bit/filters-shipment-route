@@ -2,10 +2,11 @@ const crypto = require("crypto")
 const bcrypt = require("bcrypt")
 const { MailtrapClient } = require("mailtrap")
 const { PASSWORD_RESET_REQUEST_TEMPLATE  ,PASSWORD_RESET_SUCCESS_TEMPLATE } = require("../mailtrap/emailTemplate.js")
-const { send } = require("process")
 const AppError = require("../utils/AppError.js")
 const asyncHandler = require("../utils/asyncHandler.js")
 const prisma = require("../config/prismaClient")
+const { StatusCodes } = require("http-status-codes")
+const { validationResult } = require("express-validator")
 
 
 let mailtrapClient
@@ -25,6 +26,11 @@ const sender = {
 
 
 const forgotpassword = asyncHandler(async (req, res, next) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    throw new AppError("Validation failed", StatusCodes.BAD_REQUEST, "VALIDATION_ERROR")
+  }
+
   const { email } = req.body
 
   const exists = await prisma.user.findUnique({
@@ -32,7 +38,7 @@ const forgotpassword = asyncHandler(async (req, res, next) => {
   })
 
   if (!exists) {
-    return next(new AppError("Email does not exist in our database", 400))
+    return next(new AppError("Email does not exist in our database", StatusCodes.BAD_REQUEST, "EMAIL_NOT_FOUND"))
   }
 
   const resetToken = crypto.randomBytes(32).toString("hex")
@@ -66,6 +72,10 @@ const forgotpassword = asyncHandler(async (req, res, next) => {
 })
 
 const SendPasswordResetEmail = async (email, resetLink) => {
+  if (!mailtrapClient) {
+    throw new AppError("Email service is unavailable", StatusCodes.SERVICE_UNAVAILABLE, "EMAIL_SERVICE_UNAVAILABLE")
+  }
+
   try {
     await mailtrapClient.send({
       from: sender,
@@ -75,12 +85,17 @@ const SendPasswordResetEmail = async (email, resetLink) => {
       category: "password-reset"
     })
   } catch (error) {
-    throw new AppError("Failed to send password reset email", 500)
+    throw new AppError("Failed to send password reset email", StatusCodes.INTERNAL_SERVER_ERROR, "EMAIL_SEND_FAILED")
   }
 }
 
 
 const resetpswd = asyncHandler(async (req, res, next) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    throw new AppError("Validation failed", StatusCodes.BAD_REQUEST, "VALIDATION_ERROR")
+  }
+
   const { token } = req.params
   const { password } = req.body
 
@@ -94,7 +109,7 @@ const resetpswd = asyncHandler(async (req, res, next) => {
   })
 
   if (!user) {
-    return next(new AppError("Invalid or expired token", 400))
+    return next(new AppError("Invalid or expired token", StatusCodes.BAD_REQUEST, "INVALID_RESET_TOKEN"))
   }
 
   const hashedPassword = await bcrypt.hash(password, 10)
@@ -109,13 +124,19 @@ const resetpswd = asyncHandler(async (req, res, next) => {
     }
   })
 
-  await sendPasswordResetSuccessEmail(user.email)
+  if (mailtrapClient) {
+    await sendPasswordResetSuccessEmail(user.email)
+  }
   res.status(200).json({ success: true, msg: "Password reset successful" })
 })
 
 
 
 const sendPasswordResetSuccessEmail = async (email) => {
+  if (!mailtrapClient) {
+    return;
+  }
+
   try {
     await mailtrapClient.send({
       from: sender,
@@ -125,7 +146,7 @@ const sendPasswordResetSuccessEmail = async (email) => {
       category: "password-reset"
     })
   } catch (error) {
-    throw new AppError("Failed to send password reset success email", 500)
+    throw new AppError("Failed to send password reset success email", StatusCodes.INTERNAL_SERVER_ERROR, "EMAIL_SEND_FAILED")
   }
 }
 

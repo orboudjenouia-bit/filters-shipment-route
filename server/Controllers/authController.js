@@ -246,277 +246,78 @@ const logout = async (req, res, next) => {
     );
   }
 };
-// Validation helpers
-const validatePhone = (phone) => {
-  if (!/^\d{10}$/.test(phone)) {
-    throw new AppError(
-      "Phone must be exactly 10 digits",
-      StatusCodes.BAD_REQUEST,
-      "INVALID_PHONE"
-    );
+
+const updateProfile = async (req,res,next) => {
+
+	const errors = validationResult(req);
+	if (!errors.isEmpty()) {
+		throw new AppError("Validation failed", StatusCodes.BAD_REQUEST, "VALIDATION_ERROR");
+	}
+
+	const { 
+		user: {id, type, ...userData} = {},
+		profile: {user_ID, ...profileData} = {}
+	} = req.body
+
+  if (id !== req.user.id) {
+    throw new AppError("Not authorized to update this Profile", StatusCodes.FORBIDDEN, "FORBIDDEN")
   }
-};
-
-const validateWorkingTime = (working_Time) => {
-  if (!/^\d{1,2}:\d{2}-\d{1,2}:\d{2}$/.test(working_Time)) {
-    throw new AppError(
-      "Working time format should be HH:MM-HH:MM (e.g., 9:00-17:00)",
-      StatusCodes.BAD_REQUEST,
-      "INVALID_WORKING_TIME"
-    );
-  }
-};
-
-const validateUserType = (type) => {
-  if (!["INDIVIDUAL", "BUSINESS"].includes(type)) {
-    throw new AppError(
-      "Type must be either INDIVIDUAL or BUSINESS",
-      StatusCodes.BAD_REQUEST,
-      "INVALID_TYPE"
-    );
-  }
-};
-
-const validateIndividualFields = async (userId, full_Name, nin, location) => {
-  const data = {};
-
-  if (full_Name !== undefined) {
-    if (full_Name.trim().length < 2) {
-      throw new AppError(
-        "Full name must be at least 2 characters",
-        StatusCodes.BAD_REQUEST,
-        "INVALID_FULL_NAME"
-      );
-    }
-    data.full_Name = full_Name;
-  }
-
-  if (nin !== undefined) {
-    if (nin.trim().length < 5) {
-      throw new AppError(
-        "NIN must be at least 5 characters",
-        StatusCodes.BAD_REQUEST,
-        "INVALID_NIN"
-      );
-    }
-
-    const existingNin = await prisma.individual.findUnique({
-      where: { nin: nin }
-    });
-
-    if (existingNin && existingNin.user_ID !== userId) {
-      throw new AppError(
-        "NIN already registered",
-        StatusCodes.CONFLICT,
-        "NIN_EXISTS"
-      );
-    }
-
-    data.nin = nin;
-  }
-
-  if (location !== undefined) {
-    if (location.trim().length < 2) {
-      throw new AppError(
-        "Location must be at least 2 characters",
-        StatusCodes.BAD_REQUEST,
-        "INVALID_LOCATION"
-      );
-    }
-    data.location = location;
-  }
-
-  return data;
-};
-
-const validateBusinessFields = async (userId, business_Name, rc_Number, form, nif, nis, locations) => {
-  const data = {};
-
-  if (business_Name !== undefined) {
-    if (business_Name.trim().length < 2) {
-      throw new AppError(
-        "Business name must be at least 2 characters",
-        StatusCodes.BAD_REQUEST,
-        "INVALID_BUSINESS_NAME"
-      );
-    }
-    data.business_Name = business_Name;
-  }
-
-  if (rc_Number !== undefined) {
-    const existingRc = await prisma.business.findUnique({
-      where: { rc_Number: rc_Number }
-    });
-
-    if (existingRc && existingRc.user_ID !== userId) {
-      throw new AppError(
-        "RC number already registered",
-        StatusCodes.CONFLICT,
-        "RC_EXISTS"
-      );
-    }
-    data.rc_Number = rc_Number;
-  }
-
-  if (form !== undefined) {
-    if (form.trim().length < 2) {
-      throw new AppError(
-        "Form must be at least 2 characters",
-        StatusCodes.BAD_REQUEST,
-        "INVALID_FORM"
-      );
-    }
-    data.form = form;
-  }
-
-  if (nif !== undefined) {
-    if (typeof nif !== "number" || nif < 0) {
-      throw new AppError(
-        "NIF must be a positive number",
-        StatusCodes.BAD_REQUEST,
-        "INVALID_NIF"
-      );
-    }
-    data.nif = nif;
-  }
-
-  if (nis !== undefined) {
-    if (typeof nis !== "number" || nis < 0) {
-      throw new AppError(
-        "NIS must be a positive number",
-        StatusCodes.BAD_REQUEST,
-        "INVALID_NIS"
-      );
-    }
-    data.nis = nis;
-  }
-
-  if (locations !== undefined) {
-    if (!Array.isArray(locations) || locations.length === 0) {
-      throw new AppError(
-        "Locations must be a non-empty array",
-        StatusCodes.BAD_REQUEST,
-        "INVALID_LOCATIONS"
-      );
-    }
-    data.locations = locations;
-  }
-
-  return data;
-};
-
-const updateProfile = async (req, res, next) => {
-  const userId = req.user.id;
-  const { phone, working_Time, type, full_Name, nin, location, business_Name, rc_Number, form, nif, nis, locations } = req.body;
-
-  // Get user
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, type: true, individual: true, business: true }
-  });
+	
+	const user = await prisma.user.findUnique({
+		where: { id: id }
+	})
 
   if (!user) {
-    throw new AppError("User not found", StatusCodes.NOT_FOUND, "USER_NOT_FOUND");
-  }
+    throw new AppError("User not found", StatusCodes.NOT_FOUND, "USER_NOT_FOUND")
+	}
 
-  // Validate and build update objects
-  const userUpdateData = {};
-  const individualUpdateData = {};
-  const businessUpdateData = {};
+  if (user.type !== type) {
+		throw new AppError("Type Mismatch", StatusCodes.BAD_REQUEST, "TYPE_MISMATCH")
+	}
+	
+	const updateUser = await prisma.user.update({
+		where: {id: id},
+		data: userData
+	})
 
-  if (phone !== undefined) {
-    validatePhone(phone);
-    userUpdateData.phone = phone;
-  }
+	if (user.type === "INDIVIDUAL") {
+		const indProfile = await prisma.individual.findUnique({
+			where: {user_ID: id}
+		})
 
-  if (working_Time !== undefined) {
-    validateWorkingTime(working_Time);
-    userUpdateData.working_Time = working_Time;
-  }
+		if (!indProfile) {
+			throw new AppError("No Profile with this ID", StatusCodes.NOT_FOUND, "PROFILE_NOT_FOUND")
+		}
 
-  if (type !== undefined) {
-    validateUserType(type);
-    userUpdateData.type = type;
-  }
+		const updateProfile = await prisma.individual.update({
+			where: {user_ID: id},
+			data: profileData
+		})
+		res.status(StatusCodes.OK).json({
+			msg: "Profile Data Updated Successfully", 
+			data: {user: updateUser, profile: updateProfile}
+		})
+	}
+	else if (user.type === "BUSINESS") {
+		const busProfile = await prisma.business.findUnique({
+			where: {user_ID: id}
+		})
 
-  if (full_Name !== undefined || nin !== undefined || location !== undefined) {
-    Object.assign(individualUpdateData, await validateIndividualFields(userId, full_Name, nin, location));
-  }
+		if (!busProfile) {
+			throw new AppError("No Profile with this ID", StatusCodes.NOT_FOUND, "PROFILE_NOT_FOUND")
+		}
 
-  if (business_Name !== undefined || rc_Number !== undefined || form !== undefined || nif !== undefined || nis !== undefined || locations !== undefined) {
-    Object.assign(businessUpdateData, await validateBusinessFields(userId, business_Name, rc_Number, form, nif, nis, locations));
-  }
+		const updateProfile = await prisma.business.update({
+			where: {user_ID: id},
+			data: profileData
+		})
+		res.status(StatusCodes.OK).json({
+			msg: "Profile Data Updated Successfully", 
+			data: {user: updateUser, profile: updateProfile}
+		})
+	}
+}
 
-  // Check if there's anything to update
-  if (!Object.keys(userUpdateData).length && !Object.keys(individualUpdateData).length && !Object.keys(businessUpdateData).length) {
-    throw new AppError("No fields to update", StatusCodes.BAD_REQUEST, "NO_UPDATES");
-  }
-
-  try {
-    // Update user table
-    if (Object.keys(userUpdateData).length) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: userUpdateData
-      });
-    }
-
-    // Update individual profile
-    if (Object.keys(individualUpdateData).length) {
-      if (user.type !== "INDIVIDUAL") {
-        throw new AppError("This account is not an individual account", StatusCodes.BAD_REQUEST, "TYPE_MISMATCH");
-      }
-      if (!user.individual) {
-        throw new AppError("Individual profile not found", StatusCodes.NOT_FOUND, "PROFILE_NOT_FOUND");
-      }
-      await prisma.individual.update({
-        where: { user_ID: userId },
-        data: individualUpdateData
-      });
-    }
-
-    // Update business profile
-    if (Object.keys(businessUpdateData).length) {
-      if (user.type !== "BUSINESS") {
-        throw new AppError("This account is not a business account", StatusCodes.BAD_REQUEST, "TYPE_MISMATCH");
-      }
-      if (!user.business) {
-        throw new AppError("Business profile not found", StatusCodes.NOT_FOUND, "PROFILE_NOT_FOUND");
-      }
-      await prisma.business.update({
-        where: { user_ID: userId },
-        data: businessUpdateData
-      });
-    }
-
-    // Get complete updated user
-    const completeUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        phone: true,
-        working_Time: true,
-        type: true,
-        role: true,
-        status: true,
-        individual: { select: { full_Name: true, nin: true, location: true } },
-        business: { select: { business_Name: true, rc_Number: true, form: true, nif: true, nis: true, locations: true } }
-      }
-    });
-
-    res.status(StatusCodes.OK).json({
-      success: true,
-      msg: "Profile updated successfully",
-      user: completeUser
-    });
-  } catch (error) {
-    if (error.code === "P2002") {
-      throw new AppError("Unique constraint violation", StatusCodes.CONFLICT, "DUPLICATE_VALUE");
-    }
-    throw new AppError(error.message || "Failed to update profile", StatusCodes.INTERNAL_SERVER_ERROR, "UPDATE_FAILED");
-  }
-};
 const verifyEmail = async (req, res, next) => {
   try {
     const { code } = req.body;

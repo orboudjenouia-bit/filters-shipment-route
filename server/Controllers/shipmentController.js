@@ -28,11 +28,12 @@ const listShipments = async (req, res,next) => {
             },
         },
     })
-    if (!allShipments) {
-        throw new AppError("No Shipments Created", StatusCodes.NOT_FOUND, "NO_SHIPMENTS")
-    }
     const total = await prisma.shipment.count()
-    res.status(StatusCodes.OK).json({allShipments})
+    res.status(StatusCodes.OK).json({
+        success: true,
+        total,
+        shipments: allShipments
+    })
 }
 
 const makePost = async (req, res,next) => {
@@ -78,10 +79,10 @@ const editShipment = async (req, res,next) => {
 }
 
 const deleteShipment =  async (req, res,next) => {
-    const {id} = req.params
+    const {id} = parseInt(req.params)
     
     const shipment = await prisma.shipment.findUnique({
-        where: { shipment_ID: parseInt(id) }
+        where: { shipment_ID: id }
         })
 
     if (!shipment || shipment.user_ID != req.user.id) {
@@ -89,7 +90,7 @@ const deleteShipment =  async (req, res,next) => {
     }
 
     const deletedShipment = await prisma.shipment.delete({
-        where: { shipment_ID: parseInt(id) }
+        where: { shipment_ID: id }
     })
     res.status(StatusCodes.OK).json({ msg: "Shipment Deleted Successfully" })
 }

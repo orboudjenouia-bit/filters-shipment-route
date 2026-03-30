@@ -8,7 +8,10 @@ const authToken = (req, res, next) => {
         if (!authHeader) {
             return next(new AppError("No authorization header sent", StatusCodes.UNAUTHORIZED, "NO_HEADER"));
         }
-        const token = authHeader.split(' ')[1]
+        const [scheme, token] = authHeader.split(' ')
+        if (scheme !== 'Bearer') {
+            return next(new AppError("Invalid authorization scheme", StatusCodes.UNAUTHORIZED, "INVALID_AUTH_SCHEME"));
+        }
         if (!token) {
             return next(new AppError("No token provided", StatusCodes.UNAUTHORIZED, "NO_TOKEN"));
         }

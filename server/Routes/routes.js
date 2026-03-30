@@ -27,6 +27,7 @@ router.post('/',
 router.patch('/',
   authToken,
   [
+    check('route_ID', 'Route ID is required and must be numeric').notEmpty().isInt(),
     check('origin', 'Origin must be a string').optional().isString(),
     check('destination', 'Destination must be a string').optional().isString(),
     check('region', 'Region must be a string').optional().isString(),

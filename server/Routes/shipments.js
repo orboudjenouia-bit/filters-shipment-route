@@ -30,7 +30,9 @@ router.patch('/',
     check('volume', 'Volume must be a number').optional().isNumeric(),
     check('weight', 'Weight must be a number').optional().isNumeric(),
     check('date', 'Date must be in format YYYY-MM-DD').optional().matches(/^\d{4}-\d{2}-\d{2}$/),
-    check('priority', 'Priority must be Normal, High, or Urgent').optional().isIn(['Normal', 'High', 'Urgent'])
+    check('priority', 'Priority must be Normal, High, or Urgent').optional().isIn(['Normal', 'High', 'Urgent']),
+    check('special_Information', 'Special information must be a string').optional().isString(),
+    check('status', 'Status must be In-Stock, In-Delivery, or Delivered').optional().isIn(['In-Stock', 'In-Delivery', 'Delivered'])
   ],
   asyncHandler(editShipment)
 )

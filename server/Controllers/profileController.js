@@ -167,6 +167,11 @@ const updateVehicle = async (req, res, next) => {
 };
 
 const deleteVehicle = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    throw new AppError("Validation failed", StatusCodes.BAD_REQUEST, "VALIDATION_ERROR");
+  }
+
   
   const userId = req.user.id;
   const { plate_Number } = req.body;

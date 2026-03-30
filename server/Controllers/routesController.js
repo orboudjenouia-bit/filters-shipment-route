@@ -31,11 +31,12 @@ const listRoutes = async (req,res,next) => {
             },
         },
     })
-    if (!routes) {
-        throw new AppError("No Routes Created", StatusCodes.NOT_FOUND, "No_ROUTES")
-    }
     const total = await prisma.route.count()
-    res.status(StatusCodes.OK).json({routes, total})
+    res.status(StatusCodes.OK).json({
+        success: true,
+        routes,
+        total
+    })
     
 }
 
@@ -79,10 +80,10 @@ const editRoute = async (req,res,next) => {
 }
 
 const deleteRoute = async (req,res,next) => {
-    const { id } = req.params
+    const { id } = parseInt(req.params)
 
     const route = await prisma.route.findUnique({
-        where: { route_ID: parseInt(id) }
+        where: { route_ID: id }
     })
 
     if (!route || route.user_ID != req.user.id) {
@@ -90,7 +91,7 @@ const deleteRoute = async (req,res,next) => {
     }
 
     const deletedRoute = await prisma.route.delete({
-        where: { route_ID: parseInt(id) }
+        where: { route_ID: id }
     })
     res.status(StatusCodes.OK).json({msg: "Route Deleted Successfully"})
 }

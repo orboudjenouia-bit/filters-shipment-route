@@ -39,9 +39,36 @@ router.get('/historyRoutes', checkToken, asyncHandler(getRouteHistory) )
 
 router.get('/vehicles', checkToken, asyncHandler(listVehicles) )
 // router.get('/vehicles/:id')
-router.post('/vehicles', checkToken, asyncHandler(createVehicle) )
-router.patch('/vehicles', checkToken, asyncHandler(updateVehicle) )
-router.delete('/vehicles', checkToken, asyncHandler(deleteVehicle) )
+router.post(
+  '/vehicles',
+  checkToken,
+  [
+    check('plate_Number', 'Plate number is required and must be numeric').notEmpty().isNumeric(),
+    check('vehicle_Name', 'Vehicle name is required').notEmpty().isString(),
+    check('capacity', 'Capacity is required and must be numeric').notEmpty().isNumeric(),
+    check('photo', 'Photo must be a string').optional().isString()
+  ],
+  asyncHandler(createVehicle)
+)
+router.patch(
+  '/vehicles',
+  checkToken,
+  [
+    check('plate_Number', 'Plate number is required and must be numeric').notEmpty().isNumeric(),
+    check('vehicle_Name', 'Vehicle name must be a string').optional().isString(),
+    check('capacity', 'Capacity must be numeric').optional().isNumeric(),
+    check('photo', 'Photo must be a string').optional().isString()
+  ],
+  asyncHandler(updateVehicle)
+)
+router.delete(
+  '/vehicles',
+  checkToken,
+  [
+    check('plate_Number', 'Plate number is required and must be numeric').notEmpty().isNumeric()
+  ],
+  asyncHandler(deleteVehicle)
+)
 
 
 module.exports = router;

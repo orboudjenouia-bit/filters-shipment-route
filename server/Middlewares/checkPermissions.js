@@ -12,8 +12,8 @@ const checkAdmin = async (req,res,next) => {
         }
     })
 
-    if (user.role !== "ADMIN") {
-        throw new AppError("Unauthorized Action", StatusCodes.UNAUTHORIZED, "UNAUTHORIZED")
+    if (!user || user.role !== "ADMIN") {
+        throw new AppError("Unauthorized Action", StatusCodes.FORBIDDEN, "FORBIDDEN")
     }
     next()
 }

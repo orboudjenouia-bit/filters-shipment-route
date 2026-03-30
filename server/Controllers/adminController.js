@@ -109,8 +109,8 @@ const getDashboardStats = async (req,res,next) => {
         prisma.vehicle.count(),
         prisma.shipment.count(),
         prisma.route.count(),
-        prisma.shipment.count({ where : { status: "In-stock" }}),
-        prisma.route.count({ where : { status: "In-stock" }}),
+        prisma.shipment.count({ where : { status: "In-Stock" }}),
+        prisma.route.count({ where : { status: "Active" }}),
     ])
     res.status(StatusCodes.OK).json({
         activeShipments,
