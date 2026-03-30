@@ -1,20 +1,9 @@
-const API_URL = process.env.REACT_APP_API_URL;
+import API_URL, { getAuthHeaders, parseJson } from "./http";
 
-const parseJson = async (response) => {
-  try {
-    return await response.json();
-  } catch {
-    return {};
-  }
-};
-
-export const createRoute = async (payload, token) => {
+export const createRoute = async (payload) => {
   const response = await fetch(`${API_URL}/routes`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
 
@@ -29,13 +18,10 @@ export const createRoute = async (payload, token) => {
   return data;
 };
 
-export const getRoutes = async (token) => {
+export const getRoutes = async () => {
   const response = await fetch(`${API_URL}/routes`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
+    headers: getAuthHeaders(),
   });
 
   const data = await parseJson(response);
@@ -46,11 +32,5 @@ export const getRoutes = async (token) => {
     throw error;
   }
 
-  return Array.isArray(data)
-    ? data
-    : Array.isArray(data?.routes)
-    ? data.routes
-    : Array.isArray(data?.data)
-    ? data.data
-    : [];
+  return Array.isArray(data?.routes) ? data.routes : [];
 };

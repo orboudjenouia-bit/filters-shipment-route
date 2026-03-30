@@ -40,10 +40,10 @@ export default function Verification({ onBack, onSuccess }) {
     try {
       const data = await verifyCode(codeStr);
       setLoading(false);
-      if (data.access === true) {
+      if (data?.success === true) {
         if (onSuccess) onSuccess();
       } else {
-        showError(data.message || "Invalid code. Please try again.");
+        showError(data?.msg || data?.message || "Invalid code. Please try again.");
         setCode(["", "", "", "", "", ""]);
         setTimeout(() => inputsRef.current[0]?.focus(), 100);
       }

@@ -10,6 +10,8 @@ export default function Vehicle({ onBack, onNavigate }) {
   const [form, setForm] = useState({
     type: "",
     model: "",
+    color: "",
+    year: "",
     plate: "",
     capacity: "",
   });
@@ -49,7 +51,7 @@ export default function Vehicle({ onBack, onNavigate }) {
   };
 
   const handleAddVehicle = async () => {
-    const isValid = form.type && form.model && form.plate && form.capacity;
+    const isValid = form.type && form.model && form.color && form.year && form.plate && form.capacity;
     if (!isValid) {
       setError("Please fill in all fields.");
       return;
@@ -57,6 +59,7 @@ export default function Vehicle({ onBack, onNavigate }) {
 
     const plateNumber = Number(form.plate);
     const capacity = Number(form.capacity);
+    const year = Number(form.year);
 
     if (!Number.isInteger(plateNumber) || plateNumber <= 0) {
       setError("Plate number must be a valid number.");
@@ -65,6 +68,11 @@ export default function Vehicle({ onBack, onNavigate }) {
 
     if (!Number.isFinite(capacity) || capacity <= 0) {
       setError("Capacity must be a valid number.");
+      return;
+    }
+
+    if (!Number.isInteger(year) || year < 1900) {
+      setError("Year must be a valid number.");
       return;
     }
 
@@ -77,13 +85,16 @@ export default function Vehicle({ onBack, onNavigate }) {
 
       await createVehicle({
         plate_Number: plateNumber,
+        type: form.type,
         vehicle_Name: form.model.trim(),
+        color: form.color.trim(),
+        year,
         capacity,
         photo: photoData,
       });
 
       setSuccess(true);
-      setForm({ type: "", model: "", plate: "", capacity: "" });
+      setForm({ type: "", model: "", color: "", year: "", plate: "", capacity: "" });
       setPhotos([]);
 
       if (typeof onNavigate === "function") {
@@ -138,6 +149,28 @@ export default function Vehicle({ onBack, onNavigate }) {
                 placeholder="e.g. Mercedes Actros"
                 value={form.model}
                 onChange={(e) => updateField("model", e.target.value)}
+              />
+            </div>
+
+            <div className="field-group">
+              <label className="field-label">Color</label>
+              <input
+                className="field-input"
+                type="text"
+                placeholder="e.g. White"
+                value={form.color}
+                onChange={(e) => updateField("color", e.target.value)}
+              />
+            </div>
+
+            <div className="field-group">
+              <label className="field-label">Year</label>
+              <input
+                className="field-input"
+                type="number"
+                placeholder="e.g. 2022"
+                value={form.year}
+                onChange={(e) => updateField("year", e.target.value)}
               />
             </div>
 

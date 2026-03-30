@@ -53,7 +53,7 @@ const getPathForScreen = (screen, { shipmentId, resetToken } = {}) => {
     case "shipmentDetails":
       return shipmentId != null
         ? `/shipments/${encodeURIComponent(String(shipmentId))}`
-        : "/shipments/details";
+        : "/shipments";
     case "resetPassword":
       return resetToken
         ? `/resetpassword/${encodeURIComponent(String(resetToken))}`
@@ -65,8 +65,29 @@ const getPathForScreen = (screen, { shipmentId, resetToken } = {}) => {
 
 const hasAuthToken = () => {
   try {
-    return !!localStorage.getItem("token");
+    const token = localStorage.getItem("token");
+    if (!token) return false;
+
+    const parts = token.split(".");
+    if (parts.length !== 3) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      return false;
+    }
+
+    const payload = JSON.parse(atob(parts[1]));
+    const exp = Number(payload?.exp);
+
+    if (Number.isFinite(exp) && exp * 1000 <= Date.now()) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      return false;
+    }
+
+    return true;
   } catch {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     return false;
   }
 };
@@ -82,34 +103,26 @@ const publicScreens = new Set([
   "business",
 ]);
 
-const hasSavedSession = () => {
-  try {
-    return hasAuthToken();
-  } catch {
-    return false;
-  }
-};
-
 const resolveScreenFromPath = (pathname) => {
   const normalized = pathname.replace(/\/+$/, "") || "/";
 
   if (normalized === "/") {
-    if (hasSavedSession()) {
+    if (hasAuthToken()) {
       return { screen: "dashboard", redirectTo: "/dashboard" };
     }
     return { screen: "landing" };
   }
   if (normalized === "/login") return { screen: "login" };
-  if (normalized === "/forgot-password" || normalized === "/forgot") {
+  if (normalized === "/forgot-password") {
     return { screen: "forgot" };
   }
-  if (normalized === "/create-account" || normalized === "/create") {
+  if (normalized === "/create-account") {
     return { screen: "create" };
   }
-  if (normalized === "/register/individual" || normalized === "/individual") {
+  if (normalized === "/register/individual") {
     return { screen: "individual" };
   }
-  if (normalized === "/register/business" || normalized === "/business") {
+  if (normalized === "/register/business") {
     return { screen: "business" };
   }
   if (normalized === "/verification") return { screen: "verification" };
@@ -120,9 +133,6 @@ const resolveScreenFromPath = (pathname) => {
   if (normalized === "/vehicles/create") return { screen: "vehicle" };
   if (normalized === "/routes/create") return { screen: "createRoute" };
   if (normalized === "/shipments/create") return { screen: "createShipment" };
-  if (normalized === "/shipments/details") {
-    return { screen: "shipmentDetails", shipmentId: null };
-  }
 
   if (normalized.startsWith("/shipments/")) {
     const shipmentId = decodeURIComponent(normalized.split("/")[2] || "").trim();
@@ -166,12 +176,12 @@ export default function App() {
   const navigate = (to, dir = "forward", payload = {}) => {
     if (phase !== "idle") return;
 
-    const nextShipmentId = payload?.shipmentId ?? selectedShipmentId;
-    const nextResetToken = payload?.token ?? resetToken;
+    const nextShipmentId = payload.shipmentId ?? selectedShipmentId;
+    const nextResetToken = payload.token ?? resetToken;
 
     if (to === "shipmentDetails") {
       const previousScreen =
-        payload?.from ||
+        payload.from ||
         (current === "shipmentDetails" ? shipmentDetailsBackScreen : current) ||
         "shipments";
       setShipmentDetailsBackScreen(previousScreen);
@@ -182,7 +192,7 @@ export default function App() {
       resetToken: nextResetToken,
     });
 
-    if (payload?.shipmentId != null) {
+    if (payload.shipmentId != null) {
       setSelectedShipmentId(payload.shipmentId);
     }
     if (to === "resetPassword") {
@@ -266,17 +276,12 @@ export default function App() {
 
         const resolvedName =
           profile?.displayName ||
-          profile?.individual?.full_Name ||
-          profile?.business?.business_Name ||
           (profile?.email ? String(profile.email).split("@")[0] : "User");
 
         setDisplayName(resolvedName);
       } catch {
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
         const fallback =
-          storedUser?.full_Name ||
-          storedUser?.business_Name ||
-          storedUser?.name ||
           (storedUser?.email ? String(storedUser.email).split("@")[0] : "User");
         if (isMounted) setDisplayName(fallback);
       }

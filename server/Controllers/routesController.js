@@ -12,6 +12,9 @@ const listRoutes = async (req,res,next) => {
                 select: {
                     plate_Number: true,
                     vehicle_Name: true,
+                    type: true,
+                    color: true,
+                    year: true,
                     capacity: true,
                 },
             },

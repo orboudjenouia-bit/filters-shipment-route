@@ -1,10 +1,15 @@
-/*
-  Warnings:
-
-  - You are about to drop the column `isverified` on the `User` table. All the data in the column will be lost.
-
-*/
 -- AlterTable
-ALTER TABLE "User" DROP COLUMN "isverified",
-ADD COLUMN     "isVerified" BOOLEAN NOT NULL DEFAULT false,
-ALTER COLUMN "verificationToken" SET DATA TYPE TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "isVerified" BOOLEAN NOT NULL DEFAULT false;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'User' AND column_name = 'isverified'
+  ) THEN
+    ALTER TABLE "User" DROP COLUMN "isverified";
+  END IF;
+END $$;
+
+ALTER TABLE "User" ALTER COLUMN "verificationToken" SET DATA TYPE TEXT;

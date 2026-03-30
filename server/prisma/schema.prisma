@@ -82,6 +82,9 @@ model Business {
 model Vehicle {
   plate_Number  Int     @id
   vehicle_Name  String  
+  type          String?
+  color         String?
+  year          Int?
   capacity      Int
   photo         String
   deleted_at    DateTime?
@@ -94,6 +97,8 @@ model Vehicle {
 
 model Route {
   route_ID          Int     @id @unique @default(autoincrement())
+  name              String?
+  photo             String? @db.Text
   origin            String? 
   destination       String? 
   region            String?
@@ -118,11 +123,15 @@ model Route {
 
 model Shipment {
   shipment_ID         Int     @id @default(autoincrement())
+  title               String?
+  category            String?
+  photo               String? @db.Text
   origin              String  
   destination         String  
   volume              Int
   weight              Int                    
   date                String  @db.VarChar(11) 
+  time                String? @db.VarChar(5)
   priority            String  @default("Normal")
   special_Information String? @db.Text
   status              String  @default("In-Stock")

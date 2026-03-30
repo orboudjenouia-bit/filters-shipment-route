@@ -44,7 +44,10 @@ router.post(
   checkToken,
   [
     check('plate_Number', 'Plate number is required and must be numeric').notEmpty().isNumeric(),
+    check('type', 'Vehicle type is required').notEmpty().isString(),
     check('vehicle_Name', 'Vehicle name is required').notEmpty().isString(),
+    check('color', 'Color must be a string').optional().isString(),
+    check('year', 'Year must be numeric').optional().isNumeric(),
     check('capacity', 'Capacity is required and must be numeric').notEmpty().isNumeric(),
     check('photo', 'Photo must be a string').optional().isString()
   ],
@@ -55,7 +58,10 @@ router.patch(
   checkToken,
   [
     check('plate_Number', 'Plate number is required and must be numeric').notEmpty().isNumeric(),
+    check('type', 'Vehicle type must be a string').optional().isString(),
     check('vehicle_Name', 'Vehicle name must be a string').optional().isString(),
+    check('color', 'Color must be a string').optional().isString(),
+    check('year', 'Year must be numeric').optional().isNumeric(),
     check('capacity', 'Capacity must be numeric').optional().isNumeric(),
     check('photo', 'Photo must be a string').optional().isString()
   ],

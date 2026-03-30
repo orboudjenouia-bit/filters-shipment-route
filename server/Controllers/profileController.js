@@ -100,7 +100,7 @@ const createVehicle = async (req, res, next) => {
   }
 
   const userId = req.user.id;
-  const { plate_Number, vehicle_Name, capacity, photo } = req.body;
+  const { plate_Number, type, vehicle_Name, color, year, capacity, photo } = req.body;
 
   const existingVehicle = await prisma.vehicle.findUnique({
     where: { plate_Number },
@@ -113,7 +113,10 @@ const createVehicle = async (req, res, next) => {
   const vehicle = await prisma.vehicle.create({
     data: {
       plate_Number,
+      type,
       vehicle_Name,
+      color: color || null,
+      year: year != null ? Number(year) : null,
       capacity,
       photo: photo || "",
       user: {
@@ -140,6 +143,10 @@ const updateVehicle = async (req, res, next) => {
 
   const userId = req.user.id;
   const { plate_Number, ...fields } = req.body;
+
+  if (fields.year != null) {
+    fields.year = Number(fields.year);
+  }
 
   const vehicle = await prisma.vehicle.findUnique({
     where: { plate_Number: plate_Number },

@@ -1,15 +1,7 @@
-const API_URL = process.env.REACT_APP_API_URL;
-
-const parseJson = async (response) => {
-  try {
-    return await response.json();
-  } catch {
-    return {};
-  }
-};
+import API_URL, { parseJson } from "./http";
 
 export const verifyCode = async (code) => {
-  const response = await fetch(`${API_URL}/check-code`, {
+  const response = await fetch(`${API_URL}/auth/verify-email`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ code }),
@@ -20,6 +12,7 @@ export const verifyCode = async (code) => {
   if (!response.ok) {
     throw {
       status: response.status,
+      code: data.code,
       message: data.message || "Verification failed",
     };
   }

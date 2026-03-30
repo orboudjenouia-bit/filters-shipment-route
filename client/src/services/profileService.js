@@ -1,24 +1,4 @@
-const API_URL = process.env.REACT_APP_API_URL;
-
-const parseJson = async (response) => {
-  try {
-    return await response.json();
-  } catch {
-    return {};
-  }
-};
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("token");
-  if (!token) {
-    throw { status: 401, code: "NO_TOKEN", message: "Please login first." };
-  }
-
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
-};
+import API_URL, { getAuthHeaders, parseJson } from "./http";
 
 export const IndividualProfile = async ({ full_Name, nin, location }) => {
   const response = await fetch(`${API_URL}/profile/individual`, {
@@ -68,17 +48,9 @@ export const BusinessProfile = async ({
 };
 
 export const getMyProfile = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) {
-    throw { status: 401, code: "NO_TOKEN", message: "Please login first." };
-  }
-
   const response = await fetch(`${API_URL}/profile/me`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
   });
 
   const data = await parseJson(response);
@@ -151,11 +123,19 @@ export const getVehicles = async () => {
   return data;
 };
 
-export const createVehicle = async ({ plate_Number, vehicle_Name, capacity, photo = null }) => {
+export const createVehicle = async ({
+  plate_Number,
+  type,
+  vehicle_Name,
+  color,
+  year,
+  capacity,
+  photo = null,
+}) => {
   const response = await fetch(`${API_URL}/profile/vehicles`, {
     method: "POST",
     headers: getAuthHeaders(),
-    body: JSON.stringify({ plate_Number, vehicle_Name, capacity, photo }),
+    body: JSON.stringify({ plate_Number, type, vehicle_Name, color, year, capacity, photo }),
   });
 
   const data = await parseJson(response);

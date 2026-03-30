@@ -1,20 +1,9 @@
-const API_URL = process.env.REACT_APP_API_URL;
+import API_URL, { getAuthHeaders, parseJson } from "./http";
 
-const parseJson = async (response) => {
-  try {
-    return await response.json();
-  } catch {
-    return {};
-  }
-};
-
-export const createShipment = async (payload, token) => {
+export const createShipment = async (payload) => {
   const response = await fetch(`${API_URL}/shipments`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
 
@@ -30,13 +19,10 @@ export const createShipment = async (payload, token) => {
   return data;
 };
 
-export const getShipments = async (token) => {
+export const getShipments = async () => {
   const response = await fetch(`${API_URL}/shipments`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
+    headers: getAuthHeaders(),
   });
 
   const data = await parseJson(response);
@@ -48,13 +34,5 @@ export const getShipments = async (token) => {
     };
   }
 
-  return Array.isArray(data)
-    ? data
-    : Array.isArray(data?.allShipments)
-    ? data.allShipments
-    : Array.isArray(data?.shipments)
-    ? data.shipments
-    : Array.isArray(data?.data)
-    ? data.data
-    : [];
+  return Array.isArray(data?.shipments) ? data.shipments : [];
 };

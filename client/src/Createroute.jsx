@@ -7,21 +7,11 @@ import {
   MapPin,
   Navigation,
   Send,
-  RefreshCw,
   FileText,
 } from "lucide-react";
 import { createRoute } from "./services/routeService";
+import { getVehicles } from "./services/profileService";
 import "./Createroute.css";
-
-const API_URL = process.env.REACT_APP_API_URL;
-
-const parseJson = async (response) => {
-  try {
-    return await response.json();
-  } catch {
-    return {};
-  }
-};
 
 export default function CreateRoute() {
   const navigate = useNavigate();
@@ -37,7 +27,6 @@ export default function CreateRoute() {
     intervalStart: "",
     intervalEnd: "",
     description: "",
-    recurring: true,
   });
   const [photos, setPhotos] = useState([]);
   const [error, setError] = useState("");
@@ -53,32 +42,8 @@ export default function CreateRoute() {
       setVehiclesLoading(true);
 
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          if (isMounted) setVehicles([]);
-          return;
-        }
-
-        const response = await fetch(`${API_URL}/profile/vehicles`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const data = await parseJson(response);
-        if (!response.ok) {
-          throw new Error(data?.message || `Failed to fetch vehicles (${response.status})`);
-        }
-
-        const list = Array.isArray(data?.vehicles)
-          ? data.vehicles
-          : Array.isArray(data?.data)
-          ? data.data
-          : Array.isArray(data)
-          ? data
-          : [];
+        const data = await getVehicles();
+        const list = Array.isArray(data?.vehicles) ? data.vehicles : [];
 
         if (!isMounted) return;
         setVehicles(
@@ -120,8 +85,13 @@ export default function CreateRoute() {
     setPhotos(files.slice(0, 5));
   };
 
-  const toggleRecurring = () =>
-    setForm((prev) => ({ ...prev, recurring: !prev.recurring }));
+  const fileToDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(new Error("Failed to read selected photo."));
+      reader.readAsDataURL(file);
+    });
 
   const showError = (msg) => {
     setError(msg);
@@ -189,7 +159,11 @@ export default function CreateRoute() {
       setLoading(true);
       setError("");
 
+      const photoData = photos[0] ? await fileToDataUrl(photos[0]) : null;
+
       const payload = {
+        name: form.routeName.trim(),
+        photo: photoData,
         origin,
         destination,
         region,
@@ -202,7 +176,7 @@ export default function CreateRoute() {
         more_Information: form.description.trim() || null,
       };
 
-      const data = await createRoute(payload, token);
+      const data = await createRoute(payload);
       console.log("Success:", data);
       setSuccess(true);
       setPhotos([]);
@@ -218,7 +192,6 @@ export default function CreateRoute() {
         intervalStart: "",
         intervalEnd: "",
         description: "",
-        recurring: true,
       });
       setTimeout(() => navigate("/routes"), 2000);
     } catch (err) {
@@ -441,25 +414,6 @@ export default function CreateRoute() {
               </div>
             </div>
           )}
-
-          <div className="cr-recurring-box">
-            <div className="cr-recurring-left">
-              <div className="cr-recurring-icon">
-                <RefreshCw size={16} color="#09c247" />
-              </div>
-              <div>
-                <p className="cr-recurring-title">Recurring Route</p>
-                <p className="cr-recurring-sub">Set this as a standard path</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              className={`cr-toggle ${form.recurring ? "on" : "off"}`}
-              onClick={toggleRecurring}
-            >
-              <span className="cr-toggle-thumb" />
-            </button>
-          </div>
 
           {error && <div className="cr-msg-error">{error}</div>}
           {success && <div className="cr-msg-success">Route posted! Redirecting...</div>}

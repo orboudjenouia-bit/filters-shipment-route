@@ -1,9 +1,1 @@
-/*
-  Warnings:
-
-  - The `verificationToken` column on the `User` table would be dropped and recreated. This will lead to data loss if there is data in the column.
-
-*/
--- AlterTable
-ALTER TABLE "User" DROP COLUMN "verificationToken",
-ADD COLUMN     "verificationToken" INTEGER;
+-- No-op: superseded by later migrations that normalize verificationToken type.

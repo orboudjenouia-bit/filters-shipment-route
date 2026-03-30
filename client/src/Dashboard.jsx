@@ -76,12 +76,8 @@ export default function Dashboard({ onNavigate, userName = "User" }) {
 
         const data = await response.json();
 
-        const shipmentsCount = Number(
-          data?.activeShipments ?? data?.shipments?.active ?? data?.shipmentCount ?? 0
-        );
-        const routesCount = Number(
-          data?.activeRoutes ?? data?.routes?.active ?? data?.routeCount ?? 0
-        );
+        const shipmentsCount = Number(data?.activeShipments ?? 0);
+        const routesCount = Number(data?.activeRoutes ?? 0);
 
         if (!isMounted) return;
 

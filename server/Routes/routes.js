@@ -11,6 +11,8 @@ router.get('/', authToken, asyncHandler(listRoutes))
 router.post('/', 
   authToken,
   [
+    check('name', 'Route name is required').notEmpty().isString(),
+    check('photo', 'Photo must be a string').optional().isString(),
     check('origin', 'Origin must be a string').optional({ nullable: true }).isString(),
     check('destination', 'Destination must be a string').optional({ nullable: true }).isString(),
     check('region', 'Region must be a string').optional({ nullable: true }).isString(),
@@ -28,6 +30,8 @@ router.patch('/',
   authToken,
   [
     check('route_ID', 'Route ID is required and must be numeric').notEmpty().isInt(),
+    check('name', 'Route name must be a string').optional().isString(),
+    check('photo', 'Photo must be a string').optional().isString(),
     check('origin', 'Origin must be a string').optional().isString(),
     check('destination', 'Destination must be a string').optional().isString(),
     check('region', 'Region must be a string').optional().isString(),

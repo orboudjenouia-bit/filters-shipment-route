@@ -1,12 +1,4 @@
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:4000/api";
-
-const parseJson = async (response) => {
-  try {
-    return await response.json();
-  } catch {
-    return {};
-  }
-};
+import API_URL, { parseJson } from "./http";
 
 export const register = async (email, password, phone, type) => {
   const response = await fetch(`${API_URL}/auth/register`, {
