@@ -48,7 +48,14 @@ model User {
   routes        Route[]
 
   resetPasswordToken String?
+
   resetPasswordExpires DateTime?
+
+  verificationToken String? @db.VarChar(10)
+
+  verificationTokenExpires DateTime?
+  
+  isVerified Boolean @default(false)
 }
 
 model Individual {

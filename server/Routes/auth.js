@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const { check } = require("express-validator");
-const { register, login , logout  , updateProfile} = require("../Controllers/authController");
+const { register, login , logout  , updateProfile ,verifyEmail} = require("../Controllers/authController");
 const { forgotpassword, resetpswd } = require("../Controllers/forget-password");
 const asyncHandler = require("../utils/asyncHandler");
 const checkToken = require("../Middlewares/checkToken")
@@ -24,6 +24,7 @@ router.post("/reset-password/:token", asyncHandler(resetpswd))
 router.post("/forget-password", asyncHandler(forgotpassword))
 router.post("/logout", checkToken, asyncHandler(logout))
 router.put("/update-profile", checkToken, asyncHandler(updateProfile))
+router.post("/verify-email", asyncHandler(verifyEmail))
 
 
 module.exports = router;

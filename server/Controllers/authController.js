@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const { StatusCodes } = require("http-status-codes");
 const prisma = require("../config/prismaClient");
 const AppError = require("../utils/AppError")
-
+const { snedverificationemail } = require("../mailtrap/emails.js")
 
 const register = async (req, res, next) => {
   
@@ -14,7 +14,7 @@ const register = async (req, res, next) => {
     throw new AppError("Validation failed", StatusCodes.BAD_REQUEST, "VALIDATION_ERROR");
   }
 
-  const { email, password, phone, type , role} = req.body;
+  const { email, password, phone, type, role } = req.body;
 
   // Check if user already exists
   const existingUser = await prisma.user.findUnique({
@@ -29,6 +29,10 @@ const register = async (req, res, next) => {
   // Hash the password
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  // Create verification token (6-digit random number) - generated server-side
+  const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+  const verificationTokenExpires = new Date(Date.now() + 1 * 60 * 60 * 1000); // 24 hours
+console.log("Generated verification token:", verificationToken); // Log the token for debugging
   // Save user in DB - try-catch for database-specific errors
   let user;
   try {
@@ -38,17 +42,26 @@ const register = async (req, res, next) => {
         password: hashedPassword,
         phone: phone,
         type: type,
-        role: role || "USER" 
+        role: role || "USER",
+        verificationToken: verificationToken,
+        verificationTokenExpires: verificationTokenExpires
       }
     });
   } catch (error) {
+      console.error("Full error object:", JSON.stringify(error, null, 2)); // ADD THIS
+  console.error("Error message:", error.message);
+  console.error("Error code:", error.code);
     if (error.code === "P2002") {
       throw new AppError("Email already exists in database", StatusCodes.CONFLICT, "DUPLICATE_EMAIL");
     }
     throw new AppError("Failed to create user", StatusCodes.INTERNAL_SERVER_ERROR, "USER_CREATION_ERROR");
+   
   }
 
-  // Sign JWT
+  // Send verification email AFTER user creation
+  await snedverificationemail(email, verificationToken);
+
+  // Sign JWT for login
   const token = jwt.sign(
     { id: user.id, email: user.email, role: user.role },
     process.env.JWT_SECRET,
@@ -57,7 +70,7 @@ const register = async (req, res, next) => {
 
   res.status(StatusCodes.CREATED).json({ 
     success: true,
-    msg: "Registration successful", 
+    msg: "Registration successful. Check your email to verify.", 
     token,
     user: {
       id: user.id,
@@ -68,8 +81,6 @@ const register = async (req, res, next) => {
     }
   });
 };
-
-
 const login = async (req, res, next) => {
 
   const { email, password } = req.body;
@@ -235,88 +246,39 @@ const logout = async (req, res, next) => {
     );
   }
 };
-
-
-const updateProfile = async (req, res, next) => {
-  const userId = req.user.id;
-
-  // Get user with all details
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { 
-      id: true, 
-      type: true,
-      phone: true,
-      working_Time: true,
-      individual: true,
-      business: true
-    }
-  });
-
-  if (!user) {
-    throw new AppError("User not found", StatusCodes.NOT_FOUND, "USER_NOT_FOUND");
+// Validation helpers
+const validatePhone = (phone) => {
+  if (!/^\d{10}$/.test(phone)) {
+    throw new AppError(
+      "Phone must be exactly 10 digits",
+      StatusCodes.BAD_REQUEST,
+      "INVALID_PHONE"
+    );
   }
+};
 
-  // Extract all possible fields from request
-  const { 
-    phone, 
-    working_Time, 
-    type,
-    // Individual fields
-    full_Name,
-    nin,
-    location,
-    // Business fields
-    business_Name,
-    rc_Number,
-    form,
-    nif,
-    nis,
-    locations
-  } = req.body;
-
-  // ==========================================
-  // UPDATE USER TABLE FIELDS
-  // ==========================================
-  const userUpdateData = {};
-
-  if (phone !== undefined) {
-    if (!/^\d{10}$/.test(phone)) {
-      throw new AppError(
-        "Phone must be exactly 10 digits",
-        StatusCodes.BAD_REQUEST,
-        "INVALID_PHONE"
-      );
-    }
-    userUpdateData.phone = phone;
+const validateWorkingTime = (working_Time) => {
+  if (!/^\d{1,2}:\d{2}-\d{1,2}:\d{2}$/.test(working_Time)) {
+    throw new AppError(
+      "Working time format should be HH:MM-HH:MM (e.g., 9:00-17:00)",
+      StatusCodes.BAD_REQUEST,
+      "INVALID_WORKING_TIME"
+    );
   }
+};
 
-  if (working_Time !== undefined) {
-    if (!/^\d{1,2}:\d{2}-\d{1,2}:\d{2}$/.test(working_Time)) {
-      throw new AppError(
-        "Working time format should be HH:MM-HH:MM (e.g., 9:00-17:00)",
-        StatusCodes.BAD_REQUEST,
-        "INVALID_WORKING_TIME"
-      );
-    }
-    userUpdateData.working_Time = working_Time;
+const validateUserType = (type) => {
+  if (!["INDIVIDUAL", "BUSINESS"].includes(type)) {
+    throw new AppError(
+      "Type must be either INDIVIDUAL or BUSINESS",
+      StatusCodes.BAD_REQUEST,
+      "INVALID_TYPE"
+    );
   }
+};
 
-  if (type !== undefined) {
-    if (!["INDIVIDUAL", "BUSINESS"].includes(type)) {
-      throw new AppError(
-        "Type must be either INDIVIDUAL or BUSINESS",
-        StatusCodes.BAD_REQUEST,
-        "INVALID_TYPE"
-      );
-    }
-    userUpdateData.type = type;
-  }
-
-  // ==========================================
-  // UPDATE INDIVIDUAL TABLE FIELDS
-  // ==========================================
-  const individualUpdateData = {};
+const validateIndividualFields = async (userId, full_Name, nin, location) => {
+  const data = {};
 
   if (full_Name !== undefined) {
     if (full_Name.trim().length < 2) {
@@ -326,7 +288,7 @@ const updateProfile = async (req, res, next) => {
         "INVALID_FULL_NAME"
       );
     }
-    individualUpdateData.full_Name = full_Name;
+    data.full_Name = full_Name;
   }
 
   if (nin !== undefined) {
@@ -338,7 +300,6 @@ const updateProfile = async (req, res, next) => {
       );
     }
 
-    // Check if NIN already taken by another user
     const existingNin = await prisma.individual.findUnique({
       where: { nin: nin }
     });
@@ -351,7 +312,7 @@ const updateProfile = async (req, res, next) => {
       );
     }
 
-    individualUpdateData.nin = nin;
+    data.nin = nin;
   }
 
   if (location !== undefined) {
@@ -362,13 +323,14 @@ const updateProfile = async (req, res, next) => {
         "INVALID_LOCATION"
       );
     }
-    individualUpdateData.location = location;
+    data.location = location;
   }
 
-  // ==========================================
-  // UPDATE BUSINESS TABLE FIELDS
-  // ==========================================
-  const businessUpdateData = {};
+  return data;
+};
+
+const validateBusinessFields = async (userId, business_Name, rc_Number, form, nif, nis, locations) => {
+  const data = {};
 
   if (business_Name !== undefined) {
     if (business_Name.trim().length < 2) {
@@ -378,11 +340,10 @@ const updateProfile = async (req, res, next) => {
         "INVALID_BUSINESS_NAME"
       );
     }
-    businessUpdateData.business_Name = business_Name;
+    data.business_Name = business_Name;
   }
 
   if (rc_Number !== undefined) {
-    // Check if RC number already taken
     const existingRc = await prisma.business.findUnique({
       where: { rc_Number: rc_Number }
     });
@@ -394,7 +355,7 @@ const updateProfile = async (req, res, next) => {
         "RC_EXISTS"
       );
     }
-    businessUpdateData.rc_Number = rc_Number;
+    data.rc_Number = rc_Number;
   }
 
   if (form !== undefined) {
@@ -405,7 +366,7 @@ const updateProfile = async (req, res, next) => {
         "INVALID_FORM"
       );
     }
-    businessUpdateData.form = form;
+    data.form = form;
   }
 
   if (nif !== undefined) {
@@ -416,7 +377,7 @@ const updateProfile = async (req, res, next) => {
         "INVALID_NIF"
       );
     }
-    businessUpdateData.nif = nif;
+    data.nif = nif;
   }
 
   if (nis !== undefined) {
@@ -427,7 +388,7 @@ const updateProfile = async (req, res, next) => {
         "INVALID_NIS"
       );
     }
-    businessUpdateData.nis = nis;
+    data.nis = nis;
   }
 
   if (locations !== undefined) {
@@ -438,112 +399,97 @@ const updateProfile = async (req, res, next) => {
         "INVALID_LOCATIONS"
       );
     }
-    businessUpdateData.locations = locations;
+    data.locations = locations;
   }
 
-  // ==========================================
-  // CHECK IF THERE'S ANYTHING TO UPDATE
-  // ==========================================
-  const hasUserUpdates = Object.keys(userUpdateData).length > 0;
-  const hasIndividualUpdates = Object.keys(individualUpdateData).length > 0;
-  const hasBusinessUpdates = Object.keys(businessUpdateData).length > 0;
+  return data;
+};
 
-  if (!hasUserUpdates && !hasIndividualUpdates && !hasBusinessUpdates) {
-    throw new AppError(
-      "No fields to update",
-      StatusCodes.BAD_REQUEST,
-      "NO_UPDATES"
-    );
+const updateProfile = async (req, res, next) => {
+  const userId = req.user.id;
+  const { phone, working_Time, type, full_Name, nin, location, business_Name, rc_Number, form, nif, nis, locations } = req.body;
+
+  // Get user
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, type: true, individual: true, business: true }
+  });
+
+  if (!user) {
+    throw new AppError("User not found", StatusCodes.NOT_FOUND, "USER_NOT_FOUND");
   }
 
-  // ==========================================
-  // PERFORM UPDATES
-  // ==========================================
+  // Validate and build update objects
+  const userUpdateData = {};
+  const individualUpdateData = {};
+  const businessUpdateData = {};
+
+  if (phone !== undefined) {
+    validatePhone(phone);
+    userUpdateData.phone = phone;
+  }
+
+  if (working_Time !== undefined) {
+    validateWorkingTime(working_Time);
+    userUpdateData.working_Time = working_Time;
+  }
+
+  if (type !== undefined) {
+    validateUserType(type);
+    userUpdateData.type = type;
+  }
+
+  if (full_Name !== undefined || nin !== undefined || location !== undefined) {
+    Object.assign(individualUpdateData, await validateIndividualFields(userId, full_Name, nin, location));
+  }
+
+  if (business_Name !== undefined || rc_Number !== undefined || form !== undefined || nif !== undefined || nis !== undefined || locations !== undefined) {
+    Object.assign(businessUpdateData, await validateBusinessFields(userId, business_Name, rc_Number, form, nif, nis, locations));
+  }
+
+  // Check if there's anything to update
+  if (!Object.keys(userUpdateData).length && !Object.keys(individualUpdateData).length && !Object.keys(businessUpdateData).length) {
+    throw new AppError("No fields to update", StatusCodes.BAD_REQUEST, "NO_UPDATES");
+  }
+
   try {
-    let updatedUser = null;
-    let updatedIndividual = null;
-    let updatedBusiness = null;
-
-    // Update User table if there are changes
-    if (hasUserUpdates) {
-      updatedUser = await prisma.user.update({
+    // Update user table
+    if (Object.keys(userUpdateData).length) {
+      await prisma.user.update({
         where: { id: userId },
-        data: userUpdateData,
-        select: {
-          id: true,
-          email: true,
-          phone: true,
-          working_Time: true,
-          type: true,
-          role: true,
-          status: true
-        }
-      });
-    } else {
-      // Get current user data if not updating
-      updatedUser = await prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          email: true,
-          phone: true,
-          working_Time: true,
-          type: true,
-          role: true,
-          status: true
-        }
+        data: userUpdateData
       });
     }
 
-    // Update Individual if there are changes and user is INDIVIDUAL
-    if (hasIndividualUpdates) {
+    // Update individual profile
+    if (Object.keys(individualUpdateData).length) {
       if (user.type !== "INDIVIDUAL") {
-        throw new AppError(
-          "This account is not an individual account",
-          StatusCodes.BAD_REQUEST,
-          "TYPE_MISMATCH"
-        );
+        throw new AppError("This account is not an individual account", StatusCodes.BAD_REQUEST, "TYPE_MISMATCH");
       }
-
       if (!user.individual) {
-        throw new AppError(
-          "Individual profile not found",
-          StatusCodes.NOT_FOUND,
-          "PROFILE_NOT_FOUND"
-        );
+        throw new AppError("Individual profile not found", StatusCodes.NOT_FOUND, "PROFILE_NOT_FOUND");
       }
-
-      updatedIndividual = await prisma.individual.update({
+      await prisma.individual.update({
         where: { user_ID: userId },
         data: individualUpdateData
       });
     }
 
-    // Update Business if there are changes and user is BUSINESS
-    if (hasBusinessUpdates) {
+    // Update business profile
+    if (Object.keys(businessUpdateData).length) {
       if (user.type !== "BUSINESS") {
-        throw new AppError(
-          "This account is not a business account",
-          StatusCodes.BAD_REQUEST,
-          "TYPE_MISMATCH"
-        );
+        throw new AppError("This account is not a business account", StatusCodes.BAD_REQUEST, "TYPE_MISMATCH");
       }
-
       if (!user.business) {
-        throw new AppError(
-          "Business profile not found",
-          StatusCodes.NOT_FOUND,
-          "PROFILE_NOT_FOUND"
-        );
+        throw new AppError("Business profile not found", StatusCodes.NOT_FOUND, "PROFILE_NOT_FOUND");
       }
-
-      updatedBusiness = await prisma.business.update({
+      await prisma.business.update({
         where: { user_ID: userId },
         data: businessUpdateData
       });
     }
 
-    // Get complete updated data
+    // Get complete updated user
     const completeUser = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -554,23 +500,8 @@ const updateProfile = async (req, res, next) => {
         type: true,
         role: true,
         status: true,
-        individual: {
-          select: {
-            full_Name: true,
-            nin: true,
-            location: true
-          }
-        },
-        business: {
-          select: {
-            business_Name: true,
-            rc_Number: true,
-            form: true,
-            nif: true,
-            nis: true,
-            locations: true
-          }
-        }
+        individual: { select: { full_Name: true, nin: true, location: true } },
+        business: { select: { business_Name: true, rc_Number: true, form: true, nif: true, nis: true, locations: true } }
       }
     });
 
@@ -581,18 +512,50 @@ const updateProfile = async (req, res, next) => {
     });
   } catch (error) {
     if (error.code === "P2002") {
-      throw new AppError(
-        "Unique constraint violation",
-        StatusCodes.CONFLICT,
-        "DUPLICATE_VALUE"
-      );
+      throw new AppError("Unique constraint violation", StatusCodes.CONFLICT, "DUPLICATE_VALUE");
     }
-    throw new AppError(
-      error.message || "Failed to update profile",
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      "UPDATE_FAILED"
-    );
+    throw new AppError(error.message || "Failed to update profile", StatusCodes.INTERNAL_SERVER_ERROR, "UPDATE_FAILED");
+  }
+};
+const verifyEmail = async (req, res, next) => {
+  try {
+    const { code } = req.body;
+
+    if (!code) {
+      throw new AppError("Verification code is required", StatusCodes.BAD_REQUEST, "MISSING_CODE");
+    }
+
+    const user = await prisma.user.findFirst({
+      where: {
+        verificationToken: code,
+        verificationTokenExpires: {
+          gt: new Date()
+        }
+      }
+    });
+
+    if (!user) {
+      throw new AppError("Invalid or expired verification code", StatusCodes.BAD_REQUEST, "INVALID_CODE");
+    }
+
+    const { id } = user;
+
+    await prisma.user.update({
+      where: { id },
+      data: {
+        isVerified: true,
+        verificationToken: null,
+        verificationTokenExpires: null
+      }
+    });
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      msg: "Email verified successfully"
+    });
+  } catch (error) {
+    throw error;
   }
 };
 
-module.exports = { register, login, IndividualProfile, BusinessProfile, logout , updateProfile };
+module.exports = { register, login, IndividualProfile, BusinessProfile, logout, updateProfile, verifyEmail };
