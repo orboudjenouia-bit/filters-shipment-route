@@ -19,3 +19,23 @@ export const verifyCode = async (code) => {
 
   return data;
 };
+
+export const resendVerificationCode = async (email) => {
+  const response = await fetch(`${API_URL}/auth/resend-verification`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw {
+      status: response.status,
+      code: data.code,
+      message: data.message || "Failed to resend code",
+    };
+  }
+
+  return data;
+};

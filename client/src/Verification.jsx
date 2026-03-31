@@ -2,19 +2,27 @@ import { useState, useRef, useEffect } from "react";
 import ThemeToggle from "./ThemeToggle";
 import "./Verification.css";
 import myemail from "./photo/mail.svg";
-import { verifyCode } from "./services/verificationService";
+import { verifyCode, resendVerificationCode } from "./services/verificationService";
 
 export default function Verification({ onBack, onSuccess }) {
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [timeLeft, setTimeLeft] = useState(60);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
   const inputsRef = useRef([]);
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 30);
     return () => clearTimeout(t);
+  }, []);
+
+  // Get user email from localStorage (set during registration)
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    setUserEmail(user.email || "your@email.com");
   }, []);
 
   useEffect(() => {
@@ -47,7 +55,7 @@ export default function Verification({ onBack, onSuccess }) {
         setCode(["", "", "", "", "", ""]);
         setTimeout(() => inputsRef.current[0]?.focus(), 100);
       }
-    } catch {
+    } catch (err) {
       setLoading(false);
       showError("Could not reach the server. Check your connection.");
     }
@@ -71,12 +79,26 @@ export default function Verification({ onBack, onSuccess }) {
       inputsRef.current[index - 1]?.focus();
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (timeLeft > 0) return;
-    setTimeLeft(60);
-    setCode(["", "", "", "", "", ""]);
-    setError("");
-    setTimeout(() => inputsRef.current[0]?.focus(), 100);
+    
+    setResending(true);
+    try {
+      const data = await resendVerificationCode(userEmail);
+      if (data?.success) {
+        setTimeLeft(60);
+        setCode(["", "", "", "", "", ""]);
+        setError("");
+        showError("Code resent successfully!");
+        setTimeout(() => inputsRef.current[0]?.focus(), 100);
+      } else {
+        showError(data?.message || "Failed to resend code");
+      }
+    } catch (err) {
+      showError("Could not resend code. Try again later.");
+    } finally {
+      setResending(false);
+    }
   };
 
   const allFilled = code.every(d => d !== "");
@@ -109,13 +131,17 @@ export default function Verification({ onBack, onSuccess }) {
 
         <h1 className="vf-title">Verify your email</h1>
         <p className="vf-subtitle">
-          We've sent a 6-digit code to <strong>alex@example.com</strong>. Enter it below to continue.
+          We've sent a 6-digit code to <strong>{userEmail}</strong>. Enter it below to continue.
         </p>
 
         <div className="vf-code-inputs">
           {code.map((digit, index) => (
             <input
-              key={index} type="text" inputMode="numeric" maxLength="1" value={digit}
+              key={index} 
+              type="text" 
+              inputMode="numeric" 
+              maxLength="1" 
+              value={digit}
               ref={el => (inputsRef.current[index] = el)}
               onChange={e => handleChange(e.target.value, index)}
               onKeyDown={e => handleKeyDown(e, index)}
@@ -137,7 +163,9 @@ export default function Verification({ onBack, onSuccess }) {
 
         <button
           className={`vf-verify-btn ${allFilled ? "vf-verify-btn--ready" : ""} ${loading ? "vf-verify-btn--loading" : ""}`}
-          onClick={handleSubmit} disabled={loading} type="button"
+          onClick={handleSubmit} 
+          disabled={loading} 
+          type="button"
         >
           {loading ? <span className="vf-spinner" /> : "Verify"}
         </button>
@@ -147,8 +175,9 @@ export default function Verification({ onBack, onSuccess }) {
           <span
             className={`vf-resend-link ${timeLeft === 0 ? "vf-resend-link--active" : "vf-resend-link--disabled"}`}
             onClick={handleResend}
+            style={{ cursor: timeLeft === 0 && !resending ? "pointer" : "default" }}
           >
-            Resend {timeLeft > 0 && `(${timeLeft}s)`}
+            {resending ? "Sending..." : `Resend ${timeLeft > 0 && `(${timeLeft}s)`}`}
           </span>
         </p>
 

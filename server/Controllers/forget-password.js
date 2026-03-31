@@ -1,29 +1,21 @@
 const crypto = require("crypto")
 const bcrypt = require("bcrypt")
-const { MailtrapClient } = require("mailtrap")
-const { PASSWORD_RESET_REQUEST_TEMPLATE  ,PASSWORD_RESET_SUCCESS_TEMPLATE } = require("../mailtrap/emailTemplate.js")
+const nodemailer = require("nodemailer")
+const { PASSWORD_RESET_REQUEST_TEMPLATE, PASSWORD_RESET_SUCCESS_TEMPLATE } = require("../mailtrap/emailTemplate.js")
 const AppError = require("../utils/AppError.js")
 const asyncHandler = require("../utils/asyncHandler.js")
 const prisma = require("../config/prismaClient")
 const { StatusCodes } = require("http-status-codes")
 const { validationResult } = require("express-validator")
 
-
-let mailtrapClient
-try {
-  mailtrapClient = new MailtrapClient({
-    token: process.env.MAILTRAP_TOKEN,
-  })
-} catch (err) {
-  console.log("Failed to initialize Mailtrap:", err.message)
-}
-
-
-const sender = {
-  email: process.env.MAILTRAP_FROM_EMAIL || "hello@example.com",
-  name: "wesseli-support"
-}
-
+// Nodemailer transporter
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.PASSWORD
+  }
+})
 
 const forgotpassword = asyncHandler(async (req, res, next) => {
   const errors = validationResult(req)
@@ -42,7 +34,7 @@ const forgotpassword = asyncHandler(async (req, res, next) => {
   }
 
   const resetToken = crypto.randomBytes(32).toString("hex")
-  const resetTokenExpires = new Date(Date.now() +  1 * 60 *  60 * 1000)
+  const resetTokenExpires = new Date(Date.now() + 1 * 60 * 60 * 1000)
 
   await prisma.user.update({
     where: { email: email },
@@ -55,40 +47,31 @@ const forgotpassword = asyncHandler(async (req, res, next) => {
   const clientUrl = process.env.CLIENT_URL || "http://localhost:3000"
   const resetLink = `${clientUrl}/resetpassword/${resetToken}`
 
-  let delivery = "email"
-  if (mailtrapClient) {
-    await SendPasswordResetEmail(email, resetLink)
-  } else {
-    delivery = "preview"
-    console.log("Mailtrap is not configured. Use this reset link for testing:", resetLink)
-  }
+  await SendPasswordResetEmail(email, resetLink)
 
   res.status(200).json({
     success: true,
-    msg: "Password reset request processed successfully",
-    delivery,
-    resetLink: delivery === "preview" ? resetLink : undefined,
+    msg: "Password reset email sent successfully"
   })
 })
 
 const SendPasswordResetEmail = async (email, resetLink) => {
-  if (!mailtrapClient) {
-    throw new AppError("Email service is unavailable", StatusCodes.SERVICE_UNAVAILABLE, "EMAIL_SERVICE_UNAVAILABLE")
+  const mailOptions = {
+    from: process.env.EMAIL,
+    to: email,
+    subject: "Password Reset Request",
+    html: PASSWORD_RESET_REQUEST_TEMPLATE.replace("{resetURL}", resetLink),
+    replyTo: process.env.EMAIL
   }
 
   try {
-    await mailtrapClient.send({
-      from: sender,
-      to: [{ email: email }],
-      subject: "Password Reset Request",
-      html: PASSWORD_RESET_REQUEST_TEMPLATE.replace("{resetURL}", resetLink),
-      category: "password-reset"
-    })
+    await transporter.sendMail(mailOptions)
+    console.log("Password reset email sent to: " + email)
   } catch (error) {
+    console.error("Error sending password reset email:", error)
     throw new AppError("Failed to send password reset email", StatusCodes.INTERNAL_SERVER_ERROR, "EMAIL_SEND_FAILED")
   }
 }
-
 
 const resetpswd = asyncHandler(async (req, res, next) => {
   const errors = validationResult(req)
@@ -124,28 +107,25 @@ const resetpswd = asyncHandler(async (req, res, next) => {
     }
   })
 
-  if (mailtrapClient) {
-    await sendPasswordResetSuccessEmail(user.email)
-  }
+  await sendPasswordResetSuccessEmail(user.email)
+
   res.status(200).json({ success: true, msg: "Password reset successful" })
 })
 
-
-
 const sendPasswordResetSuccessEmail = async (email) => {
-  if (!mailtrapClient) {
-    return;
+  const mailOptions = {
+    from: process.env.EMAIL,
+    to: email,
+    subject: "Password Reset Successful",
+    html: PASSWORD_RESET_SUCCESS_TEMPLATE,
+    replyTo: process.env.EMAIL
   }
 
   try {
-    await mailtrapClient.send({
-      from: sender,
-      to: [{ email: email }],
-      subject: "Password Reset successful",
-      html: PASSWORD_RESET_SUCCESS_TEMPLATE,
-      category: "password-reset"
-    })
+    await transporter.sendMail(mailOptions)
+    console.log("Password reset success email sent to: " + email)
   } catch (error) {
+    console.error("Error sending password reset success email:", error)
     throw new AppError("Failed to send password reset success email", StatusCodes.INTERNAL_SERVER_ERROR, "EMAIL_SEND_FAILED")
   }
 }
