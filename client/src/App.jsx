@@ -92,6 +92,23 @@ const hasAuthToken = () => {
   }
 };
 
+const clearStoredAuth = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+};
+
+const isSessionInvalidError = (err) => {
+  const status = Number(err?.status);
+  const code = String(err?.code || "").toUpperCase();
+  const message = String(err?.message || "").toLowerCase();
+
+  if (status === 401) return true;
+  if (status === 404 && code === "USER_NOT_FOUND") return true;
+  if (status === 404 && message.includes("user not found")) return true;
+
+  return false;
+};
+
 const publicScreens = new Set([
   "landing",
   "create",
@@ -168,6 +185,16 @@ export default function App() {
   const [shipmentsRefreshKey, setShipmentsRefreshKey] = useState(0);
   const [displayName, setDisplayName] = useState("User");
   const [resetToken, setResetToken] = useState("");
+
+  const forceLogoutToLogin = () => {
+    clearStoredAuth();
+    setCurrent("login");
+    setNext(null);
+    setPhase("idle");
+    if (location.pathname !== "/login") {
+      routerNavigate("/login", { replace: true });
+    }
+  };
 
   const clearResetPath = () => {
     routerNavigate("/", { replace: true });
@@ -270,6 +297,15 @@ export default function App() {
     let isMounted = true;
 
     const loadDisplayName = async () => {
+      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const fallback =
+        (storedUser?.email ? String(storedUser.email).split("@")[0] : "User");
+
+      if (!hasAuthToken()) {
+        if (isMounted) setDisplayName(fallback);
+        return;
+      }
+
       try {
         const profile = await getMyProfile();
         if (!isMounted) return;
@@ -279,10 +315,12 @@ export default function App() {
           (profile?.email ? String(profile.email).split("@")[0] : "User");
 
         setDisplayName(resolvedName);
-      } catch {
-        const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-        const fallback =
-          (storedUser?.email ? String(storedUser.email).split("@")[0] : "User");
+      } catch (err) {
+        if (!publicScreens.has(current) && isSessionInvalidError(err)) {
+          if (isMounted) forceLogoutToLogin();
+          return;
+        }
+
         if (isMounted) setDisplayName(fallback);
       }
     };
@@ -291,6 +329,42 @@ export default function App() {
 
     return () => {
       isMounted = false;
+    };
+  }, [current]);
+
+  useEffect(() => {
+    const handleAuthLogout = () => {
+      forceLogoutToLogin();
+    };
+
+    window.addEventListener("auth:logout", handleAuthLogout);
+
+    return () => {
+      window.removeEventListener("auth:logout", handleAuthLogout);
+    };
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!hasAuthToken() || publicScreens.has(current)) return;
+
+    let isActive = true;
+
+    const validateSession = async () => {
+      try {
+        await getMyProfile();
+      } catch (err) {
+        if (isActive && isSessionInvalidError(err)) {
+          forceLogoutToLogin();
+        }
+      }
+    };
+
+    validateSession();
+    const intervalId = setInterval(validateSession, 30000);
+
+    return () => {
+      isActive = false;
+      clearInterval(intervalId);
     };
   }, [current]);
 

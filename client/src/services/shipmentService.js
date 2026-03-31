@@ -1,4 +1,4 @@
-import API_URL, { getAuthHeaders, parseJson } from "./http";
+import API_URL, { getAuthHeaders, handleAuthFailure, parseJson } from "./http";
 
 export const createShipment = async (payload) => {
   const response = await fetch(`${API_URL}/shipments`, {
@@ -10,6 +10,7 @@ export const createShipment = async (payload) => {
   const data = await parseJson(response);
 
   if (!response.ok) {
+    handleAuthFailure(response, data);
     throw {
       status: response.status,
       message: data.message || `Server error: ${response.status}`,
@@ -28,6 +29,7 @@ export const getShipments = async () => {
   const data = await parseJson(response);
 
   if (!response.ok) {
+    handleAuthFailure(response, data);
     throw {
       status: response.status,
       message: data.message || `Server error: ${response.status}`,

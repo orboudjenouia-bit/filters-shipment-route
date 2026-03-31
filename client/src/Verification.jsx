@@ -74,6 +74,25 @@ export default function Verification({ onBack, onSuccess }) {
     if (value && index < 5) inputsRef.current[index + 1]?.focus();
   };
 
+  const handlePaste = (e, index) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "");
+    if (!pasted) return;
+
+    const nextCode = [...code];
+    const availableSlots = 6 - index;
+    const chars = pasted.slice(0, availableSlots).split("");
+
+    chars.forEach((char, offset) => {
+      nextCode[index + offset] = char;
+    });
+
+    setCode(nextCode);
+
+    const nextFocusIndex = Math.min(index + chars.length, 5);
+    inputsRef.current[nextFocusIndex]?.focus();
+  };
+
   const handleKeyDown = (e, index) => {
     if (e.key === "Backspace" && !code[index] && index > 0)
       inputsRef.current[index - 1]?.focus();
@@ -145,6 +164,7 @@ export default function Verification({ onBack, onSuccess }) {
               ref={el => (inputsRef.current[index] = el)}
               onChange={e => handleChange(e.target.value, index)}
               onKeyDown={e => handleKeyDown(e, index)}
+              onPaste={e => handlePaste(e, index)}
               className={`vf-code-input ${digit ? "vf-code-input--filled" : ""}`}
             />
           ))}

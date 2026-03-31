@@ -6,6 +6,7 @@ import {
   ArrowLeft, XCircle, AlertCircle, Check, X, Package
 } from "lucide-react";
 import { getMyProfile, getShipmentHistory, getRouteHistory, getVehicles } from "./services/profileService";
+import { logout } from "./services/authService";
 import "./Profile.css";
 
 const BellIcon = () => (
@@ -113,6 +114,18 @@ export default function Profile({ onNavigate }) {
   const [truckItems, setTruckItems] = useState([]);
 
   const verified = Boolean(userData.verified);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch {
+      // Proceed with client-side logout even if server logout fails.
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      onNavigate?.("landing");
+    }
+  };
 
   const handleNav = (tab) => {
     setActiveNav(tab);
@@ -617,7 +630,11 @@ export default function Profile({ onNavigate }) {
             { icon: <Bell size={18} />, label: "Notification Preferences", red: false },
             { icon: <LogOut size={18} />, label: "Logout", red: true },
           ].map((item, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "17px 20px", cursor: "pointer", ...(i < 2 ? { borderBottom: "1px solid var(--border-color)" } : {}) }}>
+            <div
+              key={i}
+              onClick={item.label === "Logout" ? handleLogout : undefined}
+              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "17px 20px", cursor: "pointer", ...(i < 2 ? { borderBottom: "1px solid var(--border-color)" } : {}) }}
+            >
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 <span style={{ color: item.red ? "#ef4444" : "var(--text-secondary)" }}>{item.icon}</span>
                 <span style={{ fontSize: 15, fontWeight: 500, color: item.red ? "#ef4444" : "var(--text-primary)", fontFamily: "inherit" }}>{item.label}</span>

@@ -1,4 +1,4 @@
-import API_URL, { getAuthHeaders, parseJson } from "./http";
+import API_URL, { getAuthHeaders, handleAuthFailure, parseJson } from "./http";
 
 export const IndividualProfile = async ({ full_Name, nin, location }) => {
   const response = await fetch(`${API_URL}/profile/individual`, {
@@ -10,6 +10,7 @@ export const IndividualProfile = async ({ full_Name, nin, location }) => {
   const data = await parseJson(response);
 
   if (!response.ok) {
+    handleAuthFailure(response, data);
     throw {
       status: response.status,
       code: data.code,
@@ -37,6 +38,7 @@ export const BusinessProfile = async ({
   const data = await parseJson(response);
 
   if (!response.ok) {
+    handleAuthFailure(response, data);
     throw {
       status: response.status,
       code: data.code,
@@ -56,6 +58,7 @@ export const getMyProfile = async () => {
   const data = await parseJson(response);
 
   if (!response.ok) {
+    handleAuthFailure(response, data);
     throw {
       status: response.status,
       code: data.code,
@@ -75,6 +78,7 @@ export const getShipmentHistory = async () => {
   const data = await parseJson(response);
 
   if (!response.ok) {
+    handleAuthFailure(response, data);
     throw {
       status: response.status,
       code: data.code,
@@ -94,6 +98,7 @@ export const getRouteHistory = async () => {
   const data = await parseJson(response);
 
   if (!response.ok) {
+    handleAuthFailure(response, data);
     throw {
       status: response.status,
       code: data.code,
@@ -113,6 +118,7 @@ export const getVehicles = async () => {
   const data = await parseJson(response);
 
   if (!response.ok) {
+    handleAuthFailure(response, data);
     throw {
       status: response.status,
       code: data.code,
@@ -141,6 +147,7 @@ export const createVehicle = async ({
   const data = await parseJson(response);
 
   if (!response.ok) {
+    handleAuthFailure(response, data);
     throw {
       status: response.status,
       code: data.code,
