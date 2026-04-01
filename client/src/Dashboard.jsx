@@ -161,6 +161,27 @@ export default function Dashboard({ onNavigate, userName = "User" }) {
             </svg>
           </button>
 
+          <div className="db-card" onClick={() => onNavigate("subscription")}>
+            <div className="db-card-img" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80")', backgroundSize: 'cover', backgroundPosition: 'center' }} />
+            <div className="db-card-body">
+              <div className="db-card-row">
+                <h3 className="db-card-title">Subscription Plans</h3>
+                <span className="db-badge db-badge--transit">UPGRADE</span>
+              </div>
+              <p className="db-card-desc">
+                Unlock premium features with our flexible plans.
+              </p>
+              <p className="db-card-time">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{marginRight:4}}>
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                Choose your momentum
+              </p>
+              <button className="db-view-btn">View Plans</button>
+            </div>
+          </div>
+
           <div className="db-card" onClick={() => onNavigate("shipmentDetails")}>
             <div className="db-card-img db-card-img--containers" />
             <div className="db-card-body">

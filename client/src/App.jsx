@@ -18,6 +18,7 @@ import CreateRoute from "./Createroute";
 import ShipmentDetails from "./Shipmentdetails";
 import CreateShipment from "./Createshipment";
 import { getMyProfile } from "./services/profileService";
+import SubscriptionPlans from './SubscriptionPlans';
 import "./App.css";
 
 const getPathForScreen = (screen, { shipmentId, resetToken } = {}) => {
@@ -58,6 +59,8 @@ const getPathForScreen = (screen, { shipmentId, resetToken } = {}) => {
       return resetToken
         ? `/resetpassword/${encodeURIComponent(String(resetToken))}`
         : "/resetpassword";
+    case "subscription":
+      return "/subscription";
     default:
       return "/";
   }
@@ -80,6 +83,7 @@ const publicScreens = new Set([
   "resetPassword",
   "individual",
   "business",
+  "subscription",
 ]);
 
 const hasSavedSession = () => {
@@ -123,6 +127,7 @@ const resolveScreenFromPath = (pathname) => {
   if (normalized === "/shipments/details") {
     return { screen: "shipmentDetails", shipmentId: null };
   }
+  if (normalized === "/subscription") return { screen: "subscription" };
 
   if (normalized.startsWith("/shipments/")) {
     const shipmentId = decodeURIComponent(normalized.split("/")[2] || "").trim();
@@ -439,6 +444,10 @@ export default function App() {
               }
             }}
           />
+        )}
+
+        {current === "subscription" && (
+          <SubscriptionPlans />
         )}
       </div>
     </ThemeProvider>
