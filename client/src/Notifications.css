@@ -1,0 +1,366 @@
+.notifications-screen {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  display: flex;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+}
+
+.notif-container {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100vh;
+  background: var(--bg-secondary);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+}
+
+.notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.notif-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notif-back-btn {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+.notif-back-btn:hover {
+  opacity: 0.7;
+}
+
+.notif-title {
+  flex: 1;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.notif-menu-btn {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+.notif-menu-btn:hover {
+  opacity: 0.7;
+}
+
+.notif-header-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+  min-width: 150px;
+  z-index: 1000;
+  margin-top: 4px;
+}
+
+.notif-menu-item {
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: background-color 0.2s;
+}
+
+.notif-menu-item:hover {
+  background-color: var(--bg-secondary);
+}
+
+.notif-menu-item--activate {
+  color: #22c55e;
+}
+
+.notif-menu-item--delete {
+  color: #ef4444;
+}
+
+.notif-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.notif-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.notif-tab {
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.notif-tab:hover {
+  background-color: var(--bg-secondary);
+}
+
+.notif-tab--active {
+  color: white;
+}
+
+.notif-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.notif-select-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.notif-select-read-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  background-color: #22c55e;
+  color: white;
+}
+
+.notif-select-read-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.notif-loading,
+.notif-error,
+.notif-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.notif-error {
+  color: #ef4444;
+}
+
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.notif-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s;
+  position: relative;
+}
+
+.notif-card--unread {
+  border-left: 4px solid #22c55e;
+  background-color: rgba(34, 197, 94, 0.05);
+}
+
+.notif-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.notif-card-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: var(--bg-secondary);
+}
+
+.notif-select-checkbox {
+  margin-top: 10px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #22c55e;
+}
+
+.notif-card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.notif-card-message {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.notif-card-time {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.notif-card-menu {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.notif-card-menu-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+}
+
+.notif-card-menu-btn:hover {
+  color: var(--text-primary);
+}
+
+.notif-card-right {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.notif-card-menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+  min-width: 140px;
+  margin-top: 4px;
+  z-index: 1001;
+}
+
+.notif-card-menu-dropdown .notif-menu-item {
+  padding: 10px 14px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.notif-card-menu-dropdown .notif-menu-item:last-child {
+  border-bottom: none;
+}
+
+/* Scrollbar styling */
+.notif-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notif-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.notif-content::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
+  border-radius: 3px;
+}
+
+.notif-content::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+  .notif-header {
+    padding: 12px 16px;
+  }
+
+  .notif-card {
+    padding: 12px;
+  }
+
+  .notif-tabs {
+    padding: 10px 16px;
+  }
+
+  .notif-content {
+    padding: 8px;
+  }
+
+  .notif-list {
+    gap: 8px;
+  }
+}

@@ -50,7 +50,7 @@ const normalizeStatus = (status) => {
   return "active";
 };
 
-export default function RoutesScreen({ onNavigate }) {
+export default function RoutesScreen({ onNavigate, hasUnreadNotifications = false }) {
   const [activeTab, setActiveTab] = useState("all");
   const [activeNav, setActiveNav] = useState("routes");
   const [routes, setRoutes] = useState([]);
@@ -60,17 +60,35 @@ export default function RoutesScreen({ onNavigate }) {
   useEffect(() => {
     let isMounted = true;
 
-    const normalizeRoute = (item, index) => ({
-      id: item?.route_ID || item?.id || `${index}-${item?.date || "route"}`,
-      userName:
-        item?.user?.individual?.full_Name ||
-        item?.user?.business?.business_Name ||
-        (item?.user?.email ? String(item.user.email).split("@")[0] : "Unknown user"),
-      name: item?.name || item?.route_Name || "Route",
-      time:
-        item?.date_type === "INTERVAL"
-          ? `${item?.interval_start || "-"} to ${item?.interval_end || "-"}`
-          : item?.date || item?.createdAtLabel || "No date",
+const formatCreatedAt = (createdAt) => {
+    if (!createdAt) return "No date";
+    try {
+      const date = new Date(createdAt);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) return "Today";
+      if (diffDays === 1) return "Yesterday";
+      if (diffDays < 7) return `${diffDays} days ago`;
+      if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+      return date.toLocaleDateString();
+    } catch {
+      return "No date";
+    }
+  };
+
+  const normalizeRoute = (item, index) => ({
+    id: item?.route_ID || item?.id || `${index}-${item?.date || "route"}`,
+    userName:
+      item?.user?.individual?.full_Name ||
+      item?.user?.business?.business_Name ||
+      (item?.user?.email ? String(item.user.email).split("@")[0] : "Unknown user"),
+    name: item?.name || item?.route_Name || "Route",
+    time:
+      item?.date_type === "INTERVAL"
+        ? `${item?.interval_start || "-"} to ${item?.interval_end || "-"}`
+        : item?.date || item?.createdAtLabel || formatCreatedAt(item?.createdAt),
       price: item?.priceLabel || (item?.price != null ? `${item.price} DA` : ""),
       postType: item?.post_type || "ORIGIN_DESTINATION",
       origin: item?.origin || "Origin not specified",
@@ -140,9 +158,9 @@ export default function RoutesScreen({ onNavigate }) {
           </div>
           <div className="sh-header-icons">
             <button className="sh-icon-btn" type="button" aria-label="Search routes"><SearchIcon /></button>
-            <button className="sh-icon-btn sh-bell" type="button" aria-label="Notifications">
+            <button className="sh-icon-btn sh-bell" type="button" aria-label="Notifications" onClick={() => onNavigate("notifications")}>
               <BellIcon />
-              <span className="sh-notif-dot" />
+              {hasUnreadNotifications && <span className="sh-notif-dot" />}
             </button>
             <ThemeToggle />
           </div>

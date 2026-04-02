@@ -96,7 +96,7 @@ const getHistoryIconType = (status) => {
   return "check";
 };
 
-export default function Profile({ onNavigate }) {
+export default function Profile({ onNavigate, hasUnreadNotifications = false }) {
   const [page, setPage] = useState("profile");
   const [activeNav, setActiveNav] = useState("profile");
   const [selectedTruck, setSelectedTruck] = useState(null);
@@ -445,7 +445,9 @@ export default function Profile({ onNavigate }) {
               <button
                 type="button"
                 aria-label="Notifications"
+                onClick={() => onNavigate("notifications")}
                 style={{
+                  position: "relative",
                   width: 36,
                   height: 36,
                   borderRadius: 10,
@@ -459,6 +461,19 @@ export default function Profile({ onNavigate }) {
                 }}
               >
                 <BellIcon />
+                {hasUnreadNotifications && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: 6,
+                      right: 6,
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: "#ef4444",
+                    }}
+                  />
+                )}
               </button>
             </div>
           </div>
@@ -626,13 +641,16 @@ export default function Profile({ onNavigate }) {
 
         <div style={{ background: "var(--bg-primary)", borderRadius: 16, margin: "0 16px", overflow: "hidden", border: "1px solid var(--border-color)", boxShadow: "var(--shadow-sm)" }}>
           {[
-            { icon: <Settings size={18} />, label: "Settings", red: false },
-            { icon: <Bell size={18} />, label: "Notification Preferences", red: false },
-            { icon: <LogOut size={18} />, label: "Logout", red: true },
+            { icon: <Settings size={18} />, label: "Settings", red: false, action: null },
+            { icon: <Bell size={18} />, label: "Notification Preferences", red: false, action: "notifications" },
+            { icon: <LogOut size={18} />, label: "Logout", red: true, action: "logout" },
           ].map((item, i) => (
             <div
               key={i}
-              onClick={item.label === "Logout" ? handleLogout : undefined}
+              onClick={() => {
+                if (item.action === "logout") handleLogout();
+                else if (item.action === "notifications") onNavigate("notifications");
+              }}
               style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "17px 20px", cursor: "pointer", ...(i < 2 ? { borderBottom: "1px solid var(--border-color)" } : {}) }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>

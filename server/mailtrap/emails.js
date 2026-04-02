@@ -18,7 +18,7 @@
 //   name: "wesseli-support"
 // }
 
-// const snedverificationemail = async (email, Tokenn) => {
+// const sendverificationemail = async (email, Tokenn) => {
 //   try {
 //     if (!mailtrapClient) {
 //       throw new Error("Mailtrap client not initialized. Check MAILTRAP_TOKEN in .env");
@@ -37,52 +37,38 @@
 //   }
 // }
 
-// module.exports = { snedverificationemail }
+// module.exports = { sendverificationemail }
 
+const express = require('express');
+const cors = require('cors');
+const nodemailer = require('nodemailer');
+const { VERIFICATION_EMAIL_TEMPLATE } = require('./emailTemplate.js');
+require('dotenv').config();
 
+const sendverificationemail = async (email, Tokenn) => {
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.EMAIL,
+            pass: process.env.PASSWORD,
+        },
+    });
 
-const express = require("express")
-const cors = require("cors")
-const nodemailer = require("nodemailer")
-const { VERIFICATION_EMAIL_TEMPLATE } = require("./emailTemplate.js")
-require("dotenv").config()
+    const mailOptions = {
+        from: process.env.EMAIL,
+        to: email,
+        subject: 'Email Verification',
+        html: VERIFICATION_EMAIL_TEMPLATE.replace('{verificationCode}', Tokenn),
+        replayTO: process.env.EMAIL,
+    };
 
-
-
-
-
-
-
-const snedverificationemail = async (email, Tokenn) => {
-
-
-const transporter = nodemailer.createTransport({
-  
-service : "gmail",
-auth : {
-    user : process.env.EMAIL,
-    pass : process.env.PASSWORD
-}
-})
-
-const mailOptions = {
-    from : process.env.EMAIL,
-    to : email,
-    subject : "Email Verification",
-    html : VERIFICATION_EMAIL_TEMPLATE.replace("{verificationCode}", Tokenn),
-    replayTO : process.env.EMAIL
-}
-
-
-transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-        console.error("Error sending email:", error);
-        throw new Error("Failed to send verification email");
-    } else {
-        console.log("Email sent: " + info.response);
-    }
-
-
-})
-}
- module.exports = { snedverificationemail }
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.error('Error sending email:', error);
+            throw new Error('Failed to send verification email');
+        } else {
+            console.log('Email sent: ' + info.response);
+        }
+    });
+};
+module.exports = { sendverificationemail };

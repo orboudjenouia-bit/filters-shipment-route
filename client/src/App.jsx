@@ -17,7 +17,9 @@ import Vehicle from "./Vehicle";
 import CreateRoute from "./Createroute";
 import ShipmentDetails from "./Shipmentdetails";
 import CreateShipment from "./Createshipment";
+import Notifications from "./Notifications";
 import { getMyProfile } from "./services/profileService";
+import { getNotifications } from "./services/notificationService";
 import "./App.css";
 
 const getPathForScreen = (screen, { shipmentId, resetToken } = {}) => {
@@ -58,6 +60,8 @@ const getPathForScreen = (screen, { shipmentId, resetToken } = {}) => {
       return resetToken
         ? `/resetpassword/${encodeURIComponent(String(resetToken))}`
         : "/resetpassword";
+    case "notifications":
+      return "/notifications";
     default:
       return "/";
   }
@@ -167,6 +171,10 @@ const resolveScreenFromPath = (pathname) => {
     return { screen: "resetPassword", resetToken: "" };
   }
 
+  if (normalized === "/notifications") {
+    return { screen: "notifications" };
+  }
+
   return { screen: "landing" };
 };
 
@@ -185,6 +193,8 @@ export default function App() {
   const [shipmentsRefreshKey, setShipmentsRefreshKey] = useState(0);
   const [displayName, setDisplayName] = useState("User");
   const [resetToken, setResetToken] = useState("");
+  const [notificationsBackScreen, setNotificationsBackScreen] = useState("dashboard");
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
   const forceLogoutToLogin = () => {
     clearStoredAuth();
@@ -212,6 +222,11 @@ export default function App() {
         (current === "shipmentDetails" ? shipmentDetailsBackScreen : current) ||
         "shipments";
       setShipmentDetailsBackScreen(previousScreen);
+    }
+
+    if (to === "notifications") {
+      const previousScreen = payload.from || current || "dashboard";
+      setNotificationsBackScreen(previousScreen);
     }
 
     const targetPath = getPathForScreen(to, {
@@ -368,6 +383,34 @@ export default function App() {
     };
   }, [current]);
 
+  useEffect(() => {
+    if (!hasAuthToken() || publicScreens.has(current)) {
+      setHasUnreadNotifications(false);
+      return;
+    }
+
+    let isMounted = true;
+
+    const refreshUnreadNotifications = async () => {
+      try {
+        const list = await getNotifications();
+        if (!isMounted) return;
+        setHasUnreadNotifications(list.some((item) => item?.isRead === false));
+      } catch {
+        if (!isMounted) return;
+        setHasUnreadNotifications(false);
+      }
+    };
+
+    refreshUnreadNotifications();
+    const intervalId = setInterval(refreshUnreadNotifications, 15000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, [current]);
+
   const goTo = (to, payload) => navigate(to, "forward", payload);
   const goBack = (to, payload) => navigate(to, "back", payload);
 
@@ -458,12 +501,14 @@ export default function App() {
           <Dashboard
             onNavigate={(screen) => goTo(screen)}
             userName={displayName}
+            hasUnreadNotifications={hasUnreadNotifications}
           />
         )}
 
         {current === "shipments" && (
           <Shipments
             refreshKey={shipmentsRefreshKey}
+            hasUnreadNotifications={hasUnreadNotifications}
             onNavigate={(screen, payload) => {
               goTo(screen, payload);
             }}
@@ -473,6 +518,7 @@ export default function App() {
 
         {current === "routes" && (
           <RoutesScreen
+            hasUnreadNotifications={hasUnreadNotifications}
             onNavigate={(screen, payload) => {
               goTo(screen, payload);
             }}
@@ -481,6 +527,7 @@ export default function App() {
 
         {current === "profile" && (
           <Profile
+            hasUnreadNotifications={hasUnreadNotifications}
             onNavigate={(screen, payload) => {
               goTo(screen, payload);
             }}
@@ -516,6 +563,18 @@ export default function App() {
                 setShipmentsRefreshKey((prev) => prev + 1);
                 goTo("shipmentDetails", { shipmentId });
               }
+            }}
+          />
+        )}
+
+        {current === "notifications" && (
+          <Notifications
+            onNavigate={(screen, payload) => {
+              goTo(screen, payload);
+            }}
+            onBack={() => goBack(notificationsBackScreen || "dashboard")}
+            onNotificationsChanged={(hasUnread) => {
+              setHasUnreadNotifications(Boolean(hasUnread));
             }}
           />
         )}

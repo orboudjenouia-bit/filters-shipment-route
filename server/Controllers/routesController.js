@@ -1,11 +1,10 @@
-const prisma = require("../config/prismaClient")
-const { validationResult } = require('express-validator')
-const AppError = require("../utils/AppError")
-const { StatusCodes } = require("http-status-codes");
+const prisma = require('../config/prismaClient');
+const { validationResult } = require('express-validator');
+const AppError = require('../utils/AppError');
+const { StatusCodes } = require('http-status-codes');
+const createNotifs = require('../utils/createNotifs');
 
-
-const listRoutes = async (req,res,next) => {
-    
+const listRoutes = async (req, res, next) => {
     const routes = await prisma.route.findMany({
         include: {
             vehicle: {
@@ -33,70 +32,106 @@ const listRoutes = async (req,res,next) => {
                 },
             },
         },
-    })
-    const total = await prisma.route.count()
+    });
+    const total = await prisma.route.count();
     res.status(StatusCodes.OK).json({
         success: true,
         routes,
-        total
-    })
+        total,
+    });
     
-}
+};
 
-const postRoute = async (req,res,next) => {
-    const errors = validationResult(req)
+const postRoute = async (req, res, next) => {
+    const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        throw new AppError("Validation Failed", StatusCodes.BAD_REQUEST, "VALIDATION_ERROR")
+        throw new AppError('Validation Failed', StatusCodes.BAD_REQUEST, 'VALIDATION_ERROR');
     }
-    
+
     const route = {
         user_ID: req.user.id,
-        ...req.body
-    }
+        ...req.body,
+    };
 
-    const add = await prisma.route.create({ data: route })
-    res.status(StatusCodes.CREATED).json({ msg: "Route Posted Successfully", data: add })
-}
+    const add = await prisma.route.create({ data: route });
 
-const editRoute = async (req,res,next) => {
-    const errors = validationResult(req)
+    await createNotifs(
+        req.user.id,
+        'Route Created',
+        `Route ${add.route_ID} Created Successfully`,
+        'routes',
+        'route',
+        add.route_ID
+    )
+
+    res.status(StatusCodes.CREATED).json({
+        msg: 'Route Posted Successfully',
+        data: add,
+    });
+};
+
+const editRoute = async (req, res, next) => {
+    const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        throw new AppError("Validation Failed", StatusCodes.BAD_REQUEST, "VALIDATION_ERROR")
+        throw new AppError('Validation Failed', StatusCodes.BAD_REQUEST, 'VALIDATION_ERROR');
     }
-    
-    const { route_ID, ...fields } = req.body
-    const routeId = parseInt(route_ID)
+
+    const { route_ID, ...fields } = req.body;
+    const routeId = parseInt(route_ID);
 
     const route = await prisma.route.findUnique({
-        where: { route_ID: routeId }
-    })
+        where: { route_ID: routeId },
+    });
 
     if (!route || route.user_ID != req.user.id) {
-        throw new AppError("Not authorized to update this route", StatusCodes.FORBIDDEN, "FORBIDDEN")
+        throw new AppError('Not authorized to update this route', StatusCodes.FORBIDDEN, 'FORBIDDEN');
     }
 
     const updateRoute = await prisma.route.update({
         where: { route_ID: routeId },
-        data: fields
-    })
-    res.status(StatusCodes.OK).json({ msg: "Route Updated Successfully", data: updateRoute })
-}
+        data: fields,
+    });
 
-const deleteRoute = async (req,res,next) => {
-    const { id } = parseInt(req.params)
+    await createNotifs(
+        req.user.id,
+        'Route Updated',
+        `Route ${routeId} Updated Successfully`,
+        'routes',
+        'route',
+        routeId
+    )
 
+    res.status(StatusCodes.OK).json({
+        msg: 'Route Updated Successfully',
+        data: updateRoute,
+    });
+};
+
+const deleteRoute = async (req, res, next) => {
+    const id = parseInt(req.params.id);
+    
     const route = await prisma.route.findUnique({
-        where: { route_ID: id }
-    })
+        where: { route_ID: id },
+    });
 
     if (!route || route.user_ID != req.user.id) {
-        throw new AppError("Not authorized to delete this route", StatusCodes.FORBIDDEN, "FORBIDDEN")
+        throw new AppError('Not authorized to delete this route', StatusCodes.FORBIDDEN, 'FORBIDDEN');
     }
 
     const deletedRoute = await prisma.route.delete({
-        where: { route_ID: id }
-    })
-    res.status(StatusCodes.OK).json({msg: "Route Deleted Successfully"})
-}
+        where: { route_ID: id },
+    });
 
-module.exports = { listRoutes, postRoute, editRoute, deleteRoute }
+    await createNotifs(
+        req.user.id,
+        'Route Deleted',
+        `Route ${id} Deleted Successfully`,
+        'routes',
+        'route',
+        id
+    )
+
+    res.status(StatusCodes.OK).json({ msg: 'Route Deleted Successfully' });
+};
+
+module.exports = { listRoutes, postRoute, editRoute, deleteRoute };

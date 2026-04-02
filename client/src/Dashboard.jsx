@@ -46,7 +46,7 @@ const ProfileIcon = ({ active }) => (
   </svg>
 );
 
-export default function Dashboard({ onNavigate, userName = "User" }) {
+export default function Dashboard({ onNavigate, userName = "User", hasUnreadNotifications = false }) {
   const [activeTab, setActiveTab] = useState("home");
   const [activeShipments, setActiveShipments] = useState(0);
   const [activeRoutes, setActiveRoutes] = useState(0);
@@ -129,9 +129,9 @@ export default function Dashboard({ onNavigate, userName = "User" }) {
           </div>
           <div className="db-header-icons">
             <button className="db-icon-btn"><SearchIcon /></button>
-            <button className="db-icon-btn db-bell">
+            <button className="db-icon-btn db-bell" onClick={() => onNavigate("notifications")}>
               <BellIcon />
-              <span className="db-notif-dot" />
+              {hasUnreadNotifications && <span className="db-notif-dot" />}
             </button>
             <ThemeToggle />
           </div>
