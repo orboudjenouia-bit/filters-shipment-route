@@ -19,6 +19,7 @@ import ShipmentDetails from "./Shipmentdetails";
 import CreateShipment from "./Createshipment";
 import Notifications from "./Notifications";
 import { getMyProfile } from "./services/profileService";
+import SubscriptionPlans from './SubscriptionPlans';
 import { getNotifications } from "./services/notificationService";
 import "./App.css";
 
@@ -60,6 +61,8 @@ const getPathForScreen = (screen, { shipmentId, resetToken } = {}) => {
       return resetToken
         ? `/resetpassword/${encodeURIComponent(String(resetToken))}`
         : "/resetpassword";
+    case "subscription":
+      return "/subscription";
     case "notifications":
       return "/notifications";
     default:
@@ -122,6 +125,7 @@ const publicScreens = new Set([
   "resetPassword",
   "individual",
   "business",
+  "subscription",
 ]);
 
 const resolveScreenFromPath = (pathname) => {
@@ -154,6 +158,10 @@ const resolveScreenFromPath = (pathname) => {
   if (normalized === "/vehicles/create") return { screen: "vehicle" };
   if (normalized === "/routes/create") return { screen: "createRoute" };
   if (normalized === "/shipments/create") return { screen: "createShipment" };
+  if (normalized === "/shipments/details") {
+    return { screen: "shipmentDetails", shipmentId: null };
+  }
+  if (normalized === "/subscription") return { screen: "subscription" };
 
   if (normalized.startsWith("/shipments/")) {
     const shipmentId = decodeURIComponent(normalized.split("/")[2] || "").trim();
@@ -567,6 +575,8 @@ export default function App() {
           />
         )}
 
+        {current === "subscription" && (
+          <SubscriptionPlans />
         {current === "notifications" && (
           <Notifications
             onNavigate={(screen, payload) => {
