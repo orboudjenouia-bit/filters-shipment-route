@@ -1,10 +1,10 @@
-const express = require('express')
-const router = express.Router()
-const checkToken = require("../Middlewares/checkToken")
-const asyncHandler = require("../utils/asyncHandler")
+const express = require('express');
+const router = express.Router();
+const checkToken = require('../Middlewares/checkToken');
+const asyncHandler = require('../utils/asyncHandler');
 
-const { getStats } = require("../Controllers/dashboardController")
+const { getStats } = require('../Controllers/dashboardController');
 
-router.get("/stats", checkToken, asyncHandler(getStats))
+router.get('/stats', checkToken, asyncHandler(getStats));
 
-module.exports = router
+module.exports = router;

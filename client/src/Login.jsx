@@ -31,7 +31,11 @@ export default function Login({ onBack, onSuccess, onCreateAccount, onForgotPass
     if (!form.email || !form.password) { showError("Please fill in all fields."); return; }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(form.email)) { showError("Please enter a valid email address."); return; }
-    if (form.password.length < 6) { showError("Password must be at least 6 characters."); return; }
+    const passwordRegex = /^[A-Za-z0-9]{10,}$/;
+    if (!passwordRegex.test(form.password)) {
+      showError("Password must be at least 10 alphanumeric characters.");
+      return;
+    }
 
     try {
       setLoading(true); setError("");

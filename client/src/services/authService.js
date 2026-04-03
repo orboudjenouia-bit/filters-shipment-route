@@ -1,12 +1,4 @@
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:4000/api";
-
-const parseJson = async (response) => {
-  try {
-    return await response.json();
-  } catch {
-    return {};
-  }
-};
+import API_URL, { getAuthHeaders, handleAuthFailure, parseJson } from "./http";
 
 export const register = async (email, password, phone, type) => {
   const response = await fetch(`${API_URL}/auth/register`, {
@@ -82,6 +74,34 @@ export const resetPassword = async (token, password) => {
       status: response.status,
       code: data.code,
       message: data.message || "Failed to reset password",
+    };
+  }
+
+  return data;
+};
+
+export const logout = async () => {
+  let headers;
+
+  try {
+    headers = getAuthHeaders();
+  } catch (err) {
+    return { success: true, msg: "Already logged out" };
+  }
+
+  const response = await fetch(`${API_URL}/auth/logout`, {
+    method: "POST",
+    headers,
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    handleAuthFailure(response, data);
+    throw {
+      status: response.status,
+      code: data.code,
+      message: data.message || "Logout failed",
     };
   }
 

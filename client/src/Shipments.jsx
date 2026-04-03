@@ -44,7 +44,7 @@ const ProfileIcon = ({ active }) => (
   </svg>
 );
 
-export default function Shipments({ onNavigate, onBack, refreshKey = 0 }) {
+export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnreadNotifications = false }) {
   const [activeTab, setActiveTab] = useState("all");
   const [activeNav, setActiveNav] = useState("shipments");
   const [shipments, setShipments] = useState([]);
@@ -59,6 +59,24 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0 }) {
       storedUser?.business_Name ||
       storedUser?.name 
 
+    const formatCreatedAt = (createdAt) => {
+      if (!createdAt) return "Recently";
+      try {
+        const date = new Date(createdAt);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) return "Today";
+        if (diffDays === 1) return "Yesterday";
+        if (diffDays < 7) return `${diffDays} days ago`;
+        if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+        return date.toLocaleDateString();
+      } catch {
+        return "Recently";
+      }
+    };
+
     const normalizeShipment = (item, index) => {
       const routeText = item?.route || item?.routeName || "";
       const routeParts = String(routeText).split(/->|→|-/).map((part) => part.trim());
@@ -71,7 +89,7 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0 }) {
           item?.user?.individual?.full_Name ||
           item?.user?.business?.business_Name ||
           fallbackName,
-        time: item?.createdAtLabel || "Recently",
+        time: item?.createdAtLabel || formatCreatedAt(item?.createdAt),
         price:
           item?.priceLabel ||
           (item?.price != null ? `${item.price} DA` : "Price not specified"),
@@ -145,9 +163,9 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0 }) {
           </div>
           <div className="sh-header-icons">
             <button className="sh-icon-btn"><SearchIcon /></button>
-            <button className="sh-icon-btn sh-bell">
+            <button className="sh-icon-btn sh-bell" onClick={() => onNavigate("notifications")}>
               <BellIcon />
-              <span className="sh-notif-dot" />
+              {hasUnreadNotifications && <span className="sh-notif-dot" />}
             </button>
             <ThemeToggle />
           </div>

@@ -1,0 +1,1 @@
+-- No-op: superseded by later migrations that normalize verificationToken type.

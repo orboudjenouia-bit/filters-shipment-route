@@ -38,17 +38,24 @@ model User {
   type          UserType
   role          Roles
   status        String  @default("Active")
+  createdAt     DateTime @default(now())
+
+  resetPasswordToken String?
+  resetPasswordExpires DateTime?
+  verificationToken String? @db.VarChar(10)
+  verificationTokenExpires DateTime?
+  isVerified Boolean @default(false)
 
   individual    Individual?
   business      Business?
   subscription  Subscription?
+  notifSettings NotificationSettings?
 
-  vehicles      Vehicle[]
-  shipments     Shipment[]
-  routes        Route[]
-
-  resetPasswordToken String?
-  resetPasswordExpires DateTime?
+  vehicles       Vehicle[]
+  shipments      Shipment[]
+  routes         Route[]
+  notifications  Notification[]
+  
 }
 
 model Individual {
@@ -75,6 +82,9 @@ model Business {
 model Vehicle {
   plate_Number  Int     @id
   vehicle_Name  String  
+  type          String?
+  color         String?
+  year          Int?
   capacity      Int
   photo         String
   deleted_at    DateTime?
@@ -87,6 +97,8 @@ model Vehicle {
 
 model Route {
   route_ID          Int     @id @unique @default(autoincrement())
+  name              String?
+  photo             String? @db.Text
   origin            String? 
   destination       String? 
   region            String?
@@ -97,6 +109,7 @@ model Route {
   interval_end      String? @db.VarChar(10)
   more_Information  String?  @db.Text
   status            String  @default("Active")
+  createdAt         DateTime @default(now())
 
   
   user_ID           Int
@@ -111,14 +124,19 @@ model Route {
 
 model Shipment {
   shipment_ID         Int     @id @default(autoincrement())
+  title               String?
+  category            String?
+  photo               String? @db.Text
   origin              String  
   destination         String  
   volume              Int
   weight              Int                    
   date                String  @db.VarChar(11) 
+  time                String? @db.VarChar(5)
   priority            String  @default("Normal")
   special_Information String? @db.Text
   status              String  @default("In-Stock")
+  createdAt           DateTime @default(now())
 
   user_ID             Int
   user                User    @relation(fields: [user_ID], references: [id])
@@ -127,11 +145,39 @@ model Shipment {
 
 model Subscription {
   sub_ID     Int        @id @default(autoincrement())
-  tier       String     @default("Free-Tier")
-  rest_Time  DateTime   
-  
+  tier       String     
+  startDate  DateTime   
+  endDate    DateTime?
+  isActive   Boolean   @default(true)
+
 
   user_ID   Int        @unique
   user      User       @relation(fields: [user_ID], references: [id])
 
+}
+
+model Notification {
+  notif_ID   Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now())
+  title      String
+  message    String
+  type       String 
+  isRead     Boolean  @default(false)
+  entityType String
+  entityID   Int
+
+  user_ID    Int
+  user       User     @relation(fields: [user_ID], references: [id])
+}
+
+model NotificationSettings {
+  id               Int     @id @default(autoincrement())
+  emailEnabled     Boolean @default(true)
+  pushEnabled      Boolean @default(true)
+  shipmentUpdates  Boolean @default(true)
+  routeUpdates     Boolean @default(true)
+  Reminders        Boolean @default(true)
+
+  user_ID          Int    @unique
+  user             User   @relation(fields: [user_ID], references: [id])
 }

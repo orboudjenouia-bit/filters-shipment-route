@@ -32,6 +32,14 @@ export default function CreateShipment({ onBack, onCreated }) {
     setPhotos(files.slice(0, 5));
   };
 
+  const fileToDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(new Error("Failed to read selected photo."));
+      reader.readAsDataURL(file);
+    });
+
   const handleSubmit = async () => {
     const isValid =
       form.title &&
@@ -68,17 +76,23 @@ export default function CreateShipment({ onBack, onCreated }) {
       setError("");
       setSuccess(false);
 
+      const photoData = photos[0] ? await fileToDataUrl(photos[0]) : null;
+
       const payload = {
+        title: form.title.trim(),
+        category: form.category,
+        photo: photoData,
         origin: form.pickup.trim(),
         destination: form.delivery.trim(),
         volume,
         weight,
         date: form.date,
+        time: form.time,
         priority: form.priority,
         special_Information: form.description.trim() || null
       };
 
-      const createdShipment = await createShipment(payload, token);
+      const createdShipment = await createShipment(payload);
 
       setSuccess(true);
       setForm({

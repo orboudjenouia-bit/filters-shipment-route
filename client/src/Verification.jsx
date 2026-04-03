@@ -2,19 +2,27 @@ import { useState, useRef, useEffect } from "react";
 import ThemeToggle from "./ThemeToggle";
 import "./Verification.css";
 import myemail from "./photo/mail.svg";
-import { verifyCode } from "./services/verificationService";
+import { verifyCode, resendVerificationCode } from "./services/verificationService";
 
 export default function Verification({ onBack, onSuccess }) {
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [timeLeft, setTimeLeft] = useState(60);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
   const inputsRef = useRef([]);
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 30);
     return () => clearTimeout(t);
+  }, []);
+
+  // Get user email from localStorage (set during registration)
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    setUserEmail(user.email || "your@email.com");
   }, []);
 
   useEffect(() => {
@@ -40,14 +48,14 @@ export default function Verification({ onBack, onSuccess }) {
     try {
       const data = await verifyCode(codeStr);
       setLoading(false);
-      if (data.access === true) {
+      if (data?.success === true) {
         if (onSuccess) onSuccess();
       } else {
-        showError(data.message || "Invalid code. Please try again.");
+        showError(data?.msg || data?.message || "Invalid code. Please try again.");
         setCode(["", "", "", "", "", ""]);
         setTimeout(() => inputsRef.current[0]?.focus(), 100);
       }
-    } catch {
+    } catch (err) {
       setLoading(false);
       showError("Could not reach the server. Check your connection.");
     }
@@ -66,17 +74,50 @@ export default function Verification({ onBack, onSuccess }) {
     if (value && index < 5) inputsRef.current[index + 1]?.focus();
   };
 
+  const handlePaste = (e, index) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "");
+    if (!pasted) return;
+
+    const nextCode = [...code];
+    const availableSlots = 6 - index;
+    const chars = pasted.slice(0, availableSlots).split("");
+
+    chars.forEach((char, offset) => {
+      nextCode[index + offset] = char;
+    });
+
+    setCode(nextCode);
+
+    const nextFocusIndex = Math.min(index + chars.length, 5);
+    inputsRef.current[nextFocusIndex]?.focus();
+  };
+
   const handleKeyDown = (e, index) => {
     if (e.key === "Backspace" && !code[index] && index > 0)
       inputsRef.current[index - 1]?.focus();
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (timeLeft > 0) return;
-    setTimeLeft(60);
-    setCode(["", "", "", "", "", ""]);
-    setError("");
-    setTimeout(() => inputsRef.current[0]?.focus(), 100);
+    
+    setResending(true);
+    try {
+      const data = await resendVerificationCode(userEmail);
+      if (data?.success) {
+        setTimeLeft(60);
+        setCode(["", "", "", "", "", ""]);
+        setError("");
+        showError("Code resent successfully!");
+        setTimeout(() => inputsRef.current[0]?.focus(), 100);
+      } else {
+        showError(data?.message || "Failed to resend code");
+      }
+    } catch (err) {
+      showError("Could not resend code. Try again later.");
+    } finally {
+      setResending(false);
+    }
   };
 
   const allFilled = code.every(d => d !== "");
@@ -109,16 +150,21 @@ export default function Verification({ onBack, onSuccess }) {
 
         <h1 className="vf-title">Verify your email</h1>
         <p className="vf-subtitle">
-          We've sent a 6-digit code to <strong>alex@example.com</strong>. Enter it below to continue.
+          We've sent a 6-digit code to <strong>{userEmail}</strong>. Enter it below to continue.
         </p>
 
         <div className="vf-code-inputs">
           {code.map((digit, index) => (
             <input
-              key={index} type="text" inputMode="numeric" maxLength="1" value={digit}
+              key={index} 
+              type="text" 
+              inputMode="numeric" 
+              maxLength="1" 
+              value={digit}
               ref={el => (inputsRef.current[index] = el)}
               onChange={e => handleChange(e.target.value, index)}
               onKeyDown={e => handleKeyDown(e, index)}
+              onPaste={e => handlePaste(e, index)}
               className={`vf-code-input ${digit ? "vf-code-input--filled" : ""}`}
             />
           ))}
@@ -137,7 +183,9 @@ export default function Verification({ onBack, onSuccess }) {
 
         <button
           className={`vf-verify-btn ${allFilled ? "vf-verify-btn--ready" : ""} ${loading ? "vf-verify-btn--loading" : ""}`}
-          onClick={handleSubmit} disabled={loading} type="button"
+          onClick={handleSubmit} 
+          disabled={loading} 
+          type="button"
         >
           {loading ? <span className="vf-spinner" /> : "Verify"}
         </button>
@@ -147,8 +195,9 @@ export default function Verification({ onBack, onSuccess }) {
           <span
             className={`vf-resend-link ${timeLeft === 0 ? "vf-resend-link--active" : "vf-resend-link--disabled"}`}
             onClick={handleResend}
+            style={{ cursor: timeLeft === 0 && !resending ? "pointer" : "default" }}
           >
-            Resend {timeLeft > 0 && `(${timeLeft}s)`}
+            {resending ? "Sending..." : `Resend ${timeLeft > 0 && `(${timeLeft}s)`}`}
           </span>
         </p>
 

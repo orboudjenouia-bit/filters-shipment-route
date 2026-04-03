@@ -1,0 +1,1 @@
+-- No-op: superseded by immediate follow-up migration that makes verificationToken optional.
