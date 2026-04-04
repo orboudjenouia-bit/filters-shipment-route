@@ -18,7 +18,7 @@ router.post(
     authToken,
     [
         check('name', 'Route name is required').notEmpty().isString(),
-        check('photo', 'Photo must be a string').optional().isString(),
+        check('photo', 'Photo must be a string').optional(),
         check('origin', 'Origin must be a string')
             .optional({ nullable: true })
             .isString(),

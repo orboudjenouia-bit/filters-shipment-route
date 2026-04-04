@@ -22,11 +22,11 @@ const createNotifs = async (
             "NO_NOTIFS")
     }
 
-    if (entityID === undefined || entityID === null || entityID === "") {
+    if (entityID === undefined || entityID === 0 || entityID === "") {
         entityID = 0
     } else {
         entityID = parseInt(entityID)
-        if (!entityID)) {
+        if (!entityID) {
             throw new AppError(
                 "Invalid IDs to create Notification",
                 StatusCodes.BAD_REQUEST,
@@ -43,6 +43,7 @@ const createNotifs = async (
         })    
         return notif
     } catch (error) {
+        console.log(error)
         throw new AppError("Error Creating Notification",
             StatusCodes.INTERNAL_SERVER_ERROR,
             "PRISMA_ERROR"

@@ -66,7 +66,7 @@ router.post(
         check('capacity', 'Capacity is required and must be numeric')
             .notEmpty()
             .isNumeric(),
-        check('photo', 'Photo must be a string').optional().isString(),
+        check('photo', 'Photo must be a string').optional(),
     ],
     asyncHandler(createVehicle)
 );

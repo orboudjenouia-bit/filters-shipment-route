@@ -19,7 +19,7 @@ router.post(
     [
         check('title', 'Title is required').notEmpty().isString(),
         check('category', 'Category is required').notEmpty().isString(),
-        check('photo', 'Photo must be a string').optional().isString(),
+        check('photo', 'Photo must be a string').optional(),
         check('origin', 'Origin is required').notEmpty().isString(),
         check('destination', 'Destination is required').notEmpty().isString(),
         check('volume', 'Volume is required and must be a number')

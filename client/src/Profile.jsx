@@ -178,10 +178,16 @@ export default function Profile({ onNavigate, hasUnreadNotifications = false }) 
 
         if (!isMounted) return;
 
+        const businessLocations = Array.isArray(profile?.business?.locations)
+          ? profile.business.locations.map((value) => String(value || "").trim()).filter(Boolean)
+          : [];
+        const businessLocationText =
+          businessLocations.length > 1 ? businessLocations.join(", ") : businessLocations[0] || "";
+
         setUserData({
           verified: Boolean(profile?.individual || profile?.business),
           name: profile?.displayName || "",
-          location: profile?.individual?.location || profile?.business?.locations?.[0] || "",
+          location: profile?.individual?.location || businessLocationText,
           rating: Number(profile?.rating ?? 0),
           reviews: Number(profile?.reviews ?? 0),
           email: profile?.email || "",
@@ -481,7 +487,12 @@ export default function Profile({ onNavigate, hasUnreadNotifications = false }) 
           <div style={{ height: 1, background: "var(--border-color)", margin: "0 20px" }} />
 
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "28px 20px 30px", gap: 10 }}>
-            <div style={{ position: "relative" }}>
+            <button
+              type="button"
+              onClick={() => onNavigate?.("editProfile")}
+              aria-label="Edit profile photo"
+              style={{ position: "relative", background: "none", border: "none", padding: 0, cursor: "pointer" }}
+            >
               <div style={{ width: 100, height: 100, borderRadius: "50%", padding: 3, border: `3px solid ${verified ? "#22c55e" : "#ef4444"}` }}>
                 {userData.profilePhoto ? (
                   <img src={userData.profilePhoto} alt="profile" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
@@ -508,7 +519,7 @@ export default function Profile({ onNavigate, hasUnreadNotifications = false }) 
               >
                 {verified ? <Check size={13} color="#ffffff" strokeWidth={3} /> : <X size={13} color="#ffffff" strokeWidth={3} />}
               </div>
-            </div>
+            </button>
             <div style={{ borderRadius: 20, padding: "3px 12px", display: "flex", alignItems: "center", gap: 5, background: verified ? "#e8faf2" : "#fff0f0" }}>
               {verified ? <CheckCircle size={13} color="#22c55e" /> : <XCircle size={13} color="#ef4444" />}
               <span style={{ fontSize: 12, fontWeight: 600, color: verified ? "#22c55e" : "#ef4444" }}>{verified ? "Verified" : "Not Verified"}</span>
@@ -523,7 +534,11 @@ export default function Profile({ onNavigate, hasUnreadNotifications = false }) 
               <span style={{ color: "#22c55e", fontWeight: 700, fontSize: 14 }}>{userData.rating}/5 Rating</span>
               <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>({userData.reviews} Reviews)</span>
             </div>
-            <button style={{ marginTop: 8, background: "var(--text-primary)", color: "var(--bg-secondary)", border: "none", borderRadius: 28, padding: "13px 36px", fontFamily: "inherit", fontWeight: 700, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, letterSpacing: "1px" }}>
+            <button
+              style={{ marginTop: 8, background: "var(--text-primary)", color: "var(--bg-secondary)", border: "none", borderRadius: 28, padding: "13px 36px", fontFamily: "inherit", fontWeight: 700, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, letterSpacing: "1px" }}
+              onClick={() => onNavigate?.("editProfile")}
+              type="button"
+            >
               <Edit3 size={15} /> EDIT PROFILE
             </button>
           </div>
@@ -641,17 +656,16 @@ export default function Profile({ onNavigate, hasUnreadNotifications = false }) 
 
         <div style={{ background: "var(--bg-primary)", borderRadius: 16, margin: "0 16px", overflow: "hidden", border: "1px solid var(--border-color)", boxShadow: "var(--shadow-sm)" }}>
           {[
-            { icon: <Settings size={18} />, label: "Settings", red: false, action: null },
-            { icon: <Bell size={18} />, label: "Notification Preferences", red: false, action: "notifications" },
+            { icon: <Settings size={18} />, label: "Settings", red: false, action: "profileSettings" },
             { icon: <LogOut size={18} />, label: "Logout", red: true, action: "logout" },
-          ].map((item, i) => (
+          ].map((item, i, arr) => (
             <div
               key={i}
               onClick={() => {
                 if (item.action === "logout") handleLogout();
-                else if (item.action === "notifications") onNavigate("notifications");
+                else if (item.action === "profileSettings") onNavigate("profileSettings");
               }}
-              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "17px 20px", cursor: "pointer", ...(i < 2 ? { borderBottom: "1px solid var(--border-color)" } : {}) }}
+              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "17px 20px", cursor: "pointer", ...(i < arr.length - 1 ? { borderBottom: "1px solid var(--border-color)" } : {}) }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 <span style={{ color: item.red ? "#ef4444" : "var(--text-secondary)" }}>{item.icon}</span>

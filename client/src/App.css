@@ -9,6 +9,7 @@
   --border-color: #e2e8f0;
   --button-secondary-bg: #f1f5f9;
   --button-secondary-hover: #e2e8f0;
+  --logo-box-bg: #e5e7eb;
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
@@ -23,6 +24,7 @@
   --border-color: #334155;
   --button-secondary-bg: #334155;
   --button-secondary-hover: #475569;
+  --logo-box-bg: #334155;
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5);

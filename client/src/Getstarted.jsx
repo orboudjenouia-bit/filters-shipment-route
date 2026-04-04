@@ -1,15 +1,16 @@
 import React from 'react';
-import { Truck, ArrowRight, CheckCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import './Getstarted.css';
 import driverImg from './photo/driverimg.jpg';
+import logoSvg from './photo/Logo.svg';
 
 const LandingPage = ({ onGetStarted, onLogin }) => {
   return (
     <div className="gs-container">
       <header className="gs-header">
         <div className="gs-logo-box">
-          <Truck size={20} color="white" strokeWidth={2.5} />
+          <img src={logoSvg} alt="Wesselli logo" className="gs-logo-mark" />
         </div>
         <span className="gs-brand">Wesselli</span>
         <ThemeToggle />

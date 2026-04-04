@@ -1,14 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import ThemeToggle from "./ThemeToggle";
+import logoSvg from "./photo/Logo.svg";
 import "./Shipments.css";
 import { getShipments } from "./services/shipmentService";
-
-const SearchIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2"/>
-    <path d="M16.5 16.5L21 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-  </svg>
-);
 
 const BellIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -153,16 +147,11 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnrea
         <div className="sh-header">
           <div className="sh-logo-row">
             <div className="sh-logo-box">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx="5.5" cy="18.5" r="2.5" stroke="white" strokeWidth="2"/>
-                <circle cx="18.5" cy="18.5" r="2.5" stroke="white" strokeWidth="2"/>
-              </svg>
+              <img src={logoSvg} alt="Wesselli logo" className="sh-logo-mark" />
             </div>
             <span className="sh-brand">WESSELLI</span>
           </div>
           <div className="sh-header-icons">
-            <button className="sh-icon-btn"><SearchIcon /></button>
             <button className="sh-icon-btn sh-bell" onClick={() => onNavigate("notifications")}>
               <BellIcon />
               {hasUnreadNotifications && <span className="sh-notif-dot" />}

@@ -13,6 +13,7 @@ const listUsers = async (req, res, next) => {
             phone: true,
             type: true,
             role: true,
+            status: true,
             individual: {
                 select: {
                     full_Name: true,

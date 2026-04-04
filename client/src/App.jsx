@@ -18,10 +18,29 @@ import CreateRoute from "./Createroute";
 import ShipmentDetails from "./Shipmentdetails";
 import CreateShipment from "./Createshipment";
 import Notifications from "./Notifications";
+import AdminPanel from "./AdminPanel";
+import UsersList from "./UsersList";
+import EditProfilePage from "./EditProfilePage";
+import ProfileSettingsPage from "./ProfileSettingsPage";
+import ActiveDevicesPage from "./ActiveDevicesPage";
 import { getMyProfile } from "./services/profileService";
 import SubscriptionPlans from './SubscriptionPlans';
 import { getNotifications } from "./services/notificationService";
 import "./App.css";
+
+const ADMIN_ROLE = "ADMIN";
+
+const isAdminRole = (role) =>
+  String(role || "").trim().toUpperCase() === ADMIN_ROLE;
+
+const getStoredRole = () => {
+  try {
+    const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+    return storedUser?.role || "USER";
+  } catch {
+    return "USER";
+  }
+};
 
 const getPathForScreen = (screen, { shipmentId, resetToken } = {}) => {
   switch (screen) {
@@ -47,6 +66,12 @@ const getPathForScreen = (screen, { shipmentId, resetToken } = {}) => {
       return "/routes";
     case "profile":
       return "/profile";
+    case "editProfile":
+      return "/profile/edit";
+    case "profileSettings":
+      return "/profile/settings";
+    case "activeDevices":
+      return "/profile/settings/devices";
     case "vehicle":
       return "/vehicles/create";
     case "createRoute":
@@ -65,6 +90,10 @@ const getPathForScreen = (screen, { shipmentId, resetToken } = {}) => {
       return "/subscription";
     case "notifications":
       return "/notifications";
+    case "adminPanel":
+      return "/adminPanel";
+    case "usersList":
+      return "/adminPanel/users";
     default:
       return "/";
   }
@@ -128,6 +157,8 @@ const publicScreens = new Set([
   "subscription",
 ]);
 
+const adminOnlyScreens = new Set(["adminPanel", "usersList"]);
+
 const resolveScreenFromPath = (pathname) => {
   const normalized = pathname.replace(/\/+$/, "") || "/";
 
@@ -155,6 +186,9 @@ const resolveScreenFromPath = (pathname) => {
   if (normalized === "/shipments") return { screen: "shipments" };
   if (normalized === "/routes") return { screen: "routes" };
   if (normalized === "/profile") return { screen: "profile" };
+  if (normalized === "/profile/edit") return { screen: "editProfile" };
+  if (normalized === "/profile/settings") return { screen: "profileSettings" };
+  if (normalized === "/profile/settings/devices") return { screen: "activeDevices" };
   if (normalized === "/vehicles/create") return { screen: "vehicle" };
   if (normalized === "/routes/create") return { screen: "createRoute" };
   if (normalized === "/shipments/create") return { screen: "createShipment" };
@@ -183,6 +217,14 @@ const resolveScreenFromPath = (pathname) => {
     return { screen: "notifications" };
   }
 
+  if (normalized === "/adminPanel") {
+    return { screen: "adminPanel" };
+  }
+
+  if (normalized === "/adminPanel/users") {
+    return { screen: "usersList" };
+  }
+
   return { screen: "landing" };
 };
 
@@ -190,6 +232,7 @@ export default function App() {
   const location = useLocation();
   const routerNavigate = useNavigate();
   const pendingPathRef = useRef(null);
+  const backStackRef = useRef([]);
 
   const [current, setCurrent] = useState("landing");
   const [next, setNext] = useState(null);
@@ -200,6 +243,7 @@ export default function App() {
   const [shipmentDetailsBackScreen, setShipmentDetailsBackScreen] = useState("shipments");
   const [shipmentsRefreshKey, setShipmentsRefreshKey] = useState(0);
   const [displayName, setDisplayName] = useState("User");
+  const [userRole, setUserRole] = useState(getStoredRole());
   const [resetToken, setResetToken] = useState("");
   const [notificationsBackScreen, setNotificationsBackScreen] = useState("dashboard");
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
@@ -221,10 +265,23 @@ export default function App() {
   const navigate = (to, dir = "forward", payload = {}) => {
     if (phase !== "idle") return;
 
+    let resolvedTarget = to;
+
+    if (dir === "forward" && current && current !== to) {
+      backStackRef.current.push(current);
+    }
+
+    if (dir === "back") {
+      const previous = backStackRef.current.pop();
+      resolvedTarget = previous || to || "dashboard";
+    }
+
+    if (adminOnlyScreens.has(resolvedTarget) && !isAdminRole(userRole)) return;
+
     const nextShipmentId = payload.shipmentId ?? selectedShipmentId;
     const nextResetToken = payload.token ?? resetToken;
 
-    if (to === "shipmentDetails") {
+    if (resolvedTarget === "shipmentDetails") {
       const previousScreen =
         payload.from ||
         (current === "shipmentDetails" ? shipmentDetailsBackScreen : current) ||
@@ -232,12 +289,12 @@ export default function App() {
       setShipmentDetailsBackScreen(previousScreen);
     }
 
-    if (to === "notifications") {
+    if (resolvedTarget === "notifications") {
       const previousScreen = payload.from || current || "dashboard";
       setNotificationsBackScreen(previousScreen);
     }
 
-    const targetPath = getPathForScreen(to, {
+    const targetPath = getPathForScreen(resolvedTarget, {
       shipmentId: nextShipmentId,
       resetToken: nextResetToken,
     });
@@ -245,21 +302,30 @@ export default function App() {
     if (payload.shipmentId != null) {
       setSelectedShipmentId(payload.shipmentId);
     }
-    if (to === "resetPassword") {
+    if (resolvedTarget === "resetPassword") {
       setResetToken(nextResetToken || "");
     }
 
     pendingPathRef.current = targetPath;
     setDirection(dir);
-    setNext(to);
+    setNext(resolvedTarget);
     setPhase("exit");
   };
 
   useEffect(() => {
     const routeState = resolveScreenFromPath(location.pathname);
+    const roleFromStorage = getStoredRole();
 
     if (routeState.redirectTo && location.pathname !== routeState.redirectTo) {
       routerNavigate(routeState.redirectTo, { replace: true });
+      return;
+    }
+
+    if (adminOnlyScreens.has(routeState.screen) && !isAdminRole(userRole || roleFromStorage)) {
+      routerNavigate("/dashboard", { replace: true });
+      setCurrent("dashboard");
+      setNext(null);
+      setPhase("idle");
       return;
     }
 
@@ -286,7 +352,7 @@ export default function App() {
       setNext(null);
       setPhase("idle");
     }
-  }, [location.pathname, current, routerNavigate]);
+  }, [location.pathname, current, routerNavigate, userRole]);
 
   useEffect(() => {
     if (phase === "exit") {
@@ -323,9 +389,13 @@ export default function App() {
       const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
       const fallback =
         (storedUser?.email ? String(storedUser.email).split("@")[0] : "User");
+      const fallbackRole = storedUser?.role || "USER";
 
       if (!hasAuthToken()) {
-        if (isMounted) setDisplayName(fallback);
+        if (isMounted) {
+          setDisplayName(fallback);
+          setUserRole(fallbackRole);
+        }
         return;
       }
 
@@ -338,13 +408,17 @@ export default function App() {
           (profile?.email ? String(profile.email).split("@")[0] : "User");
 
         setDisplayName(resolvedName);
+        setUserRole(profile?.role || fallbackRole);
       } catch (err) {
         if (!publicScreens.has(current) && isSessionInvalidError(err)) {
           if (isMounted) forceLogoutToLogin();
           return;
         }
 
-        if (isMounted) setDisplayName(fallback);
+        if (isMounted) {
+          setDisplayName(fallback);
+          setUserRole(fallbackRole);
+        }
       }
     };
 
@@ -509,6 +583,7 @@ export default function App() {
           <Dashboard
             onNavigate={(screen) => goTo(screen)}
             userName={displayName}
+            userRole={userRole}
             hasUnreadNotifications={hasUnreadNotifications}
           />
         )}
@@ -539,6 +614,27 @@ export default function App() {
             onNavigate={(screen, payload) => {
               goTo(screen, payload);
             }}
+          />
+        )}
+
+        {current === "editProfile" && (
+          <EditProfilePage
+            onBack={() => goBack("profile")}
+          />
+        )}
+
+        {current === "profileSettings" && (
+          <ProfileSettingsPage
+            onBack={() => goBack("profile")}
+            onNavigate={(screen, payload) => {
+              goTo(screen, payload);
+            }}
+          />
+        )}
+
+        {current === "activeDevices" && (
+          <ActiveDevicesPage
+            onBack={() => goBack("profileSettings")}
           />
         )}
 
@@ -577,6 +673,7 @@ export default function App() {
 
         {current === "subscription" && (
           <SubscriptionPlans />
+        )}
         {current === "notifications" && (
           <Notifications
             onNavigate={(screen, payload) => {
@@ -586,6 +683,21 @@ export default function App() {
             onNotificationsChanged={(hasUnread) => {
               setHasUnreadNotifications(Boolean(hasUnread));
             }}
+          />
+        )}
+
+        {current === "adminPanel" && (
+          <AdminPanel
+            onBack={() => goBack("dashboard")}
+            onNavigate={(screen, payload) => {
+              goTo(screen, payload);
+            }}
+          />
+        )}
+
+        {current === "usersList" && (
+          <UsersList
+            onBack={() => goBack("adminPanel")}
           />
         )}
       </div>

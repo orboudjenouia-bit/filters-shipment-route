@@ -340,7 +340,7 @@ const updateProfile = async (req, res, next) => {
     }
 
     const {
-        user: { id, type, email, role, ...userData } = {},
+        user: { id, type, email, ...userData } = {},
         profile: { user_ID, ...profileData } = {},
     } = req.body;
 

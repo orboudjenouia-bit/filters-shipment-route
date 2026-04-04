@@ -1,16 +1,10 @@
 import React, { useEffect, useState } from "react";
 import ThemeToggle from "./ThemeToggle";
+import logoSvg from "./photo/Logo.svg";
 import "./Dashboard.css";
 
 const API_URL = process.env.REACT_APP_API_URL;
 const DASHBOARD_STATS_ENDPOINT = "/dashboard/stats";
-
-const SearchIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2"/>
-    <path d="M16.5 16.5L21 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-  </svg>
-);
 
 const BellIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -46,7 +40,7 @@ const ProfileIcon = ({ active }) => (
   </svg>
 );
 
-export default function Dashboard({ onNavigate, userName = "User", hasUnreadNotifications = false }) {
+export default function Dashboard({ onNavigate, userName = "User", userRole = "USER", hasUnreadNotifications = false }) {
   const [activeTab, setActiveTab] = useState("home");
   const [activeShipments, setActiveShipments] = useState(0);
   const [activeRoutes, setActiveRoutes] = useState(0);
@@ -111,6 +105,7 @@ export default function Dashboard({ onNavigate, userName = "User", hasUnreadNoti
 
   const shipmentLabel = activeShipments === 1 ? "shipment" : "shipments";
   const routeLabel = activeRoutes === 1 ? "route" : "routes";
+  const isAdmin = String(userRole || "").toUpperCase() === "ADMIN";
 
   return (
     <div className="db-screen">
@@ -119,16 +114,11 @@ export default function Dashboard({ onNavigate, userName = "User", hasUnreadNoti
         <div className="db-header">
           <div className="db-logo-row">
             <div className="db-logo-box">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx="5.5" cy="18.5" r="2.5" stroke="white" strokeWidth="2"/>
-                <circle cx="18.5" cy="18.5" r="2.5" stroke="white" strokeWidth="2"/>
-              </svg>
+              <img src={logoSvg} alt="Wesselli logo" className="db-logo-mark" />
             </div>
             <span className="db-brand">WESSELLI</span>
           </div>
           <div className="db-header-icons">
-            <button className="db-icon-btn"><SearchIcon /></button>
             <button className="db-icon-btn db-bell" onClick={() => onNavigate("notifications")}>
               <BellIcon />
               {hasUnreadNotifications && <span className="db-notif-dot" />}
@@ -156,6 +146,37 @@ export default function Dashboard({ onNavigate, userName = "User", hasUnreadNoti
               <path d="M9 18l6-6-6-6" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
+
+          {isAdmin && (
+            <div className="db-card" onClick={() => onNavigate("adminPanel")}>
+              <div
+                className="db-card-img"
+                style={{
+                  backgroundImage:
+                    'url("https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=900&q=80")',
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
+              />
+              <div className="db-card-body">
+                <div className="db-card-row">
+                  <h3 className="db-card-title">Admin panel</h3>
+                  <span className="db-badge db-badge--transit">ADMIN</span>
+                </div>
+                <p className="db-card-desc">
+                  Manage users, routes, shipments, and more.
+                </p>
+                <p className="db-card-time">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{marginRight:4}}>
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  Administrative controls
+                </p>
+                <button className="db-view-btn">Open</button>
+              </div>
+            </div>
+          )}
 
           <div className="db-card" onClick={() => onNavigate("subscription")}>
             <div className="db-card-img" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80")', backgroundSize: 'cover', backgroundPosition: 'center' }} />

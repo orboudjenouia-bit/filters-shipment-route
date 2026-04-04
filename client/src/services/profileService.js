@@ -129,6 +129,27 @@ export const getVehicles = async () => {
   return data;
 };
 
+export const updateMyProfile = async ({ user, profile }) => {
+  const response = await fetch(`${API_URL}/auth/update-profile`, {
+    method: "PATCH",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ user, profile }),
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    handleAuthFailure(response, data);
+    throw {
+      status: response.status,
+      code: data.code,
+      message: data.message || "Failed to update profile",
+    };
+  }
+
+  return data?.data || data;
+};
+
 export const createVehicle = async ({
   plate_Number,
   type,
