@@ -102,6 +102,7 @@ export default function Profile({ onNavigate, hasUnreadNotifications = false }) 
   const [selectedTruck, setSelectedTruck] = useState(null);
   const [userData, setUserData] = useState({
     verified: false,
+    subscriptionTier: "Free",
     name: "",
     location: "",
     rating: 0,
@@ -186,6 +187,7 @@ export default function Profile({ onNavigate, hasUnreadNotifications = false }) 
 
         setUserData({
           verified: Boolean(profile?.individual || profile?.business),
+          subscriptionTier: profile?.subscription?.tier || "Free",
           name: profile?.displayName || "",
           location: profile?.individual?.location || businessLocationText,
           rating: Number(profile?.rating ?? 0),
@@ -520,9 +522,15 @@ export default function Profile({ onNavigate, hasUnreadNotifications = false }) 
                 {verified ? <Check size={13} color="#ffffff" strokeWidth={3} /> : <X size={13} color="#ffffff" strokeWidth={3} />}
               </div>
             </button>
-            <div style={{ borderRadius: 20, padding: "3px 12px", display: "flex", alignItems: "center", gap: 5, background: verified ? "#e8faf2" : "#fff0f0" }}>
-              {verified ? <CheckCircle size={13} color="#22c55e" /> : <XCircle size={13} color="#ef4444" />}
-              <span style={{ fontSize: 12, fontWeight: 600, color: verified ? "#22c55e" : "#ef4444" }}>{verified ? "Verified" : "Not Verified"}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+              <div style={{ borderRadius: 20, padding: "3px 12px", display: "flex", alignItems: "center", gap: 5, background: verified ? "#e8faf2" : "#fff0f0" }}>
+                {verified ? <CheckCircle size={13} color="#22c55e" /> : <XCircle size={13} color="#ef4444" />}
+                <span style={{ fontSize: 12, fontWeight: 600, color: verified ? "#22c55e" : "#ef4444" }}>{verified ? "Verified" : "Not Verified"}</span>
+              </div>
+              <div style={{ borderRadius: 20, padding: "3px 12px", display: "flex", alignItems: "center", gap: 5, background: "#ecfeff" }}>
+                <CheckCircle size={13} color="#0891b2" />
+                <span style={{ fontSize: 12, fontWeight: 600, color: "#0e7490" }}>Tier: {userData.subscriptionTier || "Free"}</span>
+              </div>
             </div>
             <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "var(--text-primary)" }}>{userData.name || "User"}</h2>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>

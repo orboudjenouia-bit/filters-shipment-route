@@ -1,0 +1,187 @@
+import { useEffect, useState } from "react";
+import { ArrowLeft, Save } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
+import { getRoutes, updateRoute } from "./services/routeService";
+import "./Createroute.css";
+
+export default function EditActiveRoutePage({ routeId, onBack, onSaved }) {
+  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    origin: "",
+    destination: "",
+    region: "",
+    date: "",
+    post_type: "ORIGIN_DESTINATION",
+    date_type: "DAY",
+    interval_start: "",
+    interval_end: "",
+    vehicle_plate: "",
+    status: "Active",
+  });
+
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 30);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const list = await getRoutes();
+        const found = list.find((it) => String(it?.route_ID || it?.id) === String(routeId));
+        if (!found) {
+          setError("Route not found.");
+          return;
+        }
+
+        setForm({
+          name: found.name || "",
+          origin: found.origin || "",
+          destination: found.destination || "",
+          region: found.region || "",
+          date: found.date || "",
+          post_type: found.post_type || "ORIGIN_DESTINATION",
+          date_type: found.date_type || "DAY",
+          interval_start: found.interval_start || "",
+          interval_end: found.interval_end || "",
+          vehicle_plate: String(found.vehicle_plate ?? ""),
+          status: found.status || "Active",
+        });
+      } catch (err) {
+        setError(err?.message || "Failed to load route.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (routeId != null) load();
+  }, [routeId]);
+
+  const updateField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    setSuccess(false);
+
+    try {
+      await updateRoute({
+        route_ID: Number(routeId),
+        ...form,
+        vehicle_plate: form.vehicle_plate ? Number(form.vehicle_plate) : undefined,
+      });
+      setSuccess(true);
+      onSaved?.();
+    } catch (err) {
+      setError(err?.message || "Failed to update route.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="cr-page">
+      <div className={`cr-card ${mounted ? "cr-card--visible" : ""}`}>
+        <div className="cr-header">
+          <button className="cr-back" onClick={onBack} type="button">
+            <ArrowLeft size={18} />
+          </button>
+          <h2 className="cr-title">Update Route</h2>
+          <ThemeToggle />
+        </div>
+
+        <form onSubmit={handleSave} noValidate>
+          {loading ? <div className="cr-msg-error">Loading route...</div> : null}
+
+          {!loading ? (
+            <>
+              <div className="cr-section-label">
+                <span className="cr-dot" />
+                Route Information
+              </div>
+
+              <div className="cr-field">
+                <label className="cr-label">Route Name</label>
+                <input value={form.name} onChange={(e) => updateField("name", e.target.value)} />
+              </div>
+
+              <div className="cr-field">
+                <label className="cr-label">Post Type</label>
+                <div className="cr-segmented">
+                  <button type="button" className={`cr-segment-btn ${form.post_type === "ORIGIN_DESTINATION" ? "active" : ""}`} onClick={() => updateField("post_type", "ORIGIN_DESTINATION")}>Origin / Destination</button>
+                  <button type="button" className={`cr-segment-btn ${form.post_type === "REGION" ? "active" : ""}`} onClick={() => updateField("post_type", "REGION")}>Region</button>
+                </div>
+              </div>
+
+              <div className="cr-field">
+                <label className="cr-label">Date Type</label>
+                <div className="cr-segmented">
+                  <button type="button" className={`cr-segment-btn ${form.date_type === "DAY" ? "active" : ""}`} onClick={() => updateField("date_type", "DAY")}>Day</button>
+                  <button type="button" className={`cr-segment-btn ${form.date_type === "INTERVAL" ? "active" : ""}`} onClick={() => updateField("date_type", "INTERVAL")}>Interval</button>
+                </div>
+              </div>
+
+              <div className="cr-field cr-date-grid">
+                <div>
+                  <label className="cr-label">Date</label>
+                  <input value={form.date} onChange={(e) => updateField("date", e.target.value)} />
+                </div>
+                <div>
+                  <label className="cr-label">Vehicle Plate</label>
+                  <input value={form.vehicle_plate} onChange={(e) => updateField("vehicle_plate", e.target.value)} />
+                </div>
+              </div>
+
+              <div className="cr-field cr-date-grid">
+                <div>
+                  <label className="cr-label">Interval Start</label>
+                  <input value={form.interval_start} onChange={(e) => updateField("interval_start", e.target.value)} />
+                </div>
+                <div>
+                  <label className="cr-label">Interval End</label>
+                  <input value={form.interval_end} onChange={(e) => updateField("interval_end", e.target.value)} />
+                </div>
+              </div>
+
+              <div className="cr-field">
+                <label className="cr-label">Origin</label>
+                <input value={form.origin} onChange={(e) => updateField("origin", e.target.value)} />
+              </div>
+
+              <div className="cr-field">
+                <label className="cr-label">Destination</label>
+                <input value={form.destination} onChange={(e) => updateField("destination", e.target.value)} />
+              </div>
+
+              <div className="cr-field">
+                <label className="cr-label">Region</label>
+                <input value={form.region} onChange={(e) => updateField("region", e.target.value)} />
+              </div>
+
+              <div className="cr-field">
+                <label className="cr-label">Status</label>
+                <input value={form.status} onChange={(e) => updateField("status", e.target.value)} />
+              </div>
+            </>
+          ) : null}
+
+          {error ? <div className="cr-msg-error">{error}</div> : null}
+          {success ? <div className="cr-msg-success">Route updated successfully!</div> : null}
+
+          <button className="cr-submit-btn" type="submit" disabled={saving || loading}>
+            {saving ? "Saving..." : "Save Changes"}
+            {!saving && <Save size={16} />}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}

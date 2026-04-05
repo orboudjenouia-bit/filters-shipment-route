@@ -1,14 +1,23 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
+import ConfirmDialog from './ConfirmDialog';
+import { createSubscription, deleteSubscription, getMySubscription, updateSubscription } from './services/subscriptionService';
 import './SubscriptionPlans.css';
 
-const SubscriptionPlans = () => {
+const SubscriptionPlans = ({ onNavigate }) => {
   const navigate = useNavigate();
+  const [mySub, setMySub] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [actionLoadingTier, setActionLoadingTier] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
-  const plans = [
+  const plans = useMemo(() => [
     {
       name: 'Free',
+      tier: 'Free',
       subtitle: 'PERSONAL USE',
       price: '0DA',
       priceSub: null,
@@ -25,6 +34,7 @@ const SubscriptionPlans = () => {
     },
     {
       name: 'Individual',
+      tier: 'Individual',
       subtitle: 'REGULAR SHIPPERS',
       price: '3000DA',
       priceSub: null,
@@ -42,6 +52,7 @@ const SubscriptionPlans = () => {
     },
     {
       name: 'Business',
+      tier: 'Business',
       subtitle: 'LOGISTICS MODELS',
       price: '10000DA',
       priceSub: null,
@@ -57,10 +68,78 @@ const SubscriptionPlans = () => {
       recommended: false,
       isBusiness: true
     }
-  ];
+  ], []);
+
+  const loadMySubscription = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const sub = await getMySubscription();
+      setMySub(sub || null);
+    } catch (err) {
+      setError(err?.message || 'Failed to load your subscription.');
+      setMySub(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadMySubscription();
+  }, []);
 
   const handleBack = () => {
+    if (onNavigate) {
+      onNavigate('dashboard');
+      return;
+    }
+
     navigate('/dashboard');
+  };
+
+  const handleSelectOrUpdate = async (plan) => {
+    setError('');
+    setActionLoadingTier(plan.tier);
+
+    try {
+      if (!mySub) {
+        const created = await createSubscription({ tier: plan.tier, isActive: true });
+        setMySub(created);
+      } else {
+        const updated = await updateSubscription(mySub.sub_ID, {
+          tier: plan.tier,
+          isActive: true,
+          endDate: mySub.endDate || null,
+        });
+        setMySub(updated);
+      }
+    } catch (err) {
+      setError(err?.message || 'Failed to update subscription.');
+    } finally {
+      setActionLoadingTier('');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!mySub?.sub_ID) return;
+
+    setDeleteLoading(true);
+    setError('');
+
+    try {
+      await deleteSubscription(mySub.sub_ID);
+      setMySub(null);
+    } catch (err) {
+      setError(err?.message || 'Failed to delete subscription.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const openDetails = () => {
+    if (!mySub?.sub_ID) return;
+    onNavigate?.('subscriptionDetails', { subscriptionId: mySub.sub_ID, from: 'subscription' });
   };
 
   return (
@@ -77,6 +156,8 @@ const SubscriptionPlans = () => {
         </div>
 
         <div className="subscription-body">
+          {error ? <p className="subscription-error-banner">{error}</p> : null}
+
           <div className="subscription-title-section">
             <p className="subscription-main-subtitle">
               Choose your<br />momentum
@@ -84,6 +165,29 @@ const SubscriptionPlans = () => {
             <p className="subscription-description">
               Scale your logistics with precision vitality and industrial speed.
             </p>
+            <p className="subscription-description" style={{ marginTop: 6 }}>
+              {loading
+                ? 'Loading your current subscription...'
+                : mySub
+                ? `Current tier: ${mySub.tier} (ID #${mySub.sub_ID})`
+                : 'You have no active subscription yet.'}
+            </p>
+
+            {mySub && (
+              <div className="subscription-top-actions">
+                <button className="plan-action-btn plan-btn-select" onClick={openDetails} type="button">
+                  View Details
+                </button>
+                <button
+                  className="plan-action-btn plan-btn-upgrade"
+                  onClick={() => setConfirmDeleteOpen(true)}
+                  disabled={deleteLoading}
+                  type="button"
+                >
+                  {deleteLoading ? 'Deleting...' : 'Delete Subscription'}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="plans-list">
@@ -120,9 +224,17 @@ const SubscriptionPlans = () => {
                   
                   <button 
                     className={`plan-action-btn ${plan.buttonVariant === 'current' ? 'plan-btn-current' : plan.buttonVariant === 'select' ? 'plan-btn-select' : 'plan-btn-upgrade'}`}
-                    disabled={plan.buttonVariant === 'current'}
+                    disabled={loading || actionLoadingTier === plan.tier || mySub?.tier === plan.tier}
+                    onClick={() => handleSelectOrUpdate(plan)}
+                    type="button"
                   >
-                    {plan.buttonText}
+                    {actionLoadingTier === plan.tier
+                      ? 'Processing...'
+                      : mySub?.tier === plan.tier
+                      ? 'Current Plan'
+                      : mySub
+                      ? `Update to ${plan.tier}`
+                      : `Select ${plan.tier}`}
                   </button>
                 </div>
               </div>
@@ -130,6 +242,20 @@ const SubscriptionPlans = () => {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        title="Delete Subscription"
+        message="Do you want to delete your current subscription?"
+        confirmLabel="Yes"
+        cancelLabel="No"
+        loading={deleteLoading}
+        onCancel={() => setConfirmDeleteOpen(false)}
+        onConfirm={async () => {
+          await handleDelete();
+          setConfirmDeleteOpen(false);
+        }}
+      />
     </div>
   );
 };

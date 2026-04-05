@@ -199,7 +199,7 @@ export default function Dashboard({ onNavigate, userName = "User", userRole = "U
             </div>
           </div>
 
-          <div className="db-card" onClick={() => onNavigate("shipmentDetails")}>
+          <div className="db-card" onClick={() => onNavigate("activeShipments")}>
             <div className="db-card-img db-card-img--containers" />
             <div className="db-card-body">
               <div className="db-card-row">
@@ -220,7 +220,7 @@ export default function Dashboard({ onNavigate, userName = "User", userRole = "U
             </div>
           </div>
 
-          <div className="db-card">
+          <div className="db-card" onClick={() => onNavigate("activeRoutes")}>
             <div className="db-card-img db-card-img--truck" />
             <div className="db-card-body">
               <h3 className="db-card-title">Active Routes</h3>

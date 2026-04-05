@@ -34,6 +34,19 @@ const listShipments = async (req, res, next) => {
     });
 };
 
+const listMyShipments = async (req, res, next) => {
+    const myShipments = await prisma.shipment.findMany({
+        where: { user_ID: req.user.id },
+        orderBy: { shipment_ID: 'desc' },
+    });
+
+    res.status(StatusCodes.OK).json({
+        success: true,
+        total: myShipments.length,
+        shipments: myShipments,
+    });
+};
+
 const makePost = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -130,4 +143,4 @@ const deleteShipment = async (req, res, next) => {
     res.status(StatusCodes.OK).json({ msg: 'Shipment Deleted Successfully' });
 };
 
-module.exports = { listShipments, makePost, editShipment, deleteShipment };
+module.exports = { listShipments, listMyShipments, makePost, editShipment, deleteShipment };

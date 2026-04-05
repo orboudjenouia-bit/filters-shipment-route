@@ -6,12 +6,14 @@ const asyncHandler = require('../utils/asyncHandler');
 
 const {
     listRoutes,
+    listMyRoutes,
     postRoute,
     editRoute,
     deleteRoute,
 } = require('../Controllers/routesController');
 
 router.get('/', authToken, asyncHandler(listRoutes));
+router.get('/me', authToken, asyncHandler(listMyRoutes));
 
 router.post(
     '/',

@@ -1,0 +1,315 @@
+/* SubscriptionDetailsPage.css - aligned with Shipmentdetails structure */
+.subd-screen {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  display: flex;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+}
+
+.subd-container {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100vh;
+  background: var(--bg-secondary);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  transform: translateX(30px);
+  transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.subd-container--visible { opacity: 1; transform: translateX(0); }
+
+.subd-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  background: var(--bg-secondary);
+  z-index: 10;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.subd-back-btn {
+  width: 36px;
+  height: 36px;
+  background: var(--button-secondary-bg);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.subd-back-btn:hover { background: var(--button-secondary-hover); }
+.subd-back-btn:active { transform: scale(0.92); }
+
+.subd-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  transition: color 0.3s ease;
+}
+
+.subd-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.subd-id-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.subd-id {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+  transition: color 0.3s ease;
+}
+
+.subd-type {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  transition: color 0.3s ease;
+}
+
+.subd-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #dcfce7;
+  color: #16a34a;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 20px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  margin-top: 4px;
+}
+
+.dark-mode .subd-status-badge {
+  background: #166534;
+  color: #86efac;
+}
+
+.subd-info-row { display: flex; gap: 12px; margin-bottom: 16px; }
+
+.subd-info-card {
+  flex: 1;
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid var(--border-color);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.subd-info-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.06em;
+  display: block;
+  margin-bottom: 8px;
+  transition: color 0.3s ease;
+}
+
+.subd-info-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  transition: color 0.3s ease;
+}
+
+.subd-progress-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.subd-progress-dates {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.subd-progress-right {
+  text-align: right;
+}
+
+.subd-progress-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.06em;
+  display: block;
+}
+
+.subd-progress-date {
+  margin-top: 3px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: block;
+}
+
+.subd-progress-track {
+  margin-top: 12px;
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--border-color);
+  display: flex;
+}
+
+.subd-progress-elapsed {
+  height: 100%;
+  background: #94a3b8;
+  transition: width 0.3s ease;
+}
+
+.subd-progress-remaining {
+  height: 100%;
+  background: linear-gradient(90deg, #16a34a, #22c55e);
+  transition: width 0.3s ease;
+}
+
+.subd-progress-meta {
+  margin: 8px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #16a34a;
+}
+
+.subd-edit-card {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border-color);
+}
+
+.subd-edit-title {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.subd-edit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.subd-edit-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.subd-edit-grid span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.subd-edit-grid input,
+.subd-edit-grid select {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.subd-edit-full {
+  grid-column: 1 / -1;
+}
+
+.subd-success {
+  margin: 0 0 12px;
+  padding: 10px;
+  border: 1px solid #86efac;
+  background: #f0fdf4;
+  color: #15803d;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.subd-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.subd-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 11px 16px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.subd-btn-primary {
+  background: #16a34a;
+  color: #fff;
+}
+
+.subd-btn-danger {
+  background: #ef4444;
+  color: #fff;
+}
+
+.subd-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.subd-spin {
+  animation: subd-spin 0.9s linear infinite;
+}
+
+.subd-state,
+.subd-empty,
+.subd-error {
+  padding: 24px;
+  text-align: center;
+}
+
+.subd-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text-secondary);
+}
+
+.subd-error {
+  color: #ef4444;
+}
+
+@keyframes subd-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

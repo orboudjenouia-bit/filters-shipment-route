@@ -144,12 +144,11 @@ model Shipment {
 }
 
 model Subscription {
-  sub_ID     Int        @id @default(autoincrement())
+  sub_ID     Int       @id @default(autoincrement())
   tier       String     
-  startDate  DateTime   
-  endDate    DateTime?
+  startDate  DateTime? @default(now())
+  endDate    DateTime? @default(dbgenerated("(CURRENT_TIMESTAMP + interval '1 month')"))
   isActive   Boolean   @default(true)
-
 
   user_ID   Int        @unique
   user      User       @relation(fields: [user_ID], references: [id])

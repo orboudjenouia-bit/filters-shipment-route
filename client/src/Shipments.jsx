@@ -218,6 +218,10 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnrea
                   <span className="sh-card-price">{s.price}</span>
                 </div>
 
+                <p className="sh-card-description">
+                  {s.specialInformation || "No description provided."}
+                </p>
+
                 <div className="sh-card-route">
                   <div className="sh-route-row">
                     <span className="sh-route-dot sh-route-dot--green" />

@@ -6,12 +6,14 @@ const asyncHandler = require('../utils/asyncHandler');
 
 const {
     listShipments,
+    listMyShipments,
     makePost,
     editShipment,
     deleteShipment,
 } = require('../Controllers/shipmentController');
 
 router.get('/', authToken, asyncHandler(listShipments));
+router.get('/me', authToken, asyncHandler(listMyShipments));
 
 router.post(
     '/',

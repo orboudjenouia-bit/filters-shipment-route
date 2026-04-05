@@ -296,6 +296,13 @@ const getMyProfile = async (req, res, next) => {
                     locations: true,
                 },
             },
+            subscription: {
+                select: {
+                    sub_ID: true,
+                    tier: true,
+                    isActive: true,
+                },
+            },
         },
     });
 

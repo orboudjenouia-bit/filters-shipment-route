@@ -185,6 +185,14 @@ export default function AdminPanel({ onNavigate, onBack }) {
       action: "Open Routes",
       onClick: () => onNavigate?.("routes"),
     },
+    {
+      id: "subscriptions",
+      icon: <IdCard size={18} />,
+      title: "Subscription management",
+      description: "View all subscriptions and manage updates or deletions.",
+      action: "Manage Subscriptions",
+      onClick: () => onNavigate?.("adminSubscriptions"),
+    },
   ];
 
   const exportsList = [

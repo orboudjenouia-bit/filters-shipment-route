@@ -94,6 +94,7 @@ const formatCreatedAt = (createdAt) => {
       vehicleColor: item?.vehicle?.color || "No color",
       vehicleYear: item?.vehicle?.year || "No year",
       status: normalizeStatus(item?.status),
+      description: item?.more_Information || item?.description || "",
     });
 
     const fetchRoutes = async () => {
@@ -238,6 +239,10 @@ const formatCreatedAt = (createdAt) => {
                   {route.price && <span className="sh-card-price">{route.price}</span>}
                 </div>
 
+                <p className="sh-card-description">
+                  {route.description || "No description provided."}
+                </p>
+
                 <div className="sh-card-route">
                   {route.postType === "REGION" ? (
                     <div className="sh-route-row">
@@ -276,7 +281,13 @@ const formatCreatedAt = (createdAt) => {
                       Maximum capacity: {route.capacity != null ? `${route.capacity} kg` : "N/A"}
                     </span>
                   </div>
-                  <button className="sh-details-btn" type="button">Details</button>
+                  <button
+                    className="sh-details-btn"
+                    type="button"
+                    onClick={() => onNavigate("routeDetails", { routeId: route.id, from: "routes" })}
+                  >
+                    Details
+                  </button>
                 </div>
               </div>
             ))

@@ -7,19 +7,15 @@ const createNotifs = async (
     userID, title, message, type, entityType = "NONE", entityID = 0
 ) => {
     if (!userID || !title || !type) {
-        throw new AppError(
-            "No Enough data to create notification",
-            StatusCodes.BAD_REQUEST,
-            "NO_NOTIFS")
+        console.error("No Enough data to create notification")
+        return null
     }
 
     userID = parseInt(userID)
 
     if (!userID) {
-        throw new AppError(
-            "Invalid IDs to create Notification",
-            StatusCodes.BAD_REQUEST,
-            "NO_NOTIFS")
+        console.error("Invalid IDs to create Notification")
+        return null
     }
 
     if (entityID === undefined || entityID === 0 || entityID === "") {
@@ -27,10 +23,8 @@ const createNotifs = async (
     } else {
         entityID = parseInt(entityID)
         if (!entityID) {
-            throw new AppError(
-                "Invalid IDs to create Notification",
-                StatusCodes.BAD_REQUEST,
-                "NO_NOTIFS")
+            console.error("Invalid IDs to create Notification")
+            return null
         }
     }
     try {
@@ -44,10 +38,8 @@ const createNotifs = async (
         return notif
     } catch (error) {
         console.log(error)
-        throw new AppError("Error Creating Notification",
-            StatusCodes.INTERNAL_SERVER_ERROR,
-            "PRISMA_ERROR"
-        )
+        console.error("Error Creating Notification")
+        return null
     }
     
 }

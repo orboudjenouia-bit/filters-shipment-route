@@ -22,7 +22,7 @@ const routeRouter = require('./Routes/routes');
 const adminRouter = require('./Routes/admin');
 const dashboardRouter = require('./Routes/dashboard');
 const notificationsRouter = require('./Routes/notifications')
-
+const subscriptionsRouter = require('./Routes/subscriptions')
 
 const errorHandler = require('./Middlewares/errorHandler');
 
@@ -36,6 +36,7 @@ app.use('/api/shipments', shipmentsRouter);
 app.use('/api/routes', routeRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/notifications', notificationsRouter)
+app.use('/api/subscriptions', subscriptionsRouter)
 
 app.use(errorHandler);
 

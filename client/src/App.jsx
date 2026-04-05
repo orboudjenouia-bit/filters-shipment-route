@@ -12,6 +12,12 @@ import ResetPassword from "./Resetpassword";
 import Dashboard from "./Dashboard";
 import Shipments from "./Shipments";
 import RoutesScreen from "./Routes";
+import ActiveShipmentsPage from "./ActiveShipmentsPage";
+import ActiveShipmentDetailsPage from "./ActiveShipmentDetailsPage";
+import EditActiveShipmentPage from "./EditActiveShipmentPage";
+import ActiveRoutesPage from "./ActiveRoutesPage";
+import ActiveRouteDetailsPage from "./ActiveRouteDetailsPage";
+import EditActiveRoutePage from "./EditActiveRoutePage";
 import Profile from "./Profile";
 import Vehicle from "./Vehicle";
 import CreateRoute from "./Createroute";
@@ -20,11 +26,13 @@ import CreateShipment from "./Createshipment";
 import Notifications from "./Notifications";
 import AdminPanel from "./AdminPanel";
 import UsersList from "./UsersList";
+import AdminSubscriptions from "./AdminSubscriptions";
 import EditProfilePage from "./EditProfilePage";
 import ProfileSettingsPage from "./ProfileSettingsPage";
 import ActiveDevicesPage from "./ActiveDevicesPage";
 import { getMyProfile } from "./services/profileService";
 import SubscriptionPlans from './SubscriptionPlans';
+import SubscriptionDetailsPage from "./SubscriptionDetailsPage";
 import { getNotifications } from "./services/notificationService";
 import "./App.css";
 
@@ -42,7 +50,7 @@ const getStoredRole = () => {
   }
 };
 
-const getPathForScreen = (screen, { shipmentId, resetToken } = {}) => {
+const getPathForScreen = (screen, { shipmentId, subscriptionId, activeShipmentId, activeRouteId, routeId, resetToken } = {}) => {
   switch (screen) {
     case "landing":
       return "/";
@@ -64,6 +72,10 @@ const getPathForScreen = (screen, { shipmentId, resetToken } = {}) => {
       return "/shipments";
     case "routes":
       return "/routes";
+    case "routeDetails":
+      return routeId != null
+        ? `/routes/${encodeURIComponent(String(routeId))}`
+        : "/routes";
     case "profile":
       return "/profile";
     case "editProfile":
@@ -94,6 +106,32 @@ const getPathForScreen = (screen, { shipmentId, resetToken } = {}) => {
       return "/adminPanel";
     case "usersList":
       return "/adminPanel/users";
+    case "adminSubscriptions":
+      return "/adminPanel/subscriptions";
+    case "subscriptionDetails":
+      return subscriptionId != null
+        ? `/subscription/details/${encodeURIComponent(String(subscriptionId))}`
+        : "/subscription";
+    case "activeShipments":
+      return "/active/shipments";
+    case "activeShipmentDetails":
+      return activeShipmentId != null
+        ? `/active/shipments/${encodeURIComponent(String(activeShipmentId))}`
+        : "/active/shipments";
+    case "editActiveShipment":
+      return activeShipmentId != null
+        ? `/active/shipments/${encodeURIComponent(String(activeShipmentId))}/edit`
+        : "/active/shipments";
+    case "activeRoutes":
+      return "/active/routes";
+    case "activeRouteDetails":
+      return activeRouteId != null
+        ? `/active/routes/${encodeURIComponent(String(activeRouteId))}`
+        : "/active/routes";
+    case "editActiveRoute":
+      return activeRouteId != null
+        ? `/active/routes/${encodeURIComponent(String(activeRouteId))}/edit`
+        : "/active/routes";
     default:
       return "/";
   }
@@ -154,10 +192,9 @@ const publicScreens = new Set([
   "resetPassword",
   "individual",
   "business",
-  "subscription",
 ]);
 
-const adminOnlyScreens = new Set(["adminPanel", "usersList"]);
+const adminOnlyScreens = new Set(["adminPanel", "usersList", "adminSubscriptions"]);
 
 const resolveScreenFromPath = (pathname) => {
   const normalized = pathname.replace(/\/+$/, "") || "/";
@@ -185,6 +222,12 @@ const resolveScreenFromPath = (pathname) => {
   if (normalized === "/dashboard") return { screen: "dashboard" };
   if (normalized === "/shipments") return { screen: "shipments" };
   if (normalized === "/routes") return { screen: "routes" };
+  if (normalized.startsWith("/routes/")) {
+    const routeId = decodeURIComponent(normalized.split("/")[2] || "").trim();
+    if (routeId && routeId !== "create") {
+      return { screen: "routeDetails", routeId };
+    }
+  }
   if (normalized === "/profile") return { screen: "profile" };
   if (normalized === "/profile/edit") return { screen: "editProfile" };
   if (normalized === "/profile/settings") return { screen: "profileSettings" };
@@ -225,6 +268,53 @@ const resolveScreenFromPath = (pathname) => {
     return { screen: "usersList" };
   }
 
+  if (normalized === "/adminPanel/subscriptions") {
+    return { screen: "adminSubscriptions" };
+  }
+
+  if (normalized.startsWith("/subscription/details/")) {
+    const subId = decodeURIComponent(normalized.split("/")[3] || "").trim();
+    if (subId) {
+      return { screen: "subscriptionDetails", subscriptionId: subId };
+    }
+  }
+
+  if (normalized === "/active/shipments") {
+    return { screen: "activeShipments" };
+  }
+
+  if (normalized.startsWith("/active/shipments/") && normalized.endsWith("/edit")) {
+    const activeShipmentId = decodeURIComponent(normalized.split("/")[3] || "").trim();
+    if (activeShipmentId) {
+      return { screen: "editActiveShipment", activeShipmentId };
+    }
+  }
+
+  if (normalized.startsWith("/active/shipments/")) {
+    const activeShipmentId = decodeURIComponent(normalized.split("/")[3] || "").trim();
+    if (activeShipmentId) {
+      return { screen: "activeShipmentDetails", activeShipmentId };
+    }
+  }
+
+  if (normalized === "/active/routes") {
+    return { screen: "activeRoutes" };
+  }
+
+  if (normalized.startsWith("/active/routes/") && normalized.endsWith("/edit")) {
+    const activeRouteId = decodeURIComponent(normalized.split("/")[3] || "").trim();
+    if (activeRouteId) {
+      return { screen: "editActiveRoute", activeRouteId };
+    }
+  }
+
+  if (normalized.startsWith("/active/routes/")) {
+    const activeRouteId = decodeURIComponent(normalized.split("/")[3] || "").trim();
+    if (activeRouteId) {
+      return { screen: "activeRouteDetails", activeRouteId };
+    }
+  }
+
   return { screen: "landing" };
 };
 
@@ -240,7 +330,15 @@ export default function App() {
   const [direction, setDirection] = useState("forward");
   const [role, setRole] = useState("Individual");
   const [selectedShipmentId, setSelectedShipmentId] = useState(null);
+  const [selectedSubscriptionId, setSelectedSubscriptionId] = useState(null);
+  const [selectedRouteId, setSelectedRouteId] = useState(null);
+  const [selectedActiveShipmentId, setSelectedActiveShipmentId] = useState(null);
+  const [selectedActiveRouteId, setSelectedActiveRouteId] = useState(null);
   const [shipmentDetailsBackScreen, setShipmentDetailsBackScreen] = useState("shipments");
+  const [subscriptionDetailsBackScreen, setSubscriptionDetailsBackScreen] = useState("subscription");
+  const [routeDetailsBackScreen, setRouteDetailsBackScreen] = useState("routes");
+  const [activeShipmentBackScreen, setActiveShipmentBackScreen] = useState("activeShipments");
+  const [activeRouteBackScreen, setActiveRouteBackScreen] = useState("activeRoutes");
   const [shipmentsRefreshKey, setShipmentsRefreshKey] = useState(0);
   const [displayName, setDisplayName] = useState("User");
   const [userRole, setUserRole] = useState(getStoredRole());
@@ -279,6 +377,10 @@ export default function App() {
     if (adminOnlyScreens.has(resolvedTarget) && !isAdminRole(userRole)) return;
 
     const nextShipmentId = payload.shipmentId ?? selectedShipmentId;
+    const nextSubscriptionId = payload.subscriptionId ?? selectedSubscriptionId;
+    const nextRouteId = payload.routeId ?? selectedRouteId;
+    const nextActiveShipmentId = payload.activeShipmentId ?? selectedActiveShipmentId;
+    const nextActiveRouteId = payload.activeRouteId ?? selectedActiveRouteId;
     const nextResetToken = payload.token ?? resetToken;
 
     if (resolvedTarget === "shipmentDetails") {
@@ -289,18 +391,66 @@ export default function App() {
       setShipmentDetailsBackScreen(previousScreen);
     }
 
+    if (resolvedTarget === "subscriptionDetails") {
+      const previousScreen =
+        payload.from ||
+        (current === "subscriptionDetails" ? subscriptionDetailsBackScreen : current) ||
+        "subscription";
+      setSubscriptionDetailsBackScreen(previousScreen);
+    }
+
+    if (resolvedTarget === "routeDetails") {
+      const previousScreen =
+        payload.from ||
+        (current === "routeDetails" ? routeDetailsBackScreen : current) ||
+        "routes";
+      setRouteDetailsBackScreen(previousScreen);
+    }
+
     if (resolvedTarget === "notifications") {
       const previousScreen = payload.from || current || "dashboard";
       setNotificationsBackScreen(previousScreen);
     }
 
+    if (resolvedTarget === "activeShipmentDetails" || resolvedTarget === "editActiveShipment") {
+      const previousScreen =
+        payload.from ||
+        (current === "activeShipmentDetails" || current === "editActiveShipment" ? activeShipmentBackScreen : current) ||
+        "activeShipments";
+      setActiveShipmentBackScreen(previousScreen);
+    }
+
+    if (resolvedTarget === "activeRouteDetails" || resolvedTarget === "editActiveRoute") {
+      const previousScreen =
+        payload.from ||
+        (current === "activeRouteDetails" || current === "editActiveRoute" ? activeRouteBackScreen : current) ||
+        "activeRoutes";
+      setActiveRouteBackScreen(previousScreen);
+    }
+
     const targetPath = getPathForScreen(resolvedTarget, {
       shipmentId: nextShipmentId,
+      subscriptionId: nextSubscriptionId,
+      routeId: nextRouteId,
+      activeShipmentId: nextActiveShipmentId,
+      activeRouteId: nextActiveRouteId,
       resetToken: nextResetToken,
     });
 
     if (payload.shipmentId != null) {
       setSelectedShipmentId(payload.shipmentId);
+    }
+    if (payload.subscriptionId != null) {
+      setSelectedSubscriptionId(payload.subscriptionId);
+    }
+    if (payload.routeId != null) {
+      setSelectedRouteId(payload.routeId);
+    }
+    if (payload.activeShipmentId != null) {
+      setSelectedActiveShipmentId(payload.activeShipmentId);
+    }
+    if (payload.activeRouteId != null) {
+      setSelectedActiveRouteId(payload.activeRouteId);
     }
     if (resolvedTarget === "resetPassword") {
       setResetToken(nextResetToken || "");
@@ -345,6 +495,22 @@ export default function App() {
 
     if (routeState.screen === "shipmentDetails") {
       setSelectedShipmentId(routeState.shipmentId ?? null);
+    }
+
+    if (routeState.screen === "subscriptionDetails") {
+      setSelectedSubscriptionId(routeState.subscriptionId ?? null);
+    }
+
+    if (routeState.screen === "routeDetails") {
+      setSelectedRouteId(routeState.routeId ?? null);
+    }
+
+    if (routeState.screen === "activeShipmentDetails" || routeState.screen === "editActiveShipment") {
+      setSelectedActiveShipmentId(routeState.activeShipmentId ?? null);
+    }
+
+    if (routeState.screen === "activeRouteDetails" || routeState.screen === "editActiveRoute") {
+      setSelectedActiveRouteId(routeState.activeRouteId ?? null);
     }
 
     if (routeState.screen !== current) {
@@ -599,11 +765,81 @@ export default function App() {
           />
         )}
 
+        {current === "activeShipments" && (
+          <ActiveShipmentsPage
+            onBack={() => goBack("dashboard")}
+            onNavigate={(screen, payload) => {
+              goTo(screen, payload);
+            }}
+          />
+        )}
+
+        {current === "activeShipmentDetails" && (
+          <ActiveShipmentDetailsPage
+            shipmentId={selectedActiveShipmentId}
+            onBack={() => goBack(activeShipmentBackScreen || "activeShipments")}
+            onNavigate={(screen, payload) => {
+              goTo(screen, payload);
+            }}
+          />
+        )}
+
+        {current === "editActiveShipment" && (
+          <EditActiveShipmentPage
+            shipmentId={selectedActiveShipmentId}
+            onBack={() => goBack(activeShipmentBackScreen || "activeShipmentDetails")}
+            onSaved={() => {
+              goTo("activeShipmentDetails", { activeShipmentId: selectedActiveShipmentId, from: "activeShipments" });
+            }}
+          />
+        )}
+
         {current === "routes" && (
           <RoutesScreen
             hasUnreadNotifications={hasUnreadNotifications}
             onNavigate={(screen, payload) => {
               goTo(screen, payload);
+            }}
+          />
+        )}
+
+        {current === "routeDetails" && (
+          <ActiveRouteDetailsPage
+            routeId={selectedRouteId}
+            source="all"
+            allowActions={false}
+            onBack={() => goBack(routeDetailsBackScreen || "routes")}
+            onNavigate={(screen, payload) => {
+              goTo(screen, payload);
+            }}
+          />
+        )}
+
+        {current === "activeRoutes" && (
+          <ActiveRoutesPage
+            onBack={() => goBack("dashboard")}
+            onNavigate={(screen, payload) => {
+              goTo(screen, payload);
+            }}
+          />
+        )}
+
+        {current === "activeRouteDetails" && (
+          <ActiveRouteDetailsPage
+            routeId={selectedActiveRouteId}
+            onBack={() => goBack(activeRouteBackScreen || "activeRoutes")}
+            onNavigate={(screen, payload) => {
+              goTo(screen, payload);
+            }}
+          />
+        )}
+
+        {current === "editActiveRoute" && (
+          <EditActiveRoutePage
+            routeId={selectedActiveRouteId}
+            onBack={() => goBack(activeRouteBackScreen || "activeRouteDetails")}
+            onSaved={() => {
+              goTo("activeRouteDetails", { activeRouteId: selectedActiveRouteId, from: "activeRoutes" });
             }}
           />
         )}
@@ -672,7 +908,22 @@ export default function App() {
         )}
 
         {current === "subscription" && (
-          <SubscriptionPlans />
+          <SubscriptionPlans
+            onNavigate={(screen, payload) => {
+              goTo(screen, payload);
+            }}
+          />
+        )}
+
+        {current === "subscriptionDetails" && (
+          <SubscriptionDetailsPage
+            subId={selectedSubscriptionId}
+            isAdmin={subscriptionDetailsBackScreen === "adminSubscriptions"}
+            onBack={() => goBack(subscriptionDetailsBackScreen || "subscription")}
+            onNavigate={(screen, payload) => {
+              goTo(screen, payload);
+            }}
+          />
         )}
         {current === "notifications" && (
           <Notifications
@@ -698,6 +949,15 @@ export default function App() {
         {current === "usersList" && (
           <UsersList
             onBack={() => goBack("adminPanel")}
+          />
+        )}
+
+        {current === "adminSubscriptions" && (
+          <AdminSubscriptions
+            onBack={() => goBack("adminPanel")}
+            onNavigate={(screen, payload) => {
+              goTo(screen, payload);
+            }}
           />
         )}
       </div>

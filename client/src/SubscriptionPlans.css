@@ -55,7 +55,7 @@
 .subscription-container {
   background: var(--bg-secondary);
   width: 100%;
-  max-width: 430px;
+  max-width: 420px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -155,6 +155,24 @@
   line-height: 1.5;
   padding: 0 8px;
   transition: color 0.3s ease;
+}
+
+.subscription-error-banner {
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #b91c1c;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-family: var(--font-body);
+}
+
+.subscription-top-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 /* Plans List */

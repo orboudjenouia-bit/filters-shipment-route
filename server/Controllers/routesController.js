@@ -42,6 +42,31 @@ const listRoutes = async (req, res, next) => {
     
 };
 
+const listMyRoutes = async (req, res, next) => {
+    const routes = await prisma.route.findMany({
+        where: { user_ID: req.user.id },
+        include: {
+            vehicle: {
+                select: {
+                    plate_Number: true,
+                    vehicle_Name: true,
+                    type: true,
+                    color: true,
+                    year: true,
+                    capacity: true,
+                },
+            },
+        },
+        orderBy: { route_ID: 'desc' },
+    });
+
+    res.status(StatusCodes.OK).json({
+        success: true,
+        routes,
+        total: routes.length,
+    });
+};
+
 const postRoute = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -134,4 +159,4 @@ const deleteRoute = async (req, res, next) => {
     res.status(StatusCodes.OK).json({ msg: 'Route Deleted Successfully' });
 };
 
-module.exports = { listRoutes, postRoute, editRoute, deleteRoute };
+module.exports = { listRoutes, listMyRoutes, postRoute, editRoute, deleteRoute };
