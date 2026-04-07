@@ -90,6 +90,7 @@ export default function ShipmentDetails({ onBack, onNavigate, shipmentId }) {
 
     return {
       id: shipment.shipment_ID,
+      photo: typeof shipment?.photo === "string" ? shipment.photo.trim() : "",
       senderId: shipment?.user?.id || null,
       senderPhoto: shipment?.user?.profile_Photo || storedUser?.profile_Photo || "",
       type: `${toTitle(shipment.priority)} Priority`,
@@ -143,29 +144,21 @@ export default function ShipmentDetails({ onBack, onNavigate, shipmentId }) {
                 </span>
               </div>
 
-              <div className="sd-map">
-                <div className="sd-map-bg">
-                  <svg width="100%" height="100%" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice">
-                    <rect width="400" height="200" fill="var(--bg-primary)"/>
-                    <line x1="0" y1="40" x2="400" y2="40" stroke="var(--border-color)" strokeWidth="1"/>
-                    <line x1="0" y1="80" x2="400" y2="80" stroke="var(--border-color)" strokeWidth="1"/>
-                    <line x1="0" y1="120" x2="400" y2="120" stroke="var(--border-color)" strokeWidth="1"/>
-                    <line x1="0" y1="160" x2="400" y2="160" stroke="var(--border-color)" strokeWidth="1"/>
-                    <line x1="80" y1="0" x2="80" y2="200" stroke="var(--border-color)" strokeWidth="1"/>
-                    <line x1="160" y1="0" x2="160" y2="200" stroke="var(--border-color)" strokeWidth="1"/>
-                    <line x1="240" y1="0" x2="240" y2="200" stroke="var(--border-color)" strokeWidth="1"/>
-                    <line x1="320" y1="0" x2="320" y2="200" stroke="var(--border-color)" strokeWidth="1"/>
-                    <path d="M0 100 H400" stroke="var(--border-color)" strokeWidth="8"/>
-                    <path d="M200 0 V200" stroke="var(--border-color)" strokeWidth="8"/>
-                    <circle cx="200" cy="100" r="10" fill="#ef4444"/>
-                    <circle cx="200" cy="100" r="5" fill="#fff"/>
-                  </svg>
+              {display.photo ? (
+                <div className="sd-map">
+                  <div className="sd-map-bg">
+                    <img
+                      src={resolveMediaUrl(display.photo)}
+                      alt={`Shipment ${display.id}`}
+                      className="sd-cover-image"
+                    />
+                  </div>
+                  <div className="sd-map-badge">
+                    <span className="sd-map-label">SHIPMENT PRIORITY</span>
+                    <span className="sd-map-loc">{display.priority}</span>
+                  </div>
                 </div>
-                <div className="sd-map-badge">
-                  <span className="sd-map-label">SHIPMENT PRIORITY</span>
-                  <span className="sd-map-loc">{display.priority}</span>
-                </div>
-              </div>
+              ) : null}
 
               <div className="sd-info-row">
                 <div className="sd-info-card">

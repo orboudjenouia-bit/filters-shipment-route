@@ -361,6 +361,8 @@ export default function App() {
   const [userRole, setUserRole] = useState(getStoredRole());
   const [profileGate, setProfileGate] = useState({ loading: true, hasProfile: true, type: "", isVerified: true });
   const [resetToken, setResetToken] = useState("");
+  const [forgotBackScreen, setForgotBackScreen] = useState("login");
+  const [resetPasswordBackScreen, setResetPasswordBackScreen] = useState("login");
   const [notificationsBackScreen, setNotificationsBackScreen] = useState("dashboard");
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
@@ -409,7 +411,11 @@ export default function App() {
     if (resolvedTarget === "shipmentDetails") {
       const previousScreen =
         payload.from ||
-        (current === "shipmentDetails" ? shipmentDetailsBackScreen : current) ||
+        (current === "publicProfile"
+          ? publicProfileBackScreen
+          : current === "shipmentDetails"
+          ? shipmentDetailsBackScreen
+          : current) ||
         "shipments";
       setShipmentDetailsBackScreen(previousScreen);
     }
@@ -425,7 +431,11 @@ export default function App() {
     if (resolvedTarget === "routeDetails") {
       const previousScreen =
         payload.from ||
-        (current === "routeDetails" ? routeDetailsBackScreen : current) ||
+        (current === "publicProfile"
+          ? publicProfileBackScreen
+          : current === "routeDetails"
+          ? routeDetailsBackScreen
+          : current) ||
         "routes";
       setRouteDetailsBackScreen(previousScreen);
     }
@@ -433,6 +443,23 @@ export default function App() {
     if (resolvedTarget === "notifications") {
       const previousScreen = payload.from || current || "dashboard";
       setNotificationsBackScreen(previousScreen);
+    }
+
+    if (resolvedTarget === "forgot") {
+      const previousScreen =
+        payload.from ||
+        (current === "forgot" ? forgotBackScreen : current) ||
+        "login";
+      setForgotBackScreen(previousScreen);
+    }
+
+    if (resolvedTarget === "resetPassword") {
+      const previousScreen =
+        payload.from ||
+        (current === "resetPassword" ? resetPasswordBackScreen : current) ||
+        forgotBackScreen ||
+        "login";
+      setResetPasswordBackScreen(previousScreen);
     }
 
     if (resolvedTarget === "publicProfile") {
@@ -794,7 +821,7 @@ export default function App() {
 
         {current === "forgot" && (
           <ForgotPassword
-            onBack={() => goBack("login")}
+            onBack={() => goBack(forgotBackScreen || "login")}
             onSuccess={() => goTo("login")}
           />
         )}
@@ -804,11 +831,11 @@ export default function App() {
             token={resetToken}
             onBack={() => {
               clearResetPath();
-              goBack("login");
+              goBack(resetPasswordBackScreen || forgotBackScreen || "login");
             }}
             onSuccess={() => {
               clearResetPath();
-              goTo("login");
+              goBack(resetPasswordBackScreen || forgotBackScreen || "login");
             }}
           />
         )}
@@ -938,7 +965,7 @@ export default function App() {
             routeId={selectedRouteId}
             source="all"
             allowActions={false}
-            onBack={() => goBack(routeDetailsBackScreen || "routes")}
+            onBack={() => goBack("routes")}
             onNavigate={(screen, payload) => {
               goTo(screen, payload);
             }}
@@ -1033,7 +1060,7 @@ export default function App() {
         {current === "shipmentDetails" && (
           <ShipmentDetails
             shipmentId={selectedShipmentId}
-            onBack={() => goBack(shipmentDetailsBackScreen || "shipments")}
+            onBack={() => goBack("shipments")}
             onNavigate={(screen, payload) => {
               goTo(screen, payload);
             }}

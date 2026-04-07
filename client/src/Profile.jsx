@@ -151,6 +151,16 @@ export default function Profile({ onNavigate, hasUnreadNotifications = false }) 
       return;
     }
 
+    if (item.type === "route") {
+      if (item.rawId != null) {
+        onNavigate("routeDetails", { routeId: item.rawId, from: "profile" });
+        return;
+      }
+
+      onNavigate("routes");
+      return;
+    }
+
     onNavigate("routes");
   };
 
@@ -300,7 +310,7 @@ export default function Profile({ onNavigate, hasUnreadNotifications = false }) 
             driver: "-",
             trips: Array.isArray(vehicle?.routes) ? vehicle.routes.length : 0,
             fuel: "-",
-            color: "-",
+            color: String(vehicle?.color || "").trim() || "-",
           };
         });
 
