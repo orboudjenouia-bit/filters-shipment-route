@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import ThemeToggle from "./ThemeToggle";
 import "./Shipmentdetails.css";
 import { getShipments } from "./services/shipmentService";
+import { resolveMediaUrl } from "./utils/media";
 
 const fallbackTimeline = [
   { id: 1, label: "Shipment Created", sub: "Request registered successfully", done: true },
@@ -20,7 +21,7 @@ const parseSpecialInformation = (text) => {
   return String(text).trim();
 };
 
-export default function ShipmentDetails({ onBack, shipmentId }) {
+export default function ShipmentDetails({ onBack, onNavigate, shipmentId }) {
   const [mounted, setMounted] = useState(false);
   const [shipment, setShipment] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -84,17 +85,13 @@ export default function ShipmentDetails({ onBack, shipmentId }) {
       shipment?.user?.business?.business_Name ||
       storedUser?.full_Name ||
       storedUser?.business_Name ||
-      storedUser?.name
-
-    const firstLetters = senderName
-      .split(" ")
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part.charAt(0).toUpperCase())
-      .join("") || "U";
+      storedUser?.name ||
+      "Unknown user";
 
     return {
       id: shipment.shipment_ID,
+      senderId: shipment?.user?.id || null,
+      senderPhoto: shipment?.user?.profile_Photo || storedUser?.profile_Photo || "",
       type: `${toTitle(shipment.priority)} Priority`,
       status: toTitle(shipment.status || "In-Stock"),
       origin: shipment.origin || "Origin not specified",
@@ -103,7 +100,6 @@ export default function ShipmentDetails({ onBack, shipmentId }) {
       weight: `${shipment.weight ?? "-"}kg`,
       volume: `${shipment.volume ?? "-"}m³`,
       senderName,
-      senderInitials: firstLetters,
       specialInformation: parseSpecialInformation(shipment.special_Information),
       priority: shipment.priority || "Normal",
     };
@@ -194,16 +190,38 @@ export default function ShipmentDetails({ onBack, shipmentId }) {
               </div>
 
               <div className="sd-sender-card">
-                <div className="sd-sender-avatar">{display.senderInitials}</div>
+                <div className="sd-sender-avatar">
+                  {display.senderPhoto ? (
+                    <img
+                      src={resolveMediaUrl(display.senderPhoto)}
+                      alt={display.senderName}
+                      className="sd-sender-avatar-img"
+                    />
+                  ) : (
+                    <span className="sd-sender-avatar-fallback" aria-hidden="true">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="8" r="4" stroke="white" strokeWidth="2" />
+                        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                    </span>
+                  )}
+                </div>
                 <div className="sd-sender-info">
                   <span className="sd-sender-label">SENDER</span>
                   <span className="sd-sender-name">{display.senderName}</span>
                 </div>
-                <button className="sd-msg-btn" type="button">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
+                {display.senderId ? (
+                  <button
+                    className="sd-msg-btn"
+                    type="button"
+                    aria-label="View sender profile"
+                    onClick={() => onNavigate?.("publicProfile", { userId: display.senderId, from: "shipmentDetails" })}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 20c0-3.5 3.6-6 8-6s8 2.5 8 6" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                ) : null}
               </div>
 
               <div className="sd-route">

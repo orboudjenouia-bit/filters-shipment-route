@@ -3,6 +3,7 @@ import ThemeToggle from "./ThemeToggle";
 import logoSvg from "./photo/Logo.svg";
 import "./Routes.css";
 import { getRoutes } from "./services/routeService";
+import { resolveMediaUrl } from "./utils/media";
 
 const BellIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -74,6 +75,8 @@ const formatCreatedAt = (createdAt) => {
 
   const normalizeRoute = (item, index) => ({
     id: item?.route_ID || item?.id || `${index}-${item?.date || "route"}`,
+    ownerId: item?.user?.id || null,
+    ownerPhoto: item?.user?.profile_Photo || "",
     userName:
       item?.user?.individual?.full_Name ||
       item?.user?.business?.business_Name ||
@@ -213,15 +216,43 @@ const formatCreatedAt = (createdAt) => {
             filteredRoutes.map((route) => (
               <div key={route.id} className="sh-card">
                 <div className="sh-card-top">
-                  <div className="sh-avatar">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="8" r="4" stroke="#9ca3af" strokeWidth="2" />
-                      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </div>
+                  <button
+                    className="sh-avatar"
+                    type="button"
+                    aria-label="Open user profile"
+                    onClick={() => {
+                      if (route.ownerId) {
+                        onNavigate("publicProfile", { userId: route.ownerId, from: "routes" });
+                      }
+                    }}
+                  >
+                    {route.ownerPhoto ? (
+                      <img
+                        src={resolveMediaUrl(route.ownerPhoto)}
+                        alt={route.userName}
+                        style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover" }}
+                      />
+                    ) : (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="8" r="4" stroke="#9ca3af" strokeWidth="2" />
+                        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                    )}
+                  </button>
                   <div className="sh-card-info">
                     <div className="sh-card-name-row">
-                      <span className="sh-card-name">{route.userName}</span>
+                      <button
+                        type="button"
+                        className="sh-card-name"
+                        style={{ background: "none", border: "none", padding: 0, textAlign: "left", cursor: route.ownerId ? "pointer" : "default" }}
+                        onClick={() => {
+                          if (route.ownerId) {
+                            onNavigate("publicProfile", { userId: route.ownerId, from: "routes" });
+                          }
+                        }}
+                      >
+                        {route.userName}
+                      </button>
                       <span className="sh-tag sh-tag--vehicle sh-tag--vehicle-inline">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                           <path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z" stroke="#0f172a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -281,6 +312,15 @@ const formatCreatedAt = (createdAt) => {
                       Maximum capacity: {route.capacity != null ? `${route.capacity} kg` : "N/A"}
                     </span>
                   </div>
+                  {route.ownerId ? (
+                    <button
+                      className="sh-details-btn"
+                      type="button"
+                      onClick={() => onNavigate("publicProfile", { userId: route.ownerId, from: "routes" })}
+                    >
+                      Profile
+                    </button>
+                  ) : null}
                   <button
                     className="sh-details-btn"
                     type="button"

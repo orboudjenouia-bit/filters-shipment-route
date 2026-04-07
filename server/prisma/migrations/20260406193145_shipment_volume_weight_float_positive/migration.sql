@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "Shipment" ALTER COLUMN "weight" SET DATA TYPE DOUBLE PRECISION,
+ALTER COLUMN "volume" SET DATA TYPE DOUBLE PRECISION;
+
+-- AlterTable
+ALTER TABLE "Subscription" ALTER COLUMN "endDate" SET DEFAULT (CURRENT_TIMESTAMP + interval '1 month');

@@ -3,6 +3,7 @@ import ThemeToggle from "./ThemeToggle";
 import logoSvg from "./photo/Logo.svg";
 import "./Shipments.css";
 import { getShipments } from "./services/shipmentService";
+import { resolveMediaUrl } from "./utils/media";
 
 const BellIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -79,6 +80,8 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnrea
 
       return {
         id: item?.shipment_ID || item?.id || item?._id || `${index}-${item?.createdAt || "shipment"}`,
+        ownerId: item?.user?.id || null,
+        ownerPhoto: item?.user?.profile_Photo || "",
         name:
           item?.user?.individual?.full_Name ||
           item?.user?.business?.business_Name ||
@@ -205,14 +208,44 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnrea
             filteredShipments.map((s) => (
               <div key={s.id} className="sh-card" onClick={() => onNavigate("shipmentDetails", { shipmentId: s.id })}>
                 <div className="sh-card-top">
-                  <div className="sh-avatar">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="8" r="4" stroke="#9ca3af" strokeWidth="2"/>
-                      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                  </div>
+                  <button
+                    className="sh-avatar"
+                    type="button"
+                    aria-label="Open user profile"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (s.ownerId) {
+                        onNavigate("publicProfile", { userId: s.ownerId, from: "shipments" });
+                      }
+                    }}
+                  >
+                    {s.ownerPhoto ? (
+                      <img
+                        src={resolveMediaUrl(s.ownerPhoto)}
+                        alt={s.name}
+                        style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover" }}
+                      />
+                    ) : (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="8" r="4" stroke="#9ca3af" strokeWidth="2"/>
+                        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"/>
+                      </svg>
+                    )}
+                  </button>
                   <div className="sh-card-info">
-                    <span className="sh-card-name">{s.name}</span>
+                    <button
+                      type="button"
+                      className="sh-card-name"
+                      style={{ background: "none", border: "none", padding: 0, textAlign: "left", cursor: s.ownerId ? "pointer" : "default" }}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        if (s.ownerId) {
+                          onNavigate("publicProfile", { userId: s.ownerId, from: "shipments" });
+                        }
+                      }}
+                    >
+                      {s.name}
+                    </button>
                     <span className="sh-card-time">{s.time}</span>
                   </div>
                   <span className="sh-card-price">{s.price}</span>
@@ -259,6 +292,17 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnrea
                     )}
                     {s.date && <span className="sh-tag">Date: {s.date}</span>}
                   </div>
+                  {s.ownerId ? (
+                    <button
+                      className="sh-details-btn"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onNavigate("publicProfile", { userId: s.ownerId, from: "shipments" });
+                      }}
+                    >
+                      Profile
+                    </button>
+                  ) : null}
                   <button
                     className="sh-details-btn"
                     onClick={(event) => {

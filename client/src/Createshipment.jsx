@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import ThemeToggle from "./ThemeToggle";
 import "./Createshipment.css";
 import { createShipment } from "./services/shipmentService";
+import { uploadPhoto } from "./services/uploadService";
 
 const categories = ["Electronics", "Furniture", "Apparel", "Food & Beverages", "Machinery", "Documents", "Other"];
 const priorities = ["Normal", "High", "Urgent"];
@@ -32,14 +33,6 @@ export default function CreateShipment({ onBack, onCreated }) {
     setPhotos(files.slice(0, 5));
   };
 
-  const fileToDataUrl = (file) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result || ""));
-      reader.onerror = () => reject(new Error("Failed to read selected photo."));
-      reader.readAsDataURL(file);
-    });
-
   const handleSubmit = async () => {
     const isValid =
       form.title &&
@@ -66,8 +59,8 @@ export default function CreateShipment({ onBack, onCreated }) {
       return;
     }
 
-    if (!Number.isInteger(volume) || !Number.isInteger(weight)) {
-      setError("Weight and volume must be whole numbers.");
+    if (!Number.isFinite(volume) || !Number.isFinite(weight) || volume <= 0 || weight <= 0) {
+      setError("Weight and volume must be positive numbers.");
       return;
     }
 
@@ -76,7 +69,7 @@ export default function CreateShipment({ onBack, onCreated }) {
       setError("");
       setSuccess(false);
 
-      const photoData = photos[0] ? await fileToDataUrl(photos[0]) : null;
+      const photoData = photos[0] ? await uploadPhoto(photos[0]) : null;
 
       const payload = {
         title: form.title.trim(),

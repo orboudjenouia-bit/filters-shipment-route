@@ -1,83 +1,51 @@
-import API_URL, { getAuthHeaders, handleAuthFailure, parseJson } from "./http";
+import API_URL, { getAuthHeaders, requestJson } from "./http";
 
 export const register = async (email, password, phone, type) => {
-  const response = await fetch(`${API_URL}/auth/register`, {
+  return requestJson(
+    `${API_URL}/auth/register`,
+    {
     method: "POST",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ email, password, phone, type }),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    throw {
-      status: response.status,
-      code: data.code,
-      message: data.message || "Registration Failed",
-    };
-  }
-
-  return data;
+    },
+    { fallbackMessage: "Registration failed", authAware: false }
+  );
 };
 
 export const login = async (email, password) => {
-  const response = await fetch(`${API_URL}/auth/login`, {
+  return requestJson(
+    `${API_URL}/auth/login`,
+    {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    throw {
-      status: response.status,
-      code: data.code,
-      message: data.message || "Login failed",
-    };
-  }
-
-  return data;
+    },
+    { fallbackMessage: "Login failed", authAware: false }
+  );
 };
 
 export const forgotPassword = async (email) => {
-  const response = await fetch(`${API_URL}/auth/forget-password`, {
+  return requestJson(
+    `${API_URL}/auth/forget-password`,
+    {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    throw {
-      status: response.status,
-      code: data.code,
-      message: data.message || "Failed to send reset email",
-    };
-  }
-
-  return data;
+    },
+    { fallbackMessage: "Failed to send reset email", authAware: false }
+  );
 };
 
 export const resetPassword = async (token, password) => {
-  const response = await fetch(`${API_URL}/auth/reset-password/${token}`, {
+  return requestJson(
+    `${API_URL}/auth/reset-password/${token}`,
+    {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ password }),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    throw {
-      status: response.status,
-      code: data.code,
-      message: data.message || "Failed to reset password",
-    };
-  }
-
-  return data;
+    },
+    { fallbackMessage: "Failed to reset password", authAware: false }
+  );
 };
 
 export const logout = async () => {
@@ -89,21 +57,12 @@ export const logout = async () => {
     return { success: true, msg: "Already logged out" };
   }
 
-  const response = await fetch(`${API_URL}/auth/logout`, {
-    method: "POST",
-    headers,
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    handleAuthFailure(response, data);
-    throw {
-      status: response.status,
-      code: data.code,
-      message: data.message || "Logout failed",
-    };
-  }
-
-  return data;
+  return requestJson(
+    `${API_URL}/auth/logout`,
+    {
+      method: "POST",
+      headers,
+    },
+    { fallbackMessage: "Logout failed", authAware: true }
+  );
 };

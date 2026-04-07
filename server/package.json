@@ -18,6 +18,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
+    "seed:live-demo": "node scripts/seedLiveDemo.js",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -33,6 +34,7 @@
     "json2csv": "^6.0.0-alpha.2",
     "jsonwebtoken": "^9.0.3",
     "mailtrap": "^4.5.1",
+    "multer": "^2.1.1",
     "nodemailer": "^7.0.13",
     "pg": "^8.18.0",
     "socket.io": "^4.8.3",

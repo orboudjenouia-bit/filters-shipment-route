@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const { check } = require('express-validator');
 const checkToken = require('../Middlewares/checkToken');
+const requireProfile = require('../Middlewares/requireProfile');
 const asyncHandler = require('../utils/asyncHandler');
 const {
     IndividualProfile,
@@ -14,9 +15,11 @@ const {
     updateVehicle,
     deleteVehicle,
     getMyProfile,
+    getPublicProfile,
 } = require('../Controllers/profileController');
 
 router.get('/me', checkToken, asyncHandler(getMyProfile));
+router.get('/user/:userId', checkToken, requireProfile, asyncHandler(getPublicProfile));
 
 router.post(
     '/individual',
@@ -25,6 +28,7 @@ router.post(
         check('full_Name', 'Full name is required').notEmpty().isString(),
         check('nin', 'National ID is required').notEmpty().isString(),
         check('location', 'Location is required').notEmpty().isString(),
+        check('photo', 'Photo must be a string').optional().isString(),
     ],
     asyncHandler(IndividualProfile)
 );
@@ -43,18 +47,20 @@ router.post(
         check('locations', 'Locations must be a non-empty array').isArray({
             min: 1,
         }),
+        check('photo', 'Photo must be a string').optional().isString(),
     ],
     asyncHandler(BusinessProfile)
 );
 
-router.get('/historyShipments', checkToken, asyncHandler(getShipmentHistory));
-router.get('/historyRoutes', checkToken, asyncHandler(getRouteHistory));
+router.get('/historyShipments', checkToken, requireProfile, asyncHandler(getShipmentHistory));
+router.get('/historyRoutes', checkToken, requireProfile, asyncHandler(getRouteHistory));
 
-router.get('/vehicles', checkToken, asyncHandler(listVehicles));
+router.get('/vehicles', checkToken, requireProfile, asyncHandler(listVehicles));
 // router.get('/vehicles/:id')
 router.post(
     '/vehicles',
     checkToken,
+    requireProfile,
     [
         check('plate_Number', 'Plate number is required and must be numeric')
             .notEmpty()
@@ -73,6 +79,7 @@ router.post(
 router.patch(
     '/vehicles',
     checkToken,
+    requireProfile,
     [
         check('plate_Number', 'Plate number is required and must be numeric')
             .notEmpty()
@@ -91,6 +98,7 @@ router.patch(
 router.delete(
     '/vehicles',
     checkToken,
+    requireProfile,
     [
         check('plate_Number', 'Plate number is required and must be numeric')
             .notEmpty()

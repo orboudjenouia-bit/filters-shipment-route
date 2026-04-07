@@ -8,9 +8,13 @@ import {
   Navigation,
   Send,
   FileText,
+  Plus,
+  Trash2,
+  GripVertical,
 } from "lucide-react";
 import { createRoute } from "./services/routeService";
 import { getVehicles } from "./services/profileService";
+import { uploadPhoto } from "./services/uploadService";
 import "./Createroute.css";
 
 export default function CreateRoute() {
@@ -22,6 +26,7 @@ export default function CreateRoute() {
     region: "",
     startLocation: "",
     endLocation: "",
+    waypoints: [],
     dateMode: "day",
     dayDate: "",
     intervalStart: "",
@@ -80,18 +85,32 @@ export default function CreateRoute() {
   const handleChange = (field) => (e) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
+  const addWaypoint = () => {
+    setForm((prev) => ({ ...prev, waypoints: [...prev.waypoints, ""] }));
+  };
+
+  const updateWaypoint = (index, value) => {
+    setForm((prev) => ({
+      ...prev,
+      waypoints: prev.waypoints.map((stop, i) => (i === index ? value : stop)),
+    }));
+  };
+
+  const removeWaypoint = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      waypoints: prev.waypoints.filter((_, i) => i !== index),
+    }));
+  };
+
+  const clearWaypoints = () => {
+    setForm((prev) => ({ ...prev, waypoints: [] }));
+  };
+
   const handlePhotosChange = (event) => {
     const files = Array.from(event.target.files || []);
     setPhotos(files.slice(0, 5));
   };
-
-  const fileToDataUrl = (file) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result || ""));
-      reader.onerror = () => reject(new Error("Failed to read selected photo."));
-      reader.readAsDataURL(file);
-    });
 
   const showError = (msg) => {
     setError(msg);
@@ -149,6 +168,9 @@ export default function CreateRoute() {
 
     const isRegion = form.postType === "region";
     const isInterval = form.dateMode === "interval";
+    const normalizedWaypoints = (form.waypoints || [])
+      .map((stop) => stop.trim())
+      .filter(Boolean);
 
     const origin = isRegion ? null : form.startLocation.trim();
     const destination = isRegion ? null : form.endLocation.trim();
@@ -159,13 +181,14 @@ export default function CreateRoute() {
       setLoading(true);
       setError("");
 
-      const photoData = photos[0] ? await fileToDataUrl(photos[0]) : null;
+      const photoData = photos[0] ? await uploadPhoto(photos[0]) : null;
 
       const payload = {
         name: form.routeName.trim(),
         photo: photoData,
         origin,
         destination,
+        waypoints: isRegion ? [] : normalizedWaypoints,
         region,
         date,
         post_type: form.postType === "region" ? "REGION" : "ORIGIN_DESTINATION",
@@ -187,6 +210,7 @@ export default function CreateRoute() {
         region: "",
         startLocation: "",
         endLocation: "",
+        waypoints: [],
         dateMode: "day",
         dayDate: "",
         intervalStart: "",
@@ -372,31 +396,82 @@ export default function CreateRoute() {
           {form.postType === "originDestination" ? (
             <>
               <div className="cr-field">
-                <label className="cr-label">START LOCATION</label>
-                <div className="cr-location-input-box">
-                  <Navigation size={15} className="cr-loc-icon green" />
-                  <input
-                    type="text"
-                    className="cr-loc-input"
-                    placeholder="Enter departure city"
-                    value={form.startLocation}
-                    onChange={handleChange("startLocation")}
-                  />
+                <div className="cr-stops-header">
+                  <label className="cr-label cr-stops-title">WAYPOINTS &amp; STOPS</label>
+                  <button
+                    type="button"
+                    className="cr-stops-clear"
+                    onClick={clearWaypoints}
+                    disabled={form.waypoints.length === 0}
+                  >
+                    Clear All
+                  </button>
                 </div>
-              </div>
 
-              <div className="cr-field">
-                <label className="cr-label">END LOCATION</label>
-                <div className="cr-location-input-box">
-                  <MapPin size={15} className="cr-loc-icon gray" />
-                  <input
-                    type="text"
-                    className="cr-loc-input"
-                    placeholder="Enter destination city"
-                    value={form.endLocation}
-                    onChange={handleChange("endLocation")}
-                  />
+                <div className="cr-stop-card cr-stop-card--start">
+                  <div className="cr-stop-drag" aria-hidden="true">
+                    <GripVertical size={16} />
+                  </div>
+                  <div className="cr-stop-main">
+                    <span className="cr-stop-tag cr-stop-tag--start">Start</span>
+                    <input
+                      type="text"
+                      className="cr-stop-input"
+                      placeholder="Enter departure city"
+                      value={form.startLocation}
+                      onChange={handleChange("startLocation")}
+                    />
+                  </div>
+                  <Navigation size={18} className="cr-stop-end-icon" />
                 </div>
+
+                {form.waypoints.map((stop, index) => (
+                  <div className="cr-stop-card" key={`waypoint-${index}`}>
+                    <div className="cr-stop-drag" aria-hidden="true">
+                      <GripVertical size={16} />
+                    </div>
+                    <div className="cr-stop-main">
+                      <span className="cr-stop-tag cr-stop-tag--waypoint">Stop {index + 1}</span>
+                      <input
+                        type="text"
+                        className="cr-stop-input"
+                        placeholder="Enter a stop"
+                        value={stop}
+                        onChange={(event) => updateWaypoint(index, event.target.value)}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      className="cr-stop-remove"
+                      aria-label={`Remove stop ${index + 1}`}
+                      onClick={() => removeWaypoint(index)}
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                ))}
+
+                <div className="cr-stop-card cr-stop-card--destination">
+                  <div className="cr-stop-drag" aria-hidden="true">
+                    <GripVertical size={16} />
+                  </div>
+                  <div className="cr-stop-main">
+                    <span className="cr-stop-tag cr-stop-tag--destination">Destination</span>
+                    <input
+                      type="text"
+                      className="cr-stop-input"
+                      placeholder="Enter destination city"
+                      value={form.endLocation}
+                      onChange={handleChange("endLocation")}
+                    />
+                  </div>
+                  <MapPin size={18} className="cr-stop-end-icon" />
+                </div>
+
+                <button type="button" className="cr-add-stop-btn" onClick={addWaypoint}>
+                  <Plus size={18} />
+                  Add Stop
+                </button>
               </div>
             </>
           ) : (

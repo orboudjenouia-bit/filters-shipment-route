@@ -14,6 +14,7 @@ const listUsers = async (req, res, next) => {
             type: true,
             role: true,
             status: true,
+            profile_Photo: true,
             individual: {
                 select: {
                     full_Name: true,

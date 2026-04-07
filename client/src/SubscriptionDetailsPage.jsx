@@ -8,6 +8,7 @@ import {
   getSubscriptionById,
   updateSubscription,
 } from "./services/subscriptionService";
+import { SUBSCRIPTION_PLANS } from "./subscriptionPlansData";
 import "./SubscriptionDetailsPage.css";
 
 const TIERS = ["Free", "Individual", "Business"];
@@ -104,6 +105,14 @@ export default function SubscriptionDetailsPage({ subId, isAdmin = false, onBack
     () => buildProgressData(subscription?.startDate, subscription?.endDate),
     [subscription?.startDate, subscription?.endDate]
   );
+
+  const currentPlanFeatures = useMemo(() => {
+    const currentTier = String(subscription?.tier || "").toLowerCase();
+    const matchedPlan = SUBSCRIPTION_PLANS.find(
+      (plan) => String(plan.tier || "").toLowerCase() === currentTier
+    );
+    return Array.isArray(matchedPlan?.features) ? matchedPlan.features : [];
+  }, [subscription?.tier]);
 
   const loadDetails = async () => {
     setLoading(true);
@@ -221,6 +230,22 @@ export default function SubscriptionDetailsPage({ subId, isAdmin = false, onBack
                   <span className="subd-info-label">TIER</span>
                   <span className="subd-info-val">{subscription.tier}</span>
                 </div>
+              </div>
+
+              <div className="subd-features-card">
+                <h3 className="subd-features-title">Plan Features</h3>
+                {currentPlanFeatures.length === 0 ? (
+                  <p className="subd-features-empty">No features available for this tier.</p>
+                ) : (
+                  <ul className="subd-features-list">
+                    {currentPlanFeatures.map((feature) => (
+                      <li key={feature} className="subd-feature-item">
+                        <span className="subd-feature-check">✓</span>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
 
               <div className="subd-progress-card">

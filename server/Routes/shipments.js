@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { check } = require('express-validator');
 const authToken = require('../Middlewares/checkToken');
+const requireProfile = require('../Middlewares/requireProfile');
 const asyncHandler = require('../utils/asyncHandler');
 
 const {
@@ -12,12 +13,13 @@ const {
     deleteShipment,
 } = require('../Controllers/shipmentController');
 
-router.get('/', authToken, asyncHandler(listShipments));
-router.get('/me', authToken, asyncHandler(listMyShipments));
+router.get('/', authToken, requireProfile, asyncHandler(listShipments));
+router.get('/me', authToken, requireProfile, asyncHandler(listMyShipments));
 
 router.post(
     '/',
     authToken,
+    requireProfile,
     [
         check('title', 'Title is required').notEmpty().isString(),
         check('category', 'Category is required').notEmpty().isString(),
@@ -26,10 +28,10 @@ router.post(
         check('destination', 'Destination is required').notEmpty().isString(),
         check('volume', 'Volume is required and must be a number')
             .notEmpty()
-            .isNumeric(),
+            .isFloat({ gt: 0 }),
         check('weight', 'Weight is required and must be a number')
             .notEmpty()
-            .isNumeric(),
+            .isFloat({ gt: 0 }),
         check('date', 'Date must be in format YYYY-MM-DD').matches(
             /^\d{4}-\d{2}-\d{2}$/
         ),
@@ -46,6 +48,7 @@ router.post(
 router.patch(
     '/',
     authToken,
+    requireProfile,
     [
         check('shipment_ID', 'Shipment ID is required and must be a number')
             .notEmpty()
@@ -57,8 +60,12 @@ router.patch(
         check('destination', 'Destination must be a string')
             .optional()
             .isString(),
-        check('volume', 'Volume must be a number').optional().isNumeric(),
-        check('weight', 'Weight must be a number').optional().isNumeric(),
+        check('volume', 'Volume must be a positive number')
+            .optional()
+            .isFloat({ gt: 0 }),
+        check('weight', 'Weight must be a positive number')
+            .optional()
+            .isFloat({ gt: 0 }),
         check('date', 'Date must be in format YYYY-MM-DD')
             .optional()
             .matches(/^\d{4}-\d{2}-\d{2}$/),
@@ -78,6 +85,6 @@ router.patch(
     asyncHandler(editShipment)
 );
 
-router.delete('/:id', authToken, asyncHandler(deleteShipment));
+router.delete('/:id', authToken, requireProfile, asyncHandler(deleteShipment));
 
 module.exports = router;

@@ -1,41 +1,25 @@
-import API_URL, { parseJson } from "./http";
+import API_URL, { requestJson } from "./http";
 
 export const verifyCode = async (code) => {
-  const response = await fetch(`${API_URL}/auth/verify-email`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ code }),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    throw {
-      status: response.status,
-      code: data.code,
-      message: data.message || "Verification failed",
-    };
-  }
-
-  return data;
+  return requestJson(
+    `${API_URL}/auth/verify-email`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    },
+    { fallbackMessage: "Verification failed", authAware: false }
+  );
 };
 
 export const resendVerificationCode = async (email) => {
-  const response = await fetch(`${API_URL}/auth/resend-verification`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    throw {
-      status: response.status,
-      code: data.code,
-      message: data.message || "Failed to resend code",
-    };
-  }
-
-  return data;
+  return requestJson(
+    `${API_URL}/auth/resend-verification`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    },
+    { fallbackMessage: "Failed to resend code", authAware: false }
+  );
 };

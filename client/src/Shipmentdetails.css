@@ -193,6 +193,20 @@
   font-weight: 700;
   color: #fff;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sd-sender-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.sd-sender-avatar-fallback {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
 }
 
 .sd-sender-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }

@@ -101,6 +101,7 @@ model Route {
   photo             String? @db.Text
   origin            String? 
   destination       String? 
+  waypoints         String[] @default([])
   region            String?
   date              String? @db.VarChar(30)
   post_type         PostType @default(ORIGIN_DESTINATION)
@@ -129,8 +130,8 @@ model Shipment {
   photo               String? @db.Text
   origin              String  
   destination         String  
-  volume              Int
-  weight              Int                    
+  volume              Float
+  weight              Float                    
   date                String  @db.VarChar(11) 
   time                String? @db.VarChar(5)
   priority            String  @default("Normal")

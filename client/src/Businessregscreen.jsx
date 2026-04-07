@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import ThemeToggle from "./ThemeToggle";
 import "./Businessregscreen.css";
 import { BusinessProfile } from "./services/profileService";
+import { uploadPhoto } from "./services/uploadService";
 
 const BackIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -11,6 +12,7 @@ const BackIcon = () => (
 
 export default function BusinessRegScreen({ onBack, onNext, onLogin }) {
   const [form, setForm] = useState({ businessName: "", rcNumber: "", tin: "", sin: "", legalForm: "", location: "" });
+  const [photoFile, setPhotoFile] = useState(null);
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -41,6 +43,8 @@ export default function BusinessRegScreen({ onBack, onNext, onLogin }) {
     setSubmitting(true);
 
     try {
+      const uploadedPhotoPath = photoFile ? await uploadPhoto(photoFile) : undefined;
+
       await BusinessProfile({
         business_Name: form.businessName.trim(),
         rc_Number: form.rcNumber.replace(/\s/g, ""),
@@ -48,6 +52,7 @@ export default function BusinessRegScreen({ onBack, onNext, onLogin }) {
         nif: parseInt(form.tin, 10),
         nis: parseInt(form.sin, 10),
         locations: [form.location.trim()],
+        photo: uploadedPhotoPath,
       });
 
       if (onNext) onNext(form);
@@ -61,6 +66,24 @@ export default function BusinessRegScreen({ onBack, onNext, onLogin }) {
   const handleChange = (field, value) => {
     setForm(p => ({ ...p, [field]: value }));
     setErrors(p => ({ ...p, [field]: undefined }));
+    setSubmitError("");
+  };
+
+  const handlePhotoChange = (event) => {
+    const file = event.target.files?.[0] || null;
+
+    if (!file) {
+      setPhotoFile(null);
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setSubmitError("Please choose a valid image file.");
+      setPhotoFile(null);
+      return;
+    }
+
+    setPhotoFile(file);
     setSubmitError("");
   };
 
@@ -131,6 +154,22 @@ export default function BusinessRegScreen({ onBack, onNext, onLogin }) {
             type="text" placeholder="e.g. Algiers"
             value={form.location} onChange={e => handleChange("location", e.target.value)}/>
           {errors.location && <span className="br-error br-error--show">{errors.location}</span>}
+        </div>
+
+        <div className="br-field-group">
+          <label className="br-label" htmlFor="business-profile-photo">Profile Photo (optional)</label>
+          <label className="br-upload-box" htmlFor="business-profile-photo">
+            <span className="br-upload-main">Choose profile photo</span>
+            <span className="br-upload-sub">PNG, JPG, WEBP</span>
+          </label>
+          <input
+            id="business-profile-photo"
+            className="br-file-input"
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoChange}
+          />
+          {photoFile ? <span className="br-upload-selected">Selected: {photoFile.name}</span> : null}
         </div>
 
         <div className="br-spacer" />

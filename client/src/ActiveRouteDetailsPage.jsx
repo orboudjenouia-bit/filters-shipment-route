@@ -3,6 +3,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import ConfirmDialog from "./ConfirmDialog";
 import { deleteRoute, getMyRoutes, getRoutes } from "./services/routeService";
+import { resolveMediaUrl } from "./utils/media";
 import "./Shipmentdetails.css";
 import "./ActiveManage.css";
 
@@ -60,21 +61,19 @@ export default function ActiveRouteDetailsPage({ routeId, onBack, onNavigate, so
       storedUser?.name ||
       "Unknown user";
 
-    const ownerInitials = ownerName
-      .split(" ")
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part.charAt(0).toUpperCase())
-      .join("") || "U";
-
     return {
       id: item?.route_ID || item?.id,
+      ownerId: item?.user?.id || null,
+      ownerPhoto: item?.user?.profile_Photo || storedUser?.profile_Photo || "",
       status: toTitle(item?.status || "Active"),
       routeType: toTitle(item?.post_type || "ORIGIN_DESTINATION"),
       dateType: toTitle(item?.date_type || "DAY"),
       name: item?.name || "Route",
       origin: item?.origin || "Origin not specified",
       destination: item?.destination || "Destination not specified",
+      waypoints: Array.isArray(item?.waypoints)
+        ? item.waypoints.map((stop) => String(stop || "").trim()).filter(Boolean)
+        : [],
       region: item?.region || "Region not specified",
       date: item?.date || "Date not specified",
       intervalStart: item?.interval_start || "-",
@@ -83,7 +82,6 @@ export default function ActiveRouteDetailsPage({ routeId, onBack, onNavigate, so
       vehicleName: item?.vehicle?.vehicle_Name || "Unknown vehicle",
       capacity: item?.vehicle?.capacity ?? "N/A",
       ownerName,
-      ownerInitials,
       notes: String(item?.more_Information || "No additional notes").trim(),
     };
   }, [item]);
@@ -188,14 +186,40 @@ export default function ActiveRouteDetailsPage({ routeId, onBack, onNavigate, so
               </div>
 
               <div className="sd-sender-card">
-                <div className="sd-sender-avatar">{display.ownerInitials}</div>
+                <div className="sd-sender-avatar">
+                  {display.ownerPhoto ? (
+                    <img
+                      src={resolveMediaUrl(display.ownerPhoto)}
+                      alt={display.ownerName}
+                      className="sd-sender-avatar-img"
+                    />
+                  ) : (
+                    <span className="sd-sender-avatar-fallback" aria-hidden="true">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="8" r="4" stroke="white" strokeWidth="2" />
+                        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                    </span>
+                  )}
+                </div>
                 <div className="sd-sender-info">
                   <span className="sd-sender-label">POST OWNER</span>
                   <span className="sd-sender-name">{display.ownerName}</span>
                 </div>
-                <button className="sd-msg-btn" type="button" aria-label="Route date type">
-                  {display.dateType === "Interval" ? "I" : "D"}
-                </button>
+                {display.ownerId ? (
+                  <button
+                    className="sd-msg-btn"
+                    type="button"
+                    aria-label="View owner profile"
+                    onClick={() => onNavigate?.("publicProfile", { userId: display.ownerId, from: source === "all" ? "routeDetails" : "activeRouteDetails" })}
+                  >
+                    P
+                  </button>
+                ) : (
+                  <button className="sd-msg-btn" type="button" aria-label="Route date type">
+                    {display.dateType === "Interval" ? "I" : "D"}
+                  </button>
+                )}
               </div>
 
               <div className="sd-route">
@@ -208,6 +232,23 @@ export default function ActiveRouteDetailsPage({ routeId, onBack, onNavigate, so
                     <span className="sd-route-time">Date: {display.date}</span>
                   </div>
                 </div>
+
+                {display.routeType !== "Region"
+                  ? display.waypoints.map((stop, index) => {
+                      return (
+                        <div className="sd-route-item" key={`waypoint-${index}`}>
+                          <div className="sd-route-dot sd-route-dot--inactive" />
+                          <div className="sd-route-line" />
+                          <div className="sd-route-content">
+                            <span className="sd-route-label">STOP {index + 1}</span>
+                            <span className="sd-route-place">{stop}</span>
+                            <span className="sd-route-time">Waypoint</span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  : null}
+
                 <div className="sd-route-item">
                   <div className="sd-route-dot sd-route-dot--inactive" />
                   <div className="sd-route-content">

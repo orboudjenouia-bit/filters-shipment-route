@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Plus, Trash2 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { getRoutes, updateRoute } from "./services/routeService";
 import "./Createroute.css";
@@ -14,6 +14,7 @@ export default function EditActiveRoutePage({ routeId, onBack, onSaved }) {
     name: "",
     origin: "",
     destination: "",
+    waypoints: [],
     region: "",
     date: "",
     post_type: "ORIGIN_DESTINATION",
@@ -45,6 +46,7 @@ export default function EditActiveRoutePage({ routeId, onBack, onSaved }) {
           name: found.name || "",
           origin: found.origin || "",
           destination: found.destination || "",
+          waypoints: Array.isArray(found.waypoints) ? found.waypoints : [],
           region: found.region || "",
           date: found.date || "",
           post_type: found.post_type || "ORIGIN_DESTINATION",
@@ -66,6 +68,28 @@ export default function EditActiveRoutePage({ routeId, onBack, onSaved }) {
 
   const updateField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
+  const addWaypoint = () => {
+    setForm((prev) => ({ ...prev, waypoints: [...prev.waypoints, ""] }));
+  };
+
+  const updateWaypoint = (index, value) => {
+    setForm((prev) => ({
+      ...prev,
+      waypoints: prev.waypoints.map((stop, i) => (i === index ? value : stop)),
+    }));
+  };
+
+  const removeWaypoint = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      waypoints: prev.waypoints.filter((_, i) => i !== index),
+    }));
+  };
+
+  const clearWaypoints = () => {
+    setForm((prev) => ({ ...prev, waypoints: [] }));
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -76,6 +100,10 @@ export default function EditActiveRoutePage({ routeId, onBack, onSaved }) {
       await updateRoute({
         route_ID: Number(routeId),
         ...form,
+        waypoints:
+          form.post_type === "REGION"
+            ? []
+            : form.waypoints.map((stop) => stop.trim()).filter(Boolean),
         vehicle_plate: form.vehicle_plate ? Number(form.vehicle_plate) : undefined,
       });
       setSuccess(true);
@@ -160,6 +188,48 @@ export default function EditActiveRoutePage({ routeId, onBack, onSaved }) {
                 <label className="cr-label">Destination</label>
                 <input value={form.destination} onChange={(e) => updateField("destination", e.target.value)} />
               </div>
+
+              {form.post_type === "ORIGIN_DESTINATION" ? (
+                <div className="cr-field">
+                  <div className="cr-stops-header">
+                    <label className="cr-label cr-stops-title">WAYPOINTS &amp; STOPS</label>
+                    <button
+                      type="button"
+                      className="cr-stops-clear"
+                      onClick={clearWaypoints}
+                      disabled={form.waypoints.length === 0}
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  {form.waypoints.map((stop, index) => (
+                    <div className="cr-stop-card" key={`edit-waypoint-${index}`}>
+                      <div className="cr-stop-main">
+                        <span className="cr-stop-tag cr-stop-tag--waypoint">Stop {index + 1}</span>
+                        <input
+                          type="text"
+                          className="cr-stop-input"
+                          placeholder="Enter stop"
+                          value={stop}
+                          onChange={(e) => updateWaypoint(index, e.target.value)}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="cr-stop-remove"
+                        onClick={() => removeWaypoint(index)}
+                        aria-label={`Remove stop ${index + 1}`}
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" className="cr-add-stop-btn" onClick={addWaypoint}>
+                    <Plus size={18} />
+                    Add Stop
+                  </button>
+                </div>
+              ) : null}
 
               <div className="cr-field">
                 <label className="cr-label">Region</label>

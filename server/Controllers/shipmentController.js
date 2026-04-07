@@ -4,6 +4,14 @@ const AppError = require('../utils/AppError');
 const { StatusCodes } = require('http-status-codes');
 const createNotifs = require('../utils/createNotifs');
 
+const normalizePositiveFloat = (value) => {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+        return null;
+    }
+    return parsed;
+};
+
 
 const listShipments = async (req, res, next) => {
     const allShipments = await prisma.shipment.findMany({
@@ -12,6 +20,7 @@ const listShipments = async (req, res, next) => {
                 select: {
                     id: true,
                     email: true,
+                    profile_Photo: true,
                     individual: {
                         select: {
                             full_Name: true,

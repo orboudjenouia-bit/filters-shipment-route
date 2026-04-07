@@ -336,6 +336,146 @@
 
 .cr-loc-input::placeholder { color: var(--text-placeholder); }
 
+/* ── Waypoints & Stops ── */
+.cr-stops-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.cr-stops-title {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.cr-stops-clear {
+  border: none;
+  background: transparent;
+  color: var(--green-dark);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cr-stops-clear:disabled {
+  color: var(--text-placeholder);
+  cursor: not-allowed;
+}
+
+.cr-stop-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-primary);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.cr-stop-card--start {
+  border-color: rgba(9, 194, 71, 0.35);
+}
+
+.cr-stop-card--destination {
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.cr-stop-drag {
+  color: var(--text-placeholder);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cr-stop-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cr-stop-tag {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cr-stop-tag--start {
+  color: var(--green-dark);
+}
+
+.cr-stop-tag--waypoint {
+  color: #d97706;
+}
+
+.cr-stop-tag--destination {
+  color: #2563eb;
+}
+
+.cr-stop-input,
+.cr-stop-input:focus,
+.cr-stop-input:active {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  width: 100%;
+  font-size: 15px !important;
+  font-family: var(--font-body);
+  color: var(--text-primary);
+}
+
+.cr-stop-input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.cr-stop-end-icon {
+  color: var(--text-placeholder);
+}
+
+.cr-stop-remove {
+  border: none;
+  background: transparent;
+  color: #ef4444;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+}
+
+.cr-stop-remove:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.cr-add-stop-btn {
+  width: 100%;
+  border: 2px dashed var(--border);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.cr-add-stop-btn:hover {
+  border-color: var(--green-dark);
+  color: var(--green-dark);
+}
+
 /* ── Map Preview ── */
 .cr-map-wrapper {
   position: relative;

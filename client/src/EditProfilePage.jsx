@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getMyProfile, updateMyProfile } from "./services/profileService";
+import { uploadPhoto } from "./services/uploadService";
+import { resolveMediaUrl } from "./utils/media";
 import ThemeToggle from "./ThemeToggle";
 import "./EPPages.css";
 
@@ -60,7 +62,7 @@ export default function EditProfilePage({ onBack }) {
     photoInputRef.current?.click();
   };
 
-  const handlePhotoChange = (event) => {
+  const handlePhotoChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -69,24 +71,20 @@ export default function EditProfilePage({ onBack }) {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const nextPhoto = typeof reader.result === "string" ? reader.result : "";
-      if (!nextPhoto) {
-        setStatus({ kind: "error", text: "Unable to read selected image" });
+    try {
+      const uploadedPath = await uploadPhoto(file);
+      if (!uploadedPath) {
+        setStatus({ kind: "error", text: "Unable to upload selected image" });
         return;
       }
 
-      setMeta((prev) => ({ ...prev, profilePhoto: nextPhoto }));
-      setStatus({ kind: "success", text: "New profile photo selected" });
-    };
-
-    reader.onerror = () => {
-      setStatus({ kind: "error", text: "Unable to read selected image" });
-    };
-
-    reader.readAsDataURL(file);
-    event.target.value = "";
+      setMeta((prev) => ({ ...prev, profilePhoto: uploadedPath }));
+      setStatus({ kind: "success", text: "New profile photo uploaded" });
+    } catch {
+      setStatus({ kind: "error", text: "Unable to upload selected image" });
+    } finally {
+      event.target.value = "";
+    }
   };
 
   useEffect(() => {
@@ -224,7 +222,7 @@ export default function EditProfilePage({ onBack }) {
                   aria-label="Change profile photo"
                 >
                   {meta.profilePhoto ? (
-                    <img src={meta.profilePhoto} alt="profile" className="ep-avatar-photo" />
+                    <img src={resolveMediaUrl(meta.profilePhoto)} alt="profile" className="ep-avatar-photo" />
                   ) : (
                     <AvatarPlaceholder />
                   )}
