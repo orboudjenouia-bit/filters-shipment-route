@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "./ThemeContext";
@@ -37,6 +39,7 @@ import SubscriptionPlans from './SubscriptionPlans';
 import SubscriptionDetailsPage from "./SubscriptionDetailsPage";
 import { getNotifications } from "./services/notificationService";
 import "./App.css";
+
 
 const ADMIN_ROLE = "ADMIN";
 
@@ -145,7 +148,7 @@ const getPathForScreen = (screen, { shipmentId, subscriptionId, activeShipmentId
   }
 };
 
-const hasAuthToken = () => {
+const hasAuthToken = () =>  {  
   try {
     const token = localStorage.getItem("token");
     if (!token) return false;
@@ -172,7 +175,7 @@ const hasAuthToken = () => {
     localStorage.removeItem("user");
     return false;
   }
-};
+}; 
 
 const clearStoredAuth = () => {
   localStorage.removeItem("token");
@@ -1140,3 +1143,5 @@ export default function App() {
     </ThemeProvider>
   );
 }
+  
+

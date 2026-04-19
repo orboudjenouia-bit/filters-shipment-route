@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ThemeToggle from "./ThemeToggle";
 import "./Createshipment.css";
 import { createShipment } from "./services/shipmentService";
@@ -6,6 +6,119 @@ import { uploadPhoto } from "./services/uploadService";
 
 const categories = ["Electronics", "Furniture", "Apparel", "Food & Beverages", "Machinery", "Documents", "Other"];
 const priorities = ["Normal", "High", "Urgent"];
+
+const algerianCities = [
+  "Adrar", "Chlef", "Laghouat", "Oum El Bouaghi", "Batna", "Béjaïa", "Biskra", "Béchar", "Blida", "Bouira",
+  "Tamanrasset", "Tébessa", "Tlemcen", "Tiaret", "Tizi Ouzou", "Algiers", "Djelfa", "Jijel", "Sétif", "Saïda",
+  "Skikda", "Sidi Bel Abbès", "Annaba", "Guelma", "Constantine", "Médéa", "Mostaganem", "M'Sila", "Mascara",
+  "Ouargla", "Oran", "El Bayadh", "Illizi", "Bordj Bou Arréridj", "Boumerdès", "El Tarf", "Tindouf", "Tissemsilt",
+  "El Oued", "Khenchela", "Souk Ahras", "Tipaza", "Mila", "Aïn Defla", "Naâma", "Aïn Témouchent", "Ghardaïa",
+  "Relizane", "Timimoun", "Bordj Badji Mokhtar", "Ouled Djellal", "Béni Abbès", "In Salah", "In Guezzam",
+  "Touggourt", "Djanet", "El M'Ghair", "El Menia"
+];
+
+const CityAutocomplete = ({ value, onChange, placeholder, icon: Icon }) => {
+  const [inputValue, setInputValue] = useState(value || "");
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const wrapperRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    setInputValue(value || "");
+  }, [value]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleInputChange = (e) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    setSelectedIndex(-1);
+    if (newValue.length > 0) {
+      const filtered = algerianCities.filter((city) =>
+        city.toLowerCase().includes(newValue.toLowerCase())
+      );
+      setSuggestions(filtered.slice(0, 10));
+      setShowSuggestions(true);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+    onChange(newValue);
+  };
+
+  const handleSelectCity = (city) => {
+    setInputValue(city);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    onChange(city);
+    inputRef.current?.focus();
+  };
+
+  const handleKeyDown = (e) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev + 1) % suggestions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev - 1 + suggestions.length) % suggestions.length);
+    } else if (e.key === "Enter" && selectedIndex >= 0) {
+      e.preventDefault();
+      handleSelectCity(suggestions[selectedIndex]);
+    } else if (e.key === "Escape") {
+      setShowSuggestions(false);
+    }
+  };
+
+  return (
+    <div className="city-autocomplete-cs" ref={wrapperRef}>
+      <div className="cs-input-icon-wrap">
+        {Icon && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="cs-input-icon">
+          <circle cx="12" cy="10" r="3" stroke="currentColor" strokeWidth="2"/>
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" strokeWidth="2"/>
+        </svg>}
+        <input
+          ref={inputRef}
+          type="text"
+          className="cs-input cs-input--with-icon"
+          placeholder={placeholder}
+          value={inputValue}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onFocus={() => inputValue.length > 0 && setShowSuggestions(true)}
+          autoComplete="off"
+        />
+      </div>
+      {showSuggestions && suggestions.length > 0 && (
+        <ul className="city-suggestions-cs">
+          {suggestions.map((city, index) => (
+            <li
+              key={city}
+              className={`city-suggestion-item-cs ${index === selectedIndex ? "selected" : ""}`}
+              onClick={() => handleSelectCity(city)}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="city-suggestion-icon-cs">
+                <circle cx="12" cy="10" r="3" stroke="currentColor" strokeWidth="2"/>
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" strokeWidth="2"/>
+              </svg>
+              <span>{city}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
 
 export default function CreateShipment({ onBack, onCreated }) {
   const [form, setForm] = useState({
@@ -33,6 +146,13 @@ export default function CreateShipment({ onBack, onCreated }) {
     setPhotos(files.slice(0, 5));
   };
 
+  const isValidCity = (city) => {
+    if (!city || city.trim() === "") return false;
+    return algerianCities.some(
+      (validCity) => validCity.toLowerCase() === city.toLowerCase().trim()
+    );
+  };
+
   const handleSubmit = async () => {
     const isValid =
       form.title &&
@@ -47,6 +167,16 @@ export default function CreateShipment({ onBack, onCreated }) {
 
     if (!isValid) {
       setError("Please fill in all fields.");
+      return;
+    }
+
+    if (!isValidCity(form.pickup)) {
+      setError(`"${form.pickup}" is not a valid Algerian city. Please choose from the list.`);
+      return;
+    }
+
+    if (!isValidCity(form.delivery)) {
+      setError(`"${form.delivery}" is not a valid Algerian city. Please choose from the list.`);
       return;
     }
     
@@ -235,36 +365,22 @@ export default function CreateShipment({ onBack, onCreated }) {
 
           <div className="cs-field">
             <label className="cs-label">Pickup Location</label>
-            <div className="cs-input-icon-wrap">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="cs-input-icon">
-                <circle cx="12" cy="10" r="3" stroke="currentColor" strokeWidth="2"/>
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" strokeWidth="2"/>
-              </svg>
-              <input
-                className="cs-input cs-input--with-icon"
-                type="text"
-                placeholder="Source address"
-                value={form.pickup}
-                onChange={e => handleChange("pickup", e.target.value)}
-              />
-            </div>
+            <CityAutocomplete
+              value={form.pickup}
+              onChange={(value) => handleChange("pickup", value)}
+              placeholder="Source address"
+              icon={true}
+            />
           </div>
 
           <div className="cs-field">
             <label className="cs-label">Delivery Location</label>
-            <div className="cs-input-icon-wrap">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="cs-input-icon">
-                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <line x1="4" y1="22" x2="4" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              <input
-                className="cs-input cs-input--with-icon"
-                type="text"
-                placeholder="Destination address"
-                value={form.delivery}
-                onChange={e => handleChange("delivery", e.target.value)}
-              />
-            </div>
+            <CityAutocomplete
+              value={form.delivery}
+              onChange={(value) => handleChange("delivery", value)}
+              placeholder="Destination address"
+              icon={true}
+            />
           </div>
 
           <div className="cs-schedule-card">
