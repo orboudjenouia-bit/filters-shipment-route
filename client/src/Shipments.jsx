@@ -1,9 +1,118 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import ThemeToggle from "./ThemeToggle";
 import logoSvg from "./photo/Logo.svg";
 import "./Shipments.css";
 import { getShipments } from "./services/shipmentService";
 import { resolveMediaUrl } from "./utils/media";
+
+const algerianCities = [
+  "Adrar", "Chlef", "Laghouat", "Oum El Bouaghi", "Batna", "Béjaïa", "Biskra", "Béchar", "Blida", "Bouira",
+  "Tamanrasset", "Tébessa", "Tlemcen", "Tiaret", "Tizi Ouzou", "Algiers", "Djelfa", "Jijel", "Sétif", "Saïda",
+  "Skikda", "Sidi Bel Abbès", "Annaba", "Guelma", "Constantine", "Médéa", "Mostaganem", "M'Sila", "Mascara",
+  "Ouargla", "Oran", "El Bayadh", "Illizi", "Bordj Bou Arréridj", "Boumerdès", "El Tarf", "Tindouf", "Tissemsilt",
+  "El Oued", "Khenchela", "Souk Ahras", "Tipaza", "Mila", "Aïn Defla", "Naâma", "Aïn Témouchent", "Ghardaïa",
+  "Relizane", "Timimoun", "Bordj Badji Mokhtar", "Ouled Djellal", "Béni Abbès", "In Salah", "In Guezzam",
+  "Touggourt", "Djanet", "El M'Ghair", "El Menia"
+];
+
+const categories = ["Electronics", "Furniture", "Apparel", "Food & Beverages", "Machinery", "Documents", "Other"];
+
+const CityAutocomplete = ({ value, onChange, placeholder }) => {
+  const [inputValue, setInputValue] = useState(value || "");
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const wrapperRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    setInputValue(value || "");
+  }, [value]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleInputChange = (e) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    setSelectedIndex(-1);
+    if (newValue.length > 0) {
+      const filtered = algerianCities.filter((city) =>
+        city.toLowerCase().includes(newValue.toLowerCase())
+      );
+      setSuggestions(filtered.slice(0, 10));
+      setShowSuggestions(true);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+    onChange(newValue);
+  };
+
+  const handleSelectCity = (city) => {
+    setInputValue(city);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    onChange(city);
+    inputRef.current?.focus();
+  };
+
+  const handleKeyDown = (e) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev + 1) % suggestions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev - 1 + suggestions.length) % suggestions.length);
+    } else if (e.key === "Enter" && selectedIndex >= 0) {
+      e.preventDefault();
+      handleSelectCity(suggestions[selectedIndex]);
+    } else if (e.key === "Escape") {
+      setShowSuggestions(false);
+    }
+  };
+
+  return (
+    <div className="shipments-filter-autocomplete" ref={wrapperRef}>
+      <input
+        ref={inputRef}
+        type="text"
+        className="shipments-filter-input"
+        placeholder={placeholder}
+        value={inputValue}
+        onChange={handleInputChange}
+        onKeyDown={handleKeyDown}
+        onFocus={() => inputValue.length > 0 && setShowSuggestions(true)}
+        autoComplete="off"
+      />
+      {showSuggestions && suggestions.length > 0 && (
+        <ul className="shipments-filter-suggestions">
+          {suggestions.map((city, index) => (
+            <li
+              key={city}
+              className={`shipments-filter-suggestion-item ${index === selectedIndex ? "selected" : ""}`}
+              onClick={() => handleSelectCity(city)}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="10" r="3" stroke="currentColor" strokeWidth="2"/>
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" strokeWidth="2"/>
+              </svg>
+              <span>{city}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
 
 const BellIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -45,6 +154,13 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnrea
   const [shipments, setShipments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [filters, setFilters] = useState({
+    origin: "",
+    destination: "",
+    status: "",
+    category: ""
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -132,9 +248,30 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnrea
   }, [refreshKey]);
 
   const filteredShipments = useMemo(() => {
-    if (activeTab === "all") return shipments;
-    return shipments.filter((shipment) => shipment.status === activeTab);
-  }, [activeTab, shipments]);
+    let filtered = shipments;
+    
+    if (filters.status) {
+      filtered = filtered.filter((shipment) => shipment.status === filters.status);
+    }
+    
+    if (filters.category) {
+      filtered = filtered.filter((shipment) => shipment.category === filters.category);
+    }
+    
+    if (filters.origin) {
+      filtered = filtered.filter((shipment) => 
+        shipment.origin && shipment.origin.toLowerCase().includes(filters.origin.toLowerCase())
+      );
+    }
+    
+    if (filters.destination) {
+      filtered = filtered.filter((shipment) => 
+        shipment.destination && shipment.destination.toLowerCase().includes(filters.destination.toLowerCase())
+      );
+    }
+    
+    return filtered;
+  }, [shipments, filters]);
 
   const handleNav = (tab) => {
     setActiveNav(tab);
@@ -142,6 +279,35 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnrea
     if (tab === "routes") onNavigate("routes");
     if (tab === "profile") onNavigate("profile");
   };
+
+  const openFilterModal = () => {
+    setShowFilterModal(true);
+  };
+
+  const closeFilterModal = () => {
+    setShowFilterModal(false);
+  };
+
+  const applyFilters = () => {
+    closeFilterModal();
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      origin: "",
+      destination: "",
+      status: "",
+      category: ""
+    });
+  };
+
+  const hasActiveFilters = filters.origin || filters.destination || filters.status || filters.category;
+
+  const statusOptions = [
+    { value: "", label: "All Status" },
+    { value: "active", label: "Active" },
+    { value: "pending", label: "Pending" }
+  ];
 
   return (
     <div className="sh-screen">
@@ -190,8 +356,9 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnrea
 
           <div className="sh-section-row">
             <h2 className="sh-section-title">Explore Available Shipments</h2>
-            <button className="sh-filter-btn">
+            <button className="sh-filter-btn" onClick={openFilterModal}>
               Filter
+              {hasActiveFilters && <span className="shipments-filter-active-dot"></span>}
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                 <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
@@ -291,6 +458,9 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnrea
                       </span>
                     )}
                     {s.date && <span className="sh-tag">Date: {s.date}</span>}
+                    <span className={`sh-shipment-status-tag sh-shipment-status-tag--${s.status}`}>
+                      {s.status.toUpperCase()}
+                    </span>
                   </div>
                   {s.ownerId ? (
                     <button
@@ -345,6 +515,81 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnrea
         </div>
 
       </div>
+
+      {showFilterModal && (
+        <div className="shipments-filter-overlay" onClick={closeFilterModal}>
+          <div className="shipments-filter-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="shipments-filter-header">
+              <h3 className="shipments-filter-title">Filter Shipments</h3>
+              <button className="shipments-filter-close" onClick={closeFilterModal}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+            <div className="shipments-filter-body">
+              <div className="shipments-filter-group">
+                <label className="shipments-filter-label">Status</label>
+                <div className="shipments-status-options">
+                  {statusOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      className={`shipments-status-btn ${filters.status === option.value ? "active" : ""}`}
+                      onClick={() => setFilters(prev => ({ ...prev, status: option.value }))}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="shipments-filter-group">
+                <label className="shipments-filter-label">Category</label>
+                <div className="shipments-category-options">
+                  <button
+                    className={`shipments-category-btn ${filters.category === "" ? "active" : ""}`}
+                    onClick={() => setFilters(prev => ({ ...prev, category: "" }))}
+                  >
+                    All
+                  </button>
+                  {categories.map((cat) => (
+                    <button
+                      key={cat}
+                      className={`shipments-category-btn ${filters.category === cat ? "active" : ""}`}
+                      onClick={() => setFilters(prev => ({ ...prev, category: cat }))}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="shipments-filter-group">
+                <label className="shipments-filter-label">Origin City</label>
+                <CityAutocomplete
+                  value={filters.origin}
+                  onChange={(value) => setFilters(prev => ({ ...prev, origin: value }))}
+                  placeholder="Search origin city"
+                />
+              </div>
+              <div className="shipments-filter-group">
+                <label className="shipments-filter-label">Destination City</label>
+                <CityAutocomplete
+                  value={filters.destination}
+                  onChange={(value) => setFilters(prev => ({ ...prev, destination: value }))}
+                  placeholder="Search destination city"
+                />
+              </div>
+            </div>
+            <div className="shipments-filter-footer">
+              <button className="shipments-filter-clear" onClick={clearFilters}>
+                Clear All
+              </button>
+              <button className="shipments-filter-apply" onClick={applyFilters}>
+                Apply Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
