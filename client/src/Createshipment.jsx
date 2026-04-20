@@ -122,7 +122,7 @@ const CityAutocomplete = ({ value, onChange, placeholder, icon: Icon }) => {
 
 export default function CreateShipment({ onBack, onCreated }) {
   const [form, setForm] = useState({
-    title: "", category: "", weight: "", volume: "",
+    title: "", category: "", weight: "", volume: "", price: "",
     pickup: "", delivery: "", date: "", time: "", priority: "Normal", description: "",
   });
   const [photos, setPhotos] = useState([]);
@@ -159,6 +159,7 @@ export default function CreateShipment({ onBack, onCreated }) {
       form.category &&
       form.weight &&
       form.volume &&
+      form.price &&
       form.pickup &&
       form.delivery &&
       form.date &&
@@ -182,6 +183,7 @@ export default function CreateShipment({ onBack, onCreated }) {
     
     const volume = Number(form.volume);
     const weight = Number(form.weight);
+    const price = Number(form.price);
     
     const token = localStorage.getItem("token");
     if (!token) {
@@ -189,8 +191,15 @@ export default function CreateShipment({ onBack, onCreated }) {
       return;
     }
 
-    if (!Number.isFinite(volume) || !Number.isFinite(weight) || volume <= 0 || weight <= 0) {
-      setError("Weight and volume must be positive numbers.");
+    if (
+      !Number.isFinite(volume) ||
+      !Number.isFinite(weight) ||
+      !Number.isFinite(price) ||
+      volume <= 0 ||
+      weight <= 0 ||
+      price <= 0
+    ) {
+      setError("Weight, volume, and price must be positive numbers.");
       return;
     }
 
@@ -209,6 +218,7 @@ export default function CreateShipment({ onBack, onCreated }) {
         destination: form.delivery.trim(),
         volume,
         weight,
+        price,
         date: form.date,
         time: form.time,
         priority: form.priority,
@@ -219,7 +229,7 @@ export default function CreateShipment({ onBack, onCreated }) {
 
       setSuccess(true);
       setForm({
-        title: "", category: "", weight: "", volume: "",
+        title: "", category: "", weight: "", volume: "", price: "",
         pickup: "", delivery: "", date: "", time: "", priority: "Normal", description: "",
       });
       setPhotos([]);
@@ -310,6 +320,22 @@ export default function CreateShipment({ onBack, onCreated }) {
                 />
                 <span className="cs-suffix">M³</span>
               </div>
+            </div>
+          </div>
+
+          <div className="cs-field">
+            <label className="cs-label">Price (DZD)</label>
+            <div className="cs-input-suffix-wrap">
+              <input
+                className="cs-input"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                value={form.price}
+                onChange={e => handleChange("price", e.target.value)}
+              />
+              <span className="cs-suffix">DZD</span>
             </div>
           </div>
 

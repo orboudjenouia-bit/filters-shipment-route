@@ -132,6 +132,7 @@ model Shipment {
   destination         String  
   volume              Float
   weight              Float                    
+  price               Float   @default(0)
   date                String  @db.VarChar(11) 
   time                String? @db.VarChar(5)
   priority            String  @default("Normal")

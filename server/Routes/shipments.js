@@ -32,6 +32,9 @@ router.post(
         check('weight', 'Weight is required and must be a number')
             .notEmpty()
             .isFloat({ gt: 0 }),
+        check('price', 'Price is required and must be a number')
+            .notEmpty()
+            .isFloat({ gt: 0 }),
         check('date', 'Date must be in format YYYY-MM-DD').matches(
             /^\d{4}-\d{2}-\d{2}$/
         ),
@@ -64,6 +67,9 @@ router.patch(
             .optional()
             .isFloat({ gt: 0 }),
         check('weight', 'Weight must be a positive number')
+            .optional()
+            .isFloat({ gt: 0 }),
+        check('price', 'Price must be a positive number')
             .optional()
             .isFloat({ gt: 0 }),
         check('date', 'Date must be in format YYYY-MM-DD')
