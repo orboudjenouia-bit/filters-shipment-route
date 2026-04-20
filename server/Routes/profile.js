@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { check } = require('express-validator');
 const checkToken = require('../Middlewares/checkToken');
 const asyncHandler = require('../utils/asyncHandler');
+const checkActivate = require('../Middlewares/CheckActivate');
 const {
     IndividualProfile,
     BusinessProfile,
@@ -16,7 +17,7 @@ const {
     getMyProfile,
 } = require('../Controllers/profileController');
 
-router.get('/me', checkToken, asyncHandler(getMyProfile));
+router.get('/me', checkToken,checkActivate, asyncHandler(getMyProfile));
 
 router.post(
     '/individual',
@@ -25,7 +26,7 @@ router.post(
         check('full_Name', 'Full name is required').notEmpty().isString(),
         check('nin', 'National ID is required').notEmpty().isString(),
         check('location', 'Location is required').notEmpty().isString(),
-    ],
+    ],checkActivate,
     asyncHandler(IndividualProfile)
 );
 
@@ -43,14 +44,14 @@ router.post(
         check('locations', 'Locations must be a non-empty array').isArray({
             min: 1,
         }),
-    ],
+    ],checkActivate,
     asyncHandler(BusinessProfile)
 );
 
-router.get('/historyShipments', checkToken, asyncHandler(getShipmentHistory));
-router.get('/historyRoutes', checkToken, asyncHandler(getRouteHistory));
+router.get('/historyShipments', checkToken,checkActivate, asyncHandler(getShipmentHistory));
+router.get('/historyRoutes', checkToken,checkActivate, asyncHandler(getRouteHistory));
 
-router.get('/vehicles', checkToken, asyncHandler(listVehicles));
+router.get('/vehicles', checkToken,checkActivate, asyncHandler(listVehicles));
 // router.get('/vehicles/:id')
 router.post(
     '/vehicles',
@@ -68,6 +69,7 @@ router.post(
             .isNumeric(),
         check('photo', 'Photo must be a string').optional(),
     ],
+    checkActivate,
     asyncHandler(createVehicle)
 );
 router.patch(
@@ -86,6 +88,7 @@ router.patch(
         check('capacity', 'Capacity must be numeric').optional().isNumeric(),
         check('photo', 'Photo must be a string').optional().isString(),
     ],
+    checkActivate,
     asyncHandler(updateVehicle)
 );
 router.delete(
@@ -96,6 +99,8 @@ router.delete(
             .notEmpty()
             .isNumeric(),
     ],
+    checkActivate,
+
     asyncHandler(deleteVehicle)
 );
 

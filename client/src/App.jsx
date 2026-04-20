@@ -346,6 +346,29 @@ export default function App() {
   const [notificationsBackScreen, setNotificationsBackScreen] = useState("dashboard");
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get("token");
+    const userEncoded = params.get("user");
+
+    if (!token) return;
+
+    try {
+      localStorage.setItem("token", token);
+
+      if (userEncoded) {
+        const user = JSON.parse(decodeURIComponent(userEncoded));
+        localStorage.setItem("user", JSON.stringify(user));
+      }
+
+      routerNavigate(location.pathname || "/dashboard", { replace: true });
+    } catch {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      routerNavigate("/login", { replace: true });
+    }
+  }, [location.pathname, location.search, routerNavigate]);
+
   const forceLogoutToLogin = () => {
     clearStoredAuth();
     setCurrent("login");

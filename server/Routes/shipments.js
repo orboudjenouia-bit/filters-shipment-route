@@ -3,7 +3,7 @@ const router = express.Router();
 const { check } = require('express-validator');
 const authToken = require('../Middlewares/checkToken');
 const asyncHandler = require('../utils/asyncHandler');
-
+const checkActivate = require('../Middlewares/CheckActivate');
 const {
     listShipments,
     listMyShipments,
@@ -12,8 +12,8 @@ const {
     deleteShipment,
 } = require('../Controllers/shipmentController');
 
-router.get('/', authToken, asyncHandler(listShipments));
-router.get('/me', authToken, asyncHandler(listMyShipments));
+router.get('/', authToken, checkActivate, asyncHandler(listShipments));
+router.get('/me', authToken, checkActivate, asyncHandler(listMyShipments));
 
 router.post(
     '/',
@@ -40,6 +40,7 @@ router.post(
             .optional()
             .isIn(['Normal', 'High', 'Urgent']),
     ],
+    checkActivate,
     asyncHandler(makePost)
 );
 
@@ -75,9 +76,10 @@ router.patch(
             .optional()
             .isIn(['In-Stock', 'In-Delivery', 'Delivered']),
     ],
+    checkActivate,
     asyncHandler(editShipment)
 );
 
-router.delete('/:id', authToken, asyncHandler(deleteShipment));
+router.delete('/:id', authToken, checkActivate, asyncHandler(deleteShipment));
 
 module.exports = router;

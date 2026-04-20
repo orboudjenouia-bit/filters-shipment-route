@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, LogIn, Truck } from "lucide-react";
-import { useGoogleLogin } from "@react-oauth/google";
 import ThemeToggle from "./ThemeToggle";
 import "./Login.css";
 import { login } from "./services/authService";
+import API_URL from "./services/http";
 
 export default function Login({ onBack, onSuccess, onCreateAccount, onForgotPassword }) {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -17,6 +17,28 @@ export default function Login({ onBack, onSuccess, onCreateAccount, onForgotPass
     const t = setTimeout(() => setMounted(true), 30);
     return () => clearTimeout(t);
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    const userEncoded = params.get("user");
+
+    if (!token) return;
+
+    try {
+      localStorage.setItem("token", token);
+
+      if (userEncoded) {
+        const user = JSON.parse(decodeURIComponent(userEncoded));
+        localStorage.setItem("user", JSON.stringify(user));
+      }
+
+      window.history.replaceState({}, "", "/login");
+      if (onSuccess) onSuccess();
+    } catch {
+      showError("Google login callback was invalid.");
+    }
+  }, [onSuccess]);
 
   const handleChange = (field) => (e) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -51,18 +73,24 @@ export default function Login({ onBack, onSuccess, onCreateAccount, onForgotPass
     }
   };
 
-  const handleGoogleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        setSocialLoading("google");
-        showError("Google login is not available yet.");
-      } catch (err) {
-        console.error(err);
-        showError("Google login failed. Please try again.");
-      } finally { setSocialLoading(""); }
-    },
-    onError: () => showError("Google login was cancelled."),
-  });
+  const handleGoogleLogin = async () => {
+    try {
+      setSocialLoading("google");
+
+      const response = await fetch(`${API_URL}/auth/google`);
+      const data = await response.json();
+
+      if (!response.ok || !data?.authUrl) {
+        throw new Error(data?.message || "Failed to start Google login.");
+      }
+
+      window.location.href = data.authUrl;
+    } catch (err) {
+      console.error(err);
+      showError(err.message || "Google login failed. Please try again.");
+      setSocialLoading("");
+    }
+  };
 
   const handleAppleLogin = async () => {
     try {
