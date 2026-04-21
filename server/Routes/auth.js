@@ -1,5 +1,8 @@
 const router = require('express').Router();
 const { check } = require('express-validator');
+const { StatusCodes } = require('http-status-codes');
+const prisma = require('../config/prismaClient');
+const AppError = require('../utils/AppError');
 const {
     register,
     login,
@@ -10,6 +13,7 @@ const {
 const { forgotpassword, resetpswd } = require('../Controllers/forget-password');
 const asyncHandler = require('../utils/asyncHandler');
 const checkToken = require('../Middlewares/checkToken');
+const googleAuthRouter = require('./googleAuth');
 
 router.post(
     '/register',
@@ -80,6 +84,32 @@ router.patch(
     asyncHandler(updateProfile)
 );
 
+
+
+
+
+
 router.post('/verify-email', asyncHandler(verifyEmail));
+router.use('/google', googleAuthRouter);
+router.get('/me', checkToken, asyncHandler(async (req, res) => {
+    const user = await prisma.user.findUnique({
+        where: { id: req.user.id },
+        select: {
+            id: true,
+            email: true,
+            phone: true,
+            type: true,
+            role: true,
+            isVerified: true,
+            profile_Photo: true,
+        },
+    });
+
+    if (!user) {
+        throw new AppError('User not found', StatusCodes.NOT_FOUND, 'USER_NOT_FOUND');
+    }
+
+    res.json(user);
+}));
 
 module.exports = router;

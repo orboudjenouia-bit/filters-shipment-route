@@ -53,6 +53,7 @@ const register = async (req, res, next) => {
                 phone: phone,
                 type: type,
                 role: role || 'USER',
+                status: 'ACTIVE',
                 verificationToken: verificationToken,
                 verificationTokenExpires: verificationTokenExpires,
             },
@@ -518,6 +519,8 @@ const verifyEmail = async (req, res, next) => {
         throw error;
     }
 };
+
+
 
 module.exports = {
     register,

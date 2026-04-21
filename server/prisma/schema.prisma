@@ -27,17 +27,20 @@ enum DateType {
   DAY
   INTERVAL
 }
-
+enum Statustype {
+  ACTIVE
+  SUSPENDED
+}
 model User {
   id            Int      @id @default(autoincrement())
   email         String   @unique @db.VarChar(50)
-  password      String
+  password      String?
   phone         String   @db.VarChar(10)
   profile_Photo String?
   working_Time  String?
   type          UserType
   role          Roles
-  status        String  @default("Active")
+  status        Statustype
   createdAt     DateTime @default(now())
 
   resetPasswordToken String?

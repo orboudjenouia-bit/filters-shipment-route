@@ -4,7 +4,7 @@ const { check } = require('express-validator');
 const authToken = require('../Middlewares/checkToken');
 const requireProfile = require('../Middlewares/requireProfile');
 const asyncHandler = require('../utils/asyncHandler');
-
+const checkActivate = require('../Middlewares/CheckActivate');
 const {
     listRoutes,
     listMyRoutes,
@@ -13,8 +13,8 @@ const {
     deleteRoute,
 } = require('../Controllers/routesController');
 
-router.get('/', authToken, requireProfile, asyncHandler(listRoutes));
-router.get('/me', authToken, requireProfile, asyncHandler(listMyRoutes));
+router.get('/', authToken, checkActivate, asyncHandler(listRoutes));
+router.get('/me', authToken, checkActivate, asyncHandler(listMyRoutes));
 
 router.post(
     '/',
@@ -58,7 +58,7 @@ router.post(
         check('interval_end', 'Interval end must be YYYY-MM-DD')
             .optional({ nullable: true })
             .matches(/^\d{4}-\d{2}-\d{2}$/),
-    ],
+    ],checkActivate,
     asyncHandler(postRoute)
 );
 
@@ -103,10 +103,10 @@ router.patch(
         check('interval_end', 'Interval end must be YYYY-MM-DD')
             .optional()
             .matches(/^\d{4}-\d{2}-\d{2}$/),
-    ],
+    ],checkActivate,
     asyncHandler(editRoute)
 );
 
-router.delete('/:id', authToken, requireProfile, asyncHandler(deleteRoute));
+router.delete('/:id', authToken, checkActivate, asyncHandler(deleteRoute));
 
 module.exports = router;
