@@ -153,6 +153,63 @@ const normalizeStatus = (status) => {
   return "active";
 };
 
+const parseDateInput = (value) => {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+
+  const isoMatch = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (isoMatch) {
+    const year = Number(isoMatch[1]);
+    const month = Number(isoMatch[2]);
+    const day = Number(isoMatch[3]);
+    const date = new Date(year, month - 1, day);
+    if (
+      date.getFullYear() === year &&
+      date.getMonth() === month - 1 &&
+      date.getDate() === day
+    ) {
+      return date;
+    }
+    return null;
+  }
+
+  const dmyMatch = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+  if (!dmyMatch) return null;
+
+  const day = Number(dmyMatch[1]);
+  const month = Number(dmyMatch[2]);
+  const year = Number(dmyMatch[3]);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+};
+
+const parseItemDateValue = (value) => {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value.getTime();
+  }
+
+  if (typeof value === "string") {
+    const parsed = parseDateInput(value);
+    if (parsed) return parsed.getTime();
+  }
+
+  const date = new Date(value);
+  if (!Number.isNaN(date.getTime())) return date.getTime();
+
+  return null;
+};
+
 export default function RoutesScreen({ onNavigate, hasUnreadNotifications = false }) {
   const [activeTab, setActiveTab] = useState("all");
   const [activeNav, setActiveNav] = useState("routes");
@@ -164,7 +221,9 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
     origin: "",
     destination: "",
     region: "",
-    status: ""
+    status: "",
+    afterDate: "",
+    beforeDate: ""
   });
 
   useEffect(() => {
@@ -199,6 +258,7 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
       time: item?.date_type === "INTERVAL"
         ? `${item?.interval_start || "-"} to ${item?.interval_end || "-"}`
         : item?.date || item?.createdAtLabel || formatCreatedAt(item?.createdAt),
+      dateValue: parseItemDateValue(item?.date || item?.interval_start || item?.createdAt),
       price: item?.priceLabel || (item?.price != null ? `${item.price} DA` : ""),
       postType: item?.post_type || "ORIGIN_DESTINATION",
       origin: item?.origin || "",
@@ -243,6 +303,14 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
 
   const filteredRoutes = useMemo(() => {
     let filtered = routes;
+    const afterDate = parseDateInput(filters.afterDate);
+    const beforeDate = parseDateInput(filters.beforeDate);
+    const afterDateMs = afterDate
+      ? new Date(afterDate.getFullYear(), afterDate.getMonth(), afterDate.getDate(), 0, 0, 0, 0).getTime()
+      : null;
+    const beforeDateMs = beforeDate
+      ? new Date(beforeDate.getFullYear(), beforeDate.getMonth(), beforeDate.getDate(), 23, 59, 59, 999).getTime()
+      : null;
     
     if (filters.status) {
       filtered = filtered.filter((route) => route.status === filters.status);
@@ -263,6 +331,18 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
     if (filters.region) {
       filtered = filtered.filter((route) => 
         route.region && route.region.toLowerCase().includes(filters.region.toLowerCase())
+      );
+    }
+
+    if (afterDateMs != null) {
+      filtered = filtered.filter(
+        (route) => route.dateValue != null && route.dateValue >= afterDateMs
+      );
+    }
+
+    if (beforeDateMs != null) {
+      filtered = filtered.filter(
+        (route) => route.dateValue != null && route.dateValue <= beforeDateMs
       );
     }
     
@@ -293,11 +373,19 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
       origin: "",
       destination: "",
       region: "",
-      status: ""
+      status: "",
+      afterDate: "",
+      beforeDate: ""
     });
   };
 
-  const hasActiveFilters = filters.origin || filters.destination || filters.region || filters.status;
+  const hasActiveFilters =
+    filters.origin ||
+    filters.destination ||
+    filters.region ||
+    filters.status ||
+    filters.afterDate ||
+    filters.beforeDate;
 
   const statusOptions = [
     { value: "", label: "All Status" },
@@ -579,6 +667,35 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
                   onChange={(value) => setFilters(prev => ({ ...prev, region: value }))}
                   placeholder="Search region"
                 />
+              </div>
+              <div className="routes-filter-group">
+                <label className="routes-filter-label">Date Range</label>
+                <div className="routes-date-range">
+                  <div className="routes-date-field">
+                    <span className="routes-date-field-label">After</span>
+                    <input
+                      type="date"
+                      className="routes-filter-input"
+                      value={filters.afterDate}
+                      onChange={(e) => setFilters((prev) => ({ ...prev, afterDate: e.target.value }))}
+                    />
+                    <span className="routes-date-field-value">
+                      {filters.afterDate || "Not selected"}
+                    </span>
+                  </div>
+                  <div className="routes-date-field">
+                    <span className="routes-date-field-label">Before</span>
+                    <input
+                      type="date"
+                      className="routes-filter-input"
+                      value={filters.beforeDate}
+                      onChange={(e) => setFilters((prev) => ({ ...prev, beforeDate: e.target.value }))}
+                    />
+                    <span className="routes-date-field-value">
+                      {filters.beforeDate || "Not selected"}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="routes-filter-footer">

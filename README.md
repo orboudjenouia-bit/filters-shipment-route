@@ -34,6 +34,38 @@ A full-stack logistics platform connecting shippers with carriers for freight tr
 
 ## Getting Started
 
+### Docker (Recommended for Teams)
+
+Run frontend, backend, and PostgreSQL together with live reload:
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+Services:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:4000
+- PostgreSQL: localhost:5432
+
+Notes:
+- Source code is bind-mounted, so changes in `client/` and `server/` reload automatically.
+- Backend runs `prisma migrate deploy` on startup.
+- First boot may take longer while images are built.
+
+Useful commands:
+
+```bash
+# Start in background
+docker compose up -d --build
+
+# Stop and remove containers
+docker compose down
+
+# Stop and also remove database data volume
+docker compose down -v
+```
+
 ### Prerequisites
 - Node.js 18+
 - PostgreSQL

@@ -392,7 +392,7 @@ export default function App() {
     }
   }, [location.pathname, location.search, routerNavigate]);
 
-  const forceLogoutToLogin = () => {
+  const forceLogoutToLogin = useCallback(() => {
     clearStoredAuth();
     setCurrent("login");
     setNext(null);

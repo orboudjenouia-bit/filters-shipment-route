@@ -335,6 +335,33 @@
   border-color: #22c55e;
 }
 
+.shipments-price-range {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.shipments-date-range {
+  display: grid;
+  gap: 10px;
+}
+
+.shipments-date-field {
+  display: grid;
+  gap: 6px;
+}
+
+.shipments-date-field-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.shipments-date-field-value {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
 .shipments-filter-footer {
   display: flex;
   gap: 12px;

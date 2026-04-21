@@ -70,7 +70,7 @@ const activateUser = async (req, res, next) => {
     const activate = await prisma.user.update({
         where: { id: id },
         data: {
-            status: 'Active',
+            status: 'ACTIVE',
         },
     });
 
@@ -102,7 +102,7 @@ const suspendUser = async (req, res, next) => {
     const suspend = await prisma.user.update({
         where: { id: id },
         data: {
-            status: 'Suspended',
+            status: 'SUSPENDED',
         },
     });
 
@@ -136,8 +136,8 @@ const getDashboardStats = async (req, res, next) => {
         activeRoutes,
     ] = await Promise.all([
         prisma.user.count(),
-        prisma.user.count({ where: { status: 'Active' } }),
-        prisma.user.count({ where: { status: 'Suspended' } }),
+        prisma.user.count({ where: { status: 'ACTIVE' } }),
+        prisma.user.count({ where: { status: 'SUSPENDED' } }),
         prisma.vehicle.count(),
         prisma.shipment.count(),
         prisma.route.count(),

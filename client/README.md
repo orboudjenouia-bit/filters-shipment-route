@@ -18,6 +18,14 @@ React frontend for the Wesselli Logistics Platform.
 
 ## Getting Started
 
+### Docker (From Project Root)
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+Client runs on `http://localhost:3000` with hot reload.
+
 ### Prerequisites
 - Node.js 18+
 - Backend server running
@@ -50,7 +58,7 @@ src/
 ## Environment Variables
 Create `.env` in client/:
 ```
-REACT_APP_API_URL=http://localhost:3000/api
+REACT_APP_API_URL=http://localhost:4000/api
 ```
 
 ## Contributing

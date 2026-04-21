@@ -17,6 +17,75 @@ const algerianCities = [
 
 const categories = ["Electronics", "Furniture", "Apparel", "Food & Beverages", "Machinery", "Documents", "Other"];
 
+const parsePriceValue = (value) => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string") return null;
+
+  const normalized = value.replace(/,/g, ".");
+  const match = normalized.match(/\d+(?:\.\d+)?/);
+  if (!match) return null;
+
+  const parsed = Number(match[0]);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const parseDateInput = (value) => {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+
+  const isoMatch = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (isoMatch) {
+    const year = Number(isoMatch[1]);
+    const month = Number(isoMatch[2]);
+    const day = Number(isoMatch[3]);
+    const date = new Date(year, month - 1, day);
+    if (
+      date.getFullYear() === year &&
+      date.getMonth() === month - 1 &&
+      date.getDate() === day
+    ) {
+      return date;
+    }
+    return null;
+  }
+
+  const dmyMatch = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+  if (!dmyMatch) return null;
+
+  const day = Number(dmyMatch[1]);
+  const month = Number(dmyMatch[2]);
+  const year = Number(dmyMatch[3]);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+};
+
+const parseItemDateValue = (value) => {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value.getTime();
+  }
+
+  if (typeof value === "string") {
+    const parsed = parseDateInput(value);
+    if (parsed) return parsed.getTime();
+  }
+
+  const date = new Date(value);
+  if (!Number.isNaN(date.getTime())) return date.getTime();
+
+  return null;
+};
+
 const CityAutocomplete = ({ value, onChange, placeholder }) => {
   const [inputValue, setInputValue] = useState(value || "");
   const [suggestions, setSuggestions] = useState([]);
@@ -159,7 +228,11 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnrea
     origin: "",
     destination: "",
     status: "",
-    category: ""
+    category: "",
+    minPrice: "",
+    maxPrice: "",
+    afterDate: "",
+    beforeDate: ""
   });
 
   useEffect(() => {
@@ -206,6 +279,7 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnrea
         price:
           item?.priceLabel ||
           (item?.price != null ? `${item.price} DA` : "Price not specified"),
+        priceValue: parsePriceValue(item?.price ?? item?.priceLabel),
         origin: item?.origin || item?.pickupAddress || originFromRoute,
         destination: item?.destination || item?.dropoffAddress || destinationFromRoute,
         category: item?.category || item?.cargoType || "General",
@@ -213,6 +287,7 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnrea
           item?.weightLabel ||
           (item?.weight != null ? `${item.weight}${item?.weightUnit ? ` ${item.weightUnit}` : " kg"}` : ""),
         date: item?.date || item?.pickupDate || "",
+        dateValue: parseItemDateValue(item?.date || item?.pickupDate || item?.createdAt),
         status: String(item?.status || "active").toLowerCase(),
         priority: item?.priority || "Normal",
         specialInformation: item?.special_Information || "",
@@ -249,6 +324,18 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnrea
 
   const filteredShipments = useMemo(() => {
     let filtered = shipments;
+    const minPrice = Number(filters.minPrice);
+    const maxPrice = Number(filters.maxPrice);
+    const hasMinPrice = filters.minPrice !== "" && Number.isFinite(minPrice);
+    const hasMaxPrice = filters.maxPrice !== "" && Number.isFinite(maxPrice);
+    const afterDate = parseDateInput(filters.afterDate);
+    const beforeDate = parseDateInput(filters.beforeDate);
+    const afterDateMs = afterDate
+      ? new Date(afterDate.getFullYear(), afterDate.getMonth(), afterDate.getDate(), 0, 0, 0, 0).getTime()
+      : null;
+    const beforeDateMs = beforeDate
+      ? new Date(beforeDate.getFullYear(), beforeDate.getMonth(), beforeDate.getDate(), 23, 59, 59, 999).getTime()
+      : null;
     
     if (filters.status) {
       filtered = filtered.filter((shipment) => shipment.status === filters.status);
@@ -267,6 +354,30 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnrea
     if (filters.destination) {
       filtered = filtered.filter((shipment) => 
         shipment.destination && shipment.destination.toLowerCase().includes(filters.destination.toLowerCase())
+      );
+    }
+
+    if (hasMinPrice) {
+      filtered = filtered.filter(
+        (shipment) => shipment.priceValue != null && shipment.priceValue >= minPrice
+      );
+    }
+
+    if (hasMaxPrice) {
+      filtered = filtered.filter(
+        (shipment) => shipment.priceValue != null && shipment.priceValue <= maxPrice
+      );
+    }
+
+    if (afterDateMs != null) {
+      filtered = filtered.filter(
+        (shipment) => shipment.dateValue != null && shipment.dateValue >= afterDateMs
+      );
+    }
+
+    if (beforeDateMs != null) {
+      filtered = filtered.filter(
+        (shipment) => shipment.dateValue != null && shipment.dateValue <= beforeDateMs
       );
     }
     
@@ -297,11 +408,23 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnrea
       origin: "",
       destination: "",
       status: "",
-      category: ""
+      category: "",
+      minPrice: "",
+      maxPrice: "",
+      afterDate: "",
+      beforeDate: ""
     });
   };
 
-  const hasActiveFilters = filters.origin || filters.destination || filters.status || filters.category;
+  const hasActiveFilters =
+    filters.origin ||
+    filters.destination ||
+    filters.status ||
+    filters.category ||
+    filters.minPrice ||
+    filters.maxPrice ||
+    filters.afterDate ||
+    filters.beforeDate;
 
   const statusOptions = [
     { value: "", label: "All Status" },
@@ -577,6 +700,56 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnrea
                   onChange={(value) => setFilters(prev => ({ ...prev, destination: value }))}
                   placeholder="Search destination city"
                 />
+              </div>
+              <div className="shipments-filter-group">
+                <label className="shipments-filter-label">Price Range (DA)</label>
+                <div className="shipments-price-range">
+                  <input
+                    type="number"
+                    min="0"
+                    className="shipments-filter-input"
+                    placeholder="Min"
+                    value={filters.minPrice}
+                    onChange={(e) => setFilters((prev) => ({ ...prev, minPrice: e.target.value }))}
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    className="shipments-filter-input"
+                    placeholder="Max"
+                    value={filters.maxPrice}
+                    onChange={(e) => setFilters((prev) => ({ ...prev, maxPrice: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="shipments-filter-group">
+                <label className="shipments-filter-label">Date Range</label>
+                <div className="shipments-date-range">
+                  <div className="shipments-date-field">
+                    <span className="shipments-date-field-label">After</span>
+                    <input
+                      type="date"
+                      className="shipments-filter-input"
+                      value={filters.afterDate}
+                      onChange={(e) => setFilters((prev) => ({ ...prev, afterDate: e.target.value }))}
+                    />
+                    <span className="shipments-date-field-value">
+                      {filters.afterDate || "Not selected"}
+                    </span>
+                  </div>
+                  <div className="shipments-date-field">
+                    <span className="shipments-date-field-label">Before</span>
+                    <input
+                      type="date"
+                      className="shipments-filter-input"
+                      value={filters.beforeDate}
+                      onChange={(e) => setFilters((prev) => ({ ...prev, beforeDate: e.target.value }))}
+                    />
+                    <span className="shipments-date-field-value">
+                      {filters.beforeDate || "Not selected"}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="shipments-filter-footer">

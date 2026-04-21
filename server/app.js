@@ -7,11 +7,28 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-app.use(cors());
+
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:3000')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+                return;
+            }
+            callback(new Error('CORS origin not allowed'));
+        },
+    })
+);
+
 const PORT = process.env.PORT || 3000;
 const io = new Server(server, {
     cors: {
-        origin: 'http://localhost:3000',
+        origin: allowedOrigins,
         methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     },
 });

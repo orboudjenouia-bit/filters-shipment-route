@@ -18,6 +18,15 @@ A professional backend application for PRPG06 with enterprise-level error handli
 
 ## 🚀 Setup
 
+### Docker Quick Start (From Project Root)
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+The backend will be available at `http://localhost:4000` and will run Prisma migrations automatically on startup.
+
 ### Prerequisites
 - Node.js (v18+)
 - PostgreSQL (v12+)
