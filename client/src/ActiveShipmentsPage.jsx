@@ -120,7 +120,7 @@ export default function ActiveShipmentsPage({ onBack, onNavigate }) {
                         <button className="am-actions-item" type="button" onClick={() => onNavigate("editActiveShipment", { activeShipmentId: item.id, from: "activeShipments" })}>
                           <Pencil size={18} /> Update
                         </button>
-                        <button className="am-actions-item" type="button" onClick={() => onNavigate("activeShipmentDetails", { activeShipmentId: item.id, from: "activeShipments" })}>
+                        <button className="am-actions-item" type="button" onClick={() => onNavigate("shipmentDetails", { shipmentId: item.id, from: "activeShipments" })}>
                           <Eye size={18} /> View Details
                         </button>
                         <button className="am-actions-item am-actions-item--delete" type="button" onClick={() => setConfirmTarget(item)}>

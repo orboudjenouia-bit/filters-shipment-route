@@ -12,6 +12,7 @@ import {
   suspendAdminUser,
 } from "./services/adminService";
 import ThemeToggle from "./ThemeToggle";
+import { resolveMediaUrl } from "./utils/media";
 import "./UsersList.css";
 
 const FILTERS = [
@@ -46,6 +47,7 @@ const mapUser = (user) => {
       "Unknown user",
     email: user?.email || "",
     phone: user?.phone || "-",
+    profilePhoto: typeof user?.profile_Photo === "string" ? user.profile_Photo.trim() : "",
     type: type || "unknown",
     role: role || "user",
     status: normalizeStatus(user?.status),
@@ -84,15 +86,40 @@ function ContextMenu({ user, onClose, onAction }) {
 }
 
 // ── User Item ─────────────────────────────────────────────────
-function UserItem({ user, openMenuId, onToggleMenu, onCloseMenu, onAction, actionLoadingId }) {
+function UserItem({ user, openMenuId, onToggleMenu, onCloseMenu, onAction, actionLoadingId, onOpenProfile }) {
   const isMenuOpen = openMenuId === user.id;
   const isLoading  = actionLoadingId === user.id;
 
   return (
     <div className={`ul-item ${isLoading ? "ul-item--loading" : ""}`}>
-      <div className="ul-avatar">{user.name.slice(0, 1).toUpperCase()}</div>
+      <button
+        className="ul-avatar"
+        type="button"
+        aria-label="Open user profile"
+        onClick={() => onOpenProfile?.(user)}
+      >
+        {user.profilePhoto ? (
+          <img
+            src={resolveMediaUrl(user.profilePhoto)}
+            alt={user.name}
+            className="ul-avatar-img"
+          />
+        ) : (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="8" r="4" stroke="#1e3a8a" strokeWidth="2" />
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#1e3a8a" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        )}
+      </button>
       <div className="ul-info">
-        <p className="ul-name">{user.name}</p>
+        <button
+          type="button"
+          className="ul-name"
+          style={{ background: "none", border: "none", padding: 0, textAlign: "left", cursor: "pointer" }}
+          onClick={() => onOpenProfile?.(user)}
+        >
+          {user.name}
+        </button>
         <p className="ul-id">ID: {user.userId} · {user.email}</p>
         <div className="ul-badges">
           <span className={`ul-type-badge ul-type-${user.type || "unknown"}`}>
@@ -126,7 +153,7 @@ function UserItem({ user, openMenuId, onToggleMenu, onCloseMenu, onAction, actio
 }
 
 // ── Main Component ────────────────────────────────────────────
-export default function UsersList({ onBack }) {
+export default function UsersList({ onBack, onNavigate }) {
   const [users,           setUsers]           = useState([]);
   const [activeFilter,    setActiveFilter]    = useState("all");
   const [openMenuId,      setOpenMenuId]      = useState(null);
@@ -291,6 +318,11 @@ export default function UsersList({ onBack }) {
                   onCloseMenu={() => setOpenMenuId(null)}
                   onAction={handleAction}
                   actionLoadingId={actionLoadingId}
+                  onOpenProfile={(user) => {
+                    if (user?.id != null) {
+                      onNavigate?.("publicProfile", { userId: user.id, from: "usersList" });
+                    }
+                  }}
                 />
               ))}
             </div>

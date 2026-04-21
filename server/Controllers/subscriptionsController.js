@@ -4,6 +4,15 @@ const AppError = require('../utils/AppError');
 const { StatusCodes } = require('http-status-codes');
 const createNotifs = require('../utils/createNotifs');
 
+const isAdminUser = async (userId) => {
+    const user = await prisma.user.findUnique({
+        where: { id: Number(userId) },
+        select: { role: true },
+    });
+
+    return user?.role === 'ADMIN';
+};
+
 const listSubscriptions = async (req,res,next) => {
 
     const subs = await prisma.subscription.findMany()
@@ -67,6 +76,7 @@ const updateSub = async (req,res,next) => {
     }
 
     const id = req.user.id
+    const isAdmin = await isAdminUser(id)
     const sub_ID = parseInt(req.params.id)
     const { ...sub } = req.body
     
@@ -78,7 +88,7 @@ const updateSub = async (req,res,next) => {
         throw new AppError("This Subscription doesn't Exists", StatusCodes.NOT_FOUND, "SUBSCRIPTION_NOT_FOUND")
     }
 
-    if (oldSub.user_ID != id && req.user.role != "ADMIN") {
+    if (oldSub.user_ID != id && !isAdmin) {
         throw new AppError("You're not authorized to update this Subscription", StatusCodes.FORBIDDEN, "NO_AUTHORIZATION")
     }
 
@@ -100,13 +110,14 @@ const updateSub = async (req,res,next) => {
 const deleteSub = async (req,res,next) => {
 
     const id = req.user.id
+    const isAdmin = await isAdminUser(id)
     const sub_ID = parseInt(req.params.id)
 
     const sub = await prisma.subscription.findUnique({
         where: { sub_ID }
     })
 
-    if (!sub || sub.user_ID != id && req.user.role != "ADMIN") {
+    if (!sub || sub.user_ID != id && !isAdmin) {
         throw new AppError('Not authorized to delete this subscription', StatusCodes.FORBIDDEN, 'FORBIDDEN');
     }
 
@@ -129,13 +140,14 @@ const deleteSub = async (req,res,next) => {
 const viewSub = async (req,res,next) => {
 
     const id = req.user.id
+    const isAdmin = await isAdminUser(id)
     const sub_ID = parseInt(req.params.id)
     
     const sub = await prisma.subscription.findUnique({
         where: { sub_ID}
     })
 
-    if (!sub || sub.user_ID != id && req.user.role != "ADMIN") {
+    if (!sub || sub.user_ID != id && !isAdmin) {
         throw new AppError('Not authorized to View this subscription', StatusCodes.FORBIDDEN, 'FORBIDDEN')
     }
     res.status(StatusCodes.OK).json(sub)

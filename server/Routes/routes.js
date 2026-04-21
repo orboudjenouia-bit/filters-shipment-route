@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { check } = require('express-validator');
 const authToken = require('../Middlewares/checkToken');
+const requireProfile = require('../Middlewares/requireProfile');
 const asyncHandler = require('../utils/asyncHandler');
 const checkActivate = require('../Middlewares/CheckActivate');
 const {
@@ -18,6 +19,7 @@ router.get('/me', authToken, checkActivate, asyncHandler(listMyRoutes));
 router.post(
     '/',
     authToken,
+    requireProfile,
     [
         check('name', 'Route name is required').notEmpty().isString(),
         check('photo', 'Photo must be a string').optional(),
@@ -27,6 +29,14 @@ router.post(
         check('destination', 'Destination must be a string')
             .optional({ nullable: true })
             .isString(),
+        check('waypoints', 'Waypoints must be an array of strings')
+            .optional({ nullable: true })
+            .isArray(),
+        check('waypoints.*', 'Each waypoint must be a non-empty string')
+            .optional({ nullable: true })
+            .isString()
+            .trim()
+            .notEmpty(),
         check('region', 'Region must be a string')
             .optional({ nullable: true })
             .isString(),
@@ -55,6 +65,7 @@ router.post(
 router.patch(
     '/',
     authToken,
+    requireProfile,
     [
         check('route_ID', 'Route ID is required and must be numeric')
             .notEmpty()
@@ -65,6 +76,14 @@ router.patch(
         check('destination', 'Destination must be a string')
             .optional()
             .isString(),
+        check('waypoints', 'Waypoints must be an array of strings')
+            .optional({ nullable: true })
+            .isArray(),
+        check('waypoints.*', 'Each waypoint must be a non-empty string')
+            .optional({ nullable: true })
+            .isString()
+            .trim()
+            .notEmpty(),
         check('region', 'Region must be a string').optional().isString(),
         check('date', 'Date must be YYYY-MM-DD or YYYY-MM-DD to YYYY-MM-DD')
             .optional()

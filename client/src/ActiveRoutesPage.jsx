@@ -115,7 +115,7 @@ export default function ActiveRoutesPage({ onBack, onNavigate }) {
                         <button className="am-actions-item" type="button" onClick={() => onNavigate("editActiveRoute", { activeRouteId: item.id, from: "activeRoutes" })}>
                           <Pencil size={18} /> Update
                         </button>
-                        <button className="am-actions-item" type="button" onClick={() => onNavigate("activeRouteDetails", { activeRouteId: item.id, from: "activeRoutes" })}>
+                        <button className="am-actions-item" type="button" onClick={() => onNavigate("routeDetails", { routeId: item.id, from: "activeRoutes" })}>
                           <Eye size={18} /> View Details
                         </button>
                         <button className="am-actions-item am-actions-item--delete" type="button" onClick={() => setConfirmTarget(item)}>

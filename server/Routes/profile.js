@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const { check } = require('express-validator');
 const checkToken = require('../Middlewares/checkToken');
+const requireProfile = require('../Middlewares/requireProfile');
 const asyncHandler = require('../utils/asyncHandler');
 const checkActivate = require('../Middlewares/CheckActivate');
 const {
@@ -15,6 +16,7 @@ const {
     updateVehicle,
     deleteVehicle,
     getMyProfile,
+    getPublicProfile,
 } = require('../Controllers/profileController');
 
 router.get('/me', checkToken,checkActivate, asyncHandler(getMyProfile));
@@ -56,6 +58,7 @@ router.get('/vehicles', checkToken,checkActivate, asyncHandler(listVehicles));
 router.post(
     '/vehicles',
     checkToken,
+    requireProfile,
     [
         check('plate_Number', 'Plate number is required and must be numeric')
             .notEmpty()
@@ -75,6 +78,7 @@ router.post(
 router.patch(
     '/vehicles',
     checkToken,
+    requireProfile,
     [
         check('plate_Number', 'Plate number is required and must be numeric')
             .notEmpty()
@@ -94,6 +98,7 @@ router.patch(
 router.delete(
     '/vehicles',
     checkToken,
+    requireProfile,
     [
         check('plate_Number', 'Plate number is required and must be numeric')
             .notEmpty()

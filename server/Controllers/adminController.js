@@ -14,6 +14,7 @@ const listUsers = async (req, res, next) => {
             type: true,
             role: true,
             status: true,
+            profile_Photo: true,
             individual: {
                 select: {
                     full_Name: true,
@@ -232,6 +233,7 @@ const exportShipmentsCSV = async (req, res, next) => {
         destination: shipment.destination,
         volume: shipment.volume,
         weight: shipment.weight,
+        price: shipment.price,
         date: shipment.date,
         priority: shipment.priority,
         status: shipment.status,
@@ -245,6 +247,7 @@ const exportShipmentsCSV = async (req, res, next) => {
             'destination',
             'volume',
             'weight',
+            'price',
             'date',
             'priority',
             'status',

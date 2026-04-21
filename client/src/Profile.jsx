@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { getMyProfile, getShipmentHistory, getRouteHistory, getVehicles } from "./services/profileService";
 import { logout } from "./services/authService";
+import { resolveMediaUrl } from "./utils/media";
 import "./Profile.css";
 
 const BellIcon = () => (
@@ -150,6 +151,16 @@ export default function Profile({ onNavigate, hasUnreadNotifications = false }) 
       return;
     }
 
+    if (item.type === "route") {
+      if (item.rawId != null) {
+        onNavigate("routeDetails", { routeId: item.rawId, from: "profile" });
+        return;
+      }
+
+      onNavigate("routes");
+      return;
+    }
+
     onNavigate("routes");
   };
 
@@ -205,16 +216,19 @@ export default function Profile({ onNavigate, hasUnreadNotifications = false }) 
 
         const normalizedHistory = shipments.map((item) => {
           const normalizedStatus = toHistoryStatusLabel(item?.status);
-          const shipmentName =
-            item?.shipmentName ||
-            "NO NAME";
           const shipmentId = item?.shipment_ID || item?.id || null;
+          const normalizedTitle =
+            String(item?.title || "").trim() ||
+            String(item?.shipmentName || "").trim() ||
+            String(item?.name || "").trim() ||
+            (item?.category ? `${item.category} Shipment` : "") ||
+            (shipmentId ? `Shipment #${shipmentId}` : "Shipment");
 
           return {
             id: shipmentId || `ID-${Math.random().toString(36).slice(2, 7)}`,
             rawId: shipmentId,
             type: "shipment",
-            title: shipmentName,
+            title: normalizedTitle,
             date: item?.date || "Unknown date",
             kindLabel: "SHIPMENT",
             status: normalizedStatus,
@@ -296,7 +310,7 @@ export default function Profile({ onNavigate, hasUnreadNotifications = false }) 
             driver: "-",
             trips: Array.isArray(vehicle?.routes) ? vehicle.routes.length : 0,
             fuel: "-",
-            color: "-",
+            color: String(vehicle?.color || "").trim() || "-",
           };
         });
 
@@ -377,7 +391,7 @@ export default function Profile({ onNavigate, hasUnreadNotifications = false }) 
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {truck.hasPhoto ? (
-              <img src={truck.img} alt={truck.name} style={{ width: 52, height: 52, borderRadius: 13, objectFit: "cover", flexShrink: 0 }} />
+              <img src={resolveMediaUrl(truck.img)} alt={truck.name} style={{ width: 52, height: 52, borderRadius: 13, objectFit: "cover", flexShrink: 0 }} />
             ) : (
               <div style={{ width: 52, height: 52, borderRadius: 13, background: "rgba(148, 163, 184, 0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <Truck size={24} color="#94a3b8" />
@@ -413,7 +427,7 @@ export default function Profile({ onNavigate, hasUnreadNotifications = false }) 
       {subPageHeader("TRUCK DETAILS", () => setPage("allTrucks"))}
 
       <div style={{ margin: "12px 16px 0", borderRadius: 16, overflow: "hidden", height: 180, position: "relative" }}>
-        <img src={t.img.replace("w=80&h=80", "w=430&h=180")} alt={t.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <img src={resolveMediaUrl(t.img)} alt={t.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 60%)" }} />
         <div style={{ position: "absolute", bottom: 14, left: 16, right: 16, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
           <div>
@@ -497,7 +511,7 @@ export default function Profile({ onNavigate, hasUnreadNotifications = false }) 
             >
               <div style={{ width: 100, height: 100, borderRadius: "50%", padding: 3, border: `3px solid ${verified ? "#22c55e" : "#ef4444"}` }}>
                 {userData.profilePhoto ? (
-                  <img src={userData.profilePhoto} alt="profile" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                  <img src={resolveMediaUrl(userData.profilePhoto)} alt="profile" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
                 ) : (
                   <div style={{ width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden" }}>
                     <DefaultAvatar />
@@ -623,7 +637,7 @@ export default function Profile({ onNavigate, hasUnreadNotifications = false }) 
               style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderTop: "1px solid var(--border-color)", cursor: "pointer" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 {truck.hasPhoto ? (
-                  <img src={truck.img} alt={truck.name} style={{ width: 52, height: 52, borderRadius: 13, objectFit: "cover", flexShrink: 0 }} />
+                  <img src={resolveMediaUrl(truck.img)} alt={truck.name} style={{ width: 52, height: 52, borderRadius: 13, objectFit: "cover", flexShrink: 0 }} />
                 ) : (
                   <div style={{ width: 52, height: 52, borderRadius: 13, background: "rgba(148, 163, 184, 0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <Truck size={24} color="#94a3b8" />

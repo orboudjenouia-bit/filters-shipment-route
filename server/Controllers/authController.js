@@ -105,6 +105,7 @@ const register = async (req, res, next) => {
             phone: user.phone,
             type: user.type,
             role: user.role,
+            isVerified: user.isVerified,
         },
     });
 };
@@ -121,6 +122,7 @@ const login = async (req, res, next) => {
             phone: true,
             type: true,
             role: true,
+            isVerified: true,
         },
     });
 
@@ -159,6 +161,7 @@ const login = async (req, res, next) => {
             phone: user.phone,
             type: user.type,
             role: user.role,
+            isVerified: user.isVerified,
         },
     });
 };
@@ -174,7 +177,7 @@ const IndividualProfile = async (req, res, next) => {
     }
 
     const userId = req.user.id;
-    const { full_Name, nin, location } = req.body;
+    const { full_Name, nin, location, photo } = req.body;
 
     const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -210,14 +213,22 @@ const IndividualProfile = async (req, res, next) => {
         );
     }
 
-    const profile = await prisma.individual.create({
-        data: {
-            user_ID: userId,
-            full_Name,
-            nin,
-            location,
-        },
-    });
+    const [profile] = await prisma.$transaction([
+        prisma.individual.create({
+            data: {
+                user_ID: userId,
+                full_Name,
+                nin,
+                location,
+            },
+        }),
+        prisma.user.update({
+            where: { id: userId },
+            data: {
+                ...(photo ? { profile_Photo: String(photo).trim() } : {}),
+            },
+        }),
+    ]);
 
     await createNotifs(
         userId,
@@ -246,7 +257,7 @@ const BusinessProfile = async (req, res, next) => {
     }
 
     const userId = req.user.id;
-    const { business_Name, rc_Number, form, nif, nis, locations } = req.body;
+    const { business_Name, rc_Number, form, nif, nis, locations, photo } = req.body;
 
     const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -282,17 +293,25 @@ const BusinessProfile = async (req, res, next) => {
         );
     }
 
-    const profile = await prisma.business.create({
-        data: {
-            user_ID: userId,
-            business_Name,
-            rc_Number,
-            form,
-            nif,
-            nis,
-            locations,
-        },
-    });
+    const [profile] = await prisma.$transaction([
+        prisma.business.create({
+            data: {
+                user_ID: userId,
+                business_Name,
+                rc_Number,
+                form,
+                nif,
+                nis,
+                locations,
+            },
+        }),
+        prisma.user.update({
+            where: { id: userId },
+            data: {
+                ...(photo ? { profile_Photo: String(photo).trim() } : {}),
+            },
+        }),
+    ]);
 
     await createNotifs(
         userId,

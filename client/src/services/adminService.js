@@ -1,75 +1,49 @@
-import API_URL, { getAuthHeaders, handleAuthFailure, parseJson } from "./http";
+import API_URL, { getAuthHeaders, requestJson, parseJson } from "./http";
 
 export const getAdminDashboardStats = async () => {
-  const response = await fetch(`${API_URL}/admin/Dashboard`, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    handleAuthFailure(response, data);
-    const error = new Error(data.message || `Server error: ${response.status}`);
-    error.status = response.status;
-    throw error;
-  }
-
-  return data;
+  return requestJson(
+    `${API_URL}/admin/Dashboard`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(),
+    },
+    { fallbackMessage: "Failed to load dashboard stats", authAware: true }
+  );
 };
 
 export const getAdminUsers = async () => {
-  const response = await fetch(`${API_URL}/admin/users`, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    handleAuthFailure(response, data);
-    const error = new Error(data.message || `Server error: ${response.status}`);
-    error.status = response.status;
-    throw error;
-  }
+  const data = await requestJson(
+    `${API_URL}/admin/users`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(),
+    },
+    { fallbackMessage: "Failed to load users", authAware: true }
+  );
 
   return Array.isArray(data?.users) ? data.users : [];
 };
 
 export const activateAdminUser = async (id) => {
-  const response = await fetch(`${API_URL}/admin/users/${encodeURIComponent(String(id))}/activate`, {
-    method: "PATCH",
-    headers: getAuthHeaders(),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    handleAuthFailure(response, data);
-    const error = new Error(data.message || `Server error: ${response.status}`);
-    error.status = response.status;
-    throw error;
-  }
-
-  return data;
+  return requestJson(
+    `${API_URL}/admin/users/${encodeURIComponent(String(id))}/activate`,
+    {
+      method: "PATCH",
+      headers: getAuthHeaders(),
+    },
+    { fallbackMessage: "Failed to activate user", authAware: true }
+  );
 };
 
 export const suspendAdminUser = async (id) => {
-  const response = await fetch(`${API_URL}/admin/users/${encodeURIComponent(String(id))}/suspend`, {
-    method: "PATCH",
-    headers: getAuthHeaders(),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    handleAuthFailure(response, data);
-    const error = new Error(data.message || `Server error: ${response.status}`);
-    error.status = response.status;
-    throw error;
-  }
-
-  return data;
+  return requestJson(
+    `${API_URL}/admin/users/${encodeURIComponent(String(id))}/suspend`,
+    {
+      method: "PATCH",
+      headers: getAuthHeaders(),
+    },
+    { fallbackMessage: "Failed to suspend user", authAware: true }
+  );
 };
 
 const extractFilename = (contentDisposition, fallback) => {
@@ -91,10 +65,7 @@ const downloadCsvEndpoint = async (endpoint, fallbackName) => {
 
   if (!response.ok) {
     const data = await parseJson(response);
-    handleAuthFailure(response, data);
-    const error = new Error(data.message || `Server error: ${response.status}`);
-    error.status = response.status;
-    throw error;
+    throw new Error(data?.message || `Server error: ${response.status}`);
   }
 
   const blob = await response.blob();

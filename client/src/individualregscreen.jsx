@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import ThemeToggle from "./ThemeToggle";
 import "./individualregscreen.css";
 import { IndividualProfile } from "./services/profileService";
+import { uploadPhoto } from "./services/uploadService";
 
 const BackIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -11,6 +12,7 @@ const BackIcon = () => (
 
 export default function IndividualRegScreen({ onBack, onNext, onLogin }) {
   const [form, setForm] = useState({ fullName: "", nationalId: "", location: "" });
+  const [photoFile, setPhotoFile] = useState(null);
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -37,10 +39,13 @@ export default function IndividualRegScreen({ onBack, onNext, onLogin }) {
     setSubmitting(true);
 
     try {
+      const uploadedPhotoPath = photoFile ? await uploadPhoto(photoFile) : undefined;
+
       await IndividualProfile({
         full_Name: form.fullName.trim(),
         nin: form.nationalId.replace(/\D/g, ""),
         location: form.location.trim() || "Not provided",
+        photo: uploadedPhotoPath,
       });
 
       if (onNext) onNext(form);
@@ -54,6 +59,24 @@ export default function IndividualRegScreen({ onBack, onNext, onLogin }) {
   const handleChange = (field, value) => {
     setForm(p => ({ ...p, [field]: value }));
     setErrors(p => ({ ...p, [field]: undefined }));
+    setSubmitError("");
+  };
+
+  const handlePhotoChange = (event) => {
+    const file = event.target.files?.[0] || null;
+
+    if (!file) {
+      setPhotoFile(null);
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setSubmitError("Please choose a valid image file.");
+      setPhotoFile(null);
+      return;
+    }
+
+    setPhotoFile(file);
     setSubmitError("");
   };
 
@@ -103,6 +126,22 @@ export default function IndividualRegScreen({ onBack, onNext, onLogin }) {
             value={form.location}
             onChange={e => handleChange("location", e.target.value)}
           />
+        </div>
+
+        <div className="ir-field-group">
+          <label className="ir-label" htmlFor="individual-profile-photo">Profile Photo (optional)</label>
+          <label className="ir-upload-box" htmlFor="individual-profile-photo">
+            <span className="ir-upload-main">Choose profile photo</span>
+            <span className="ir-upload-sub">PNG, JPG, WEBP</span>
+          </label>
+          <input
+            id="individual-profile-photo"
+            className="ir-file-input"
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoChange}
+          />
+          {photoFile ? <span className="ir-upload-selected">Selected: {photoFile.name}</span> : null}
         </div>
 
         <div className="ir-spacer" />

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { check } = require('express-validator');
 const authToken = require('../Middlewares/checkToken');
+const requireProfile = require('../Middlewares/requireProfile');
 const asyncHandler = require('../utils/asyncHandler');
 const checkActivate = require('../Middlewares/CheckActivate');
 const {
@@ -18,6 +19,7 @@ router.get('/me', authToken, checkActivate, asyncHandler(listMyShipments));
 router.post(
     '/',
     authToken,
+    requireProfile,
     [
         check('title', 'Title is required').notEmpty().isString(),
         check('category', 'Category is required').notEmpty().isString(),
@@ -26,10 +28,13 @@ router.post(
         check('destination', 'Destination is required').notEmpty().isString(),
         check('volume', 'Volume is required and must be a number')
             .notEmpty()
-            .isNumeric(),
+            .isFloat({ gt: 0 }),
         check('weight', 'Weight is required and must be a number')
             .notEmpty()
-            .isNumeric(),
+            .isFloat({ gt: 0 }),
+        check('price', 'Price is required and must be a number')
+            .notEmpty()
+            .isFloat({ gt: 0 }),
         check('date', 'Date must be in format YYYY-MM-DD').matches(
             /^\d{4}-\d{2}-\d{2}$/
         ),
@@ -47,6 +52,7 @@ router.post(
 router.patch(
     '/',
     authToken,
+    requireProfile,
     [
         check('shipment_ID', 'Shipment ID is required and must be a number')
             .notEmpty()
@@ -58,8 +64,15 @@ router.patch(
         check('destination', 'Destination must be a string')
             .optional()
             .isString(),
-        check('volume', 'Volume must be a number').optional().isNumeric(),
-        check('weight', 'Weight must be a number').optional().isNumeric(),
+        check('volume', 'Volume must be a positive number')
+            .optional()
+            .isFloat({ gt: 0 }),
+        check('weight', 'Weight must be a positive number')
+            .optional()
+            .isFloat({ gt: 0 }),
+        check('price', 'Price must be a positive number')
+            .optional()
+            .isFloat({ gt: 0 }),
         check('date', 'Date must be in format YYYY-MM-DD')
             .optional()
             .matches(/^\d{4}-\d{2}-\d{2}$/),

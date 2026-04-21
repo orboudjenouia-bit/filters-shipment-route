@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
 import {
@@ -8,10 +8,134 @@ import {
   Navigation,
   Send,
   FileText,
+  Plus,
+  Trash2,
+  GripVertical,
+  Search,
+  X,
 } from "lucide-react";
 import { createRoute } from "./services/routeService";
 import { getVehicles } from "./services/profileService";
+import { uploadPhoto } from "./services/uploadService";
 import "./Createroute.css";
+
+const algerianCities = [
+  "Adrar", "Chlef", "Laghouat", "Oum El Bouaghi", "Batna", "Béjaïa", "Biskra", "Béchar", "Blida", "Bouira",
+  "Tamanrasset", "Tébessa", "Tlemcen", "Tiaret", "Tizi Ouzou", "Algiers", "Djelfa", "Jijel", "Sétif", "Saïda",
+  "Skikda", "Sidi Bel Abbès", "Annaba", "Guelma", "Constantine", "Médéa", "Mostaganem", "M'Sila", "Mascara",
+  "Ouargla", "Oran", "El Bayadh", "Illizi", "Bordj Bou Arréridj", "Boumerdès", "El Tarf", "Tindouf", "Tissemsilt",
+  "El Oued", "Khenchela", "Souk Ahras", "Tipaza", "Mila", "Aïn Defla", "Naâma", "Aïn Témouchent", "Ghardaïa",
+  "Relizane", "Timimoun", "Bordj Badji Mokhtar", "Ouled Djellal", "Béni Abbès", "In Salah", "In Guezzam",
+  "Touggourt", "Djanet", "El M'Ghair", "El Menia"
+];
+
+const CityAutocomplete = ({ value, onChange, placeholder, icon: Icon, iconColor = "gray" }) => {
+  const [inputValue, setInputValue] = useState(value || "");
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const wrapperRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    setInputValue(value || "");
+  }, [value]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleInputChange = (e) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    setSelectedIndex(-1);
+    if (newValue.length > 0) {
+      const filtered = algerianCities.filter((city) =>
+        city.toLowerCase().includes(newValue.toLowerCase())
+      );
+      setSuggestions(filtered.slice(0, 10));
+      setShowSuggestions(true);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+    onChange({ target: { value: newValue } });
+  };
+
+  const handleSelectCity = (city) => {
+    setInputValue(city);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    onChange({ target: { value: city } });
+    inputRef.current?.focus();
+  };
+
+  const handleKeyDown = (e) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev + 1) % suggestions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev - 1 + suggestions.length) % suggestions.length);
+    } else if (e.key === "Enter" && selectedIndex >= 0) {
+      e.preventDefault();
+      handleSelectCity(suggestions[selectedIndex]);
+    } else if (e.key === "Escape") {
+      setShowSuggestions(false);
+    }
+  };
+
+  return (
+    <div className="city-autocomplete" ref={wrapperRef}>
+      <div className="city-input-box">
+        {Icon && <Icon size={15} className={`city-loc-icon ${iconColor}`} />}
+        <input
+          ref={inputRef}
+          type="text"
+          className="city-input"
+          placeholder={placeholder}
+          value={inputValue}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onFocus={() => inputValue.length > 0 && setShowSuggestions(true)}
+          autoComplete="off"
+        />
+        {inputValue && (
+          <button type="button" className="city-clear-btn" onClick={() => {
+            setInputValue("");
+            setSuggestions([]);
+            setShowSuggestions(false);
+            onChange({ target: { value: "" } });
+            inputRef.current?.focus();
+          }}>
+            <X size={14} />
+          </button>
+        )}
+      </div>
+      {showSuggestions && suggestions.length > 0 && (
+        <ul className="city-suggestions">
+          {suggestions.map((city, index) => (
+            <li
+              key={city}
+              className={`city-suggestion-item ${index === selectedIndex ? "selected" : ""}`}
+              onClick={() => handleSelectCity(city)}
+            >
+              <Search size={12} className="city-suggestion-icon" />
+              <span>{city}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
 
 export default function CreateRoute() {
   const navigate = useNavigate();
@@ -22,6 +146,7 @@ export default function CreateRoute() {
     region: "",
     startLocation: "",
     endLocation: "",
+    waypoints: [],
     dateMode: "day",
     dayDate: "",
     intervalStart: "",
@@ -80,22 +205,43 @@ export default function CreateRoute() {
   const handleChange = (field) => (e) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
+  const addWaypoint = () => {
+    setForm((prev) => ({ ...prev, waypoints: [...prev.waypoints, ""] }));
+  };
+
+  const updateWaypoint = (index, value) => {
+    setForm((prev) => ({
+      ...prev,
+      waypoints: prev.waypoints.map((stop, i) => (i === index ? value : stop)),
+    }));
+  };
+
+  const removeWaypoint = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      waypoints: prev.waypoints.filter((_, i) => i !== index),
+    }));
+  };
+
+  const clearWaypoints = () => {
+    setForm((prev) => ({ ...prev, waypoints: [] }));
+  };
+
   const handlePhotosChange = (event) => {
     const files = Array.from(event.target.files || []);
     setPhotos(files.slice(0, 5));
   };
 
-  const fileToDataUrl = (file) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result || ""));
-      reader.onerror = () => reject(new Error("Failed to read selected photo."));
-      reader.readAsDataURL(file);
-    });
-
   const showError = (msg) => {
     setError(msg);
     setTimeout(() => setError(""), 2000);
+  };
+
+  const isValidCity = (city) => {
+    if (!city || city.trim() === "") return false;
+    return algerianCities.some(
+      (validCity) => validCity.toLowerCase() === city.toLowerCase().trim()
+    );
   };
 
   const handleSubmit = async (e) => {
@@ -112,6 +258,28 @@ export default function CreateRoute() {
 
     if (form.postType === "region" && !form.region) {
       showError("Please provide the region.");
+      return;
+    }
+
+    if (form.postType === "originDestination") {
+      if (!isValidCity(form.startLocation)) {
+        showError(`"${form.startLocation}" is not a valid Algerian city. Please choose from the list.`);
+        return;
+      }
+      if (!isValidCity(form.endLocation)) {
+        showError(`"${form.endLocation}" is not a valid Algerian city. Please choose from the list.`);
+        return;
+      }
+      for (let i = 0; i < form.waypoints.length; i++) {
+        if (form.waypoints[i] && !isValidCity(form.waypoints[i])) {
+          showError(`"${form.waypoints[i]}" is not a valid Algerian city. Please choose from the list.`);
+          return;
+        }
+      }
+    }
+
+    if (form.postType === "region" && !isValidCity(form.region)) {
+      showError(`"${form.region}" is not a valid Algerian region. Please choose from the list.`);
       return;
     }
 
@@ -149,6 +317,9 @@ export default function CreateRoute() {
 
     const isRegion = form.postType === "region";
     const isInterval = form.dateMode === "interval";
+    const normalizedWaypoints = (form.waypoints || [])
+      .map((stop) => stop.trim())
+      .filter(Boolean);
 
     const origin = isRegion ? null : form.startLocation.trim();
     const destination = isRegion ? null : form.endLocation.trim();
@@ -159,13 +330,14 @@ export default function CreateRoute() {
       setLoading(true);
       setError("");
 
-      const photoData = photos[0] ? await fileToDataUrl(photos[0]) : null;
+      const photoData = photos[0] ? await uploadPhoto(photos[0]) : null;
 
       const payload = {
         name: form.routeName.trim(),
         photo: photoData,
         origin,
         destination,
+        waypoints: isRegion ? [] : normalizedWaypoints,
         region,
         date,
         post_type: form.postType === "region" ? "REGION" : "ORIGIN_DESTINATION",
@@ -187,6 +359,7 @@ export default function CreateRoute() {
         region: "",
         startLocation: "",
         endLocation: "",
+        waypoints: [],
         dateMode: "day",
         dayDate: "",
         intervalStart: "",
@@ -372,44 +545,94 @@ export default function CreateRoute() {
           {form.postType === "originDestination" ? (
             <>
               <div className="cr-field">
-                <label className="cr-label">START LOCATION</label>
-                <div className="cr-location-input-box">
-                  <Navigation size={15} className="cr-loc-icon green" />
-                  <input
-                    type="text"
-                    className="cr-loc-input"
-                    placeholder="Enter departure city"
-                    value={form.startLocation}
-                    onChange={handleChange("startLocation")}
-                  />
+                <div className="cr-stops-header">
+                  <label className="cr-label cr-stops-title">WAYPOINTS &amp; STOPS</label>
+                  <button
+                    type="button"
+                    className="cr-stops-clear"
+                    onClick={clearWaypoints}
+                    disabled={form.waypoints.length === 0}
+                  >
+                    Clear All
+                  </button>
                 </div>
-              </div>
 
-              <div className="cr-field">
-                <label className="cr-label">END LOCATION</label>
-                <div className="cr-location-input-box">
-                  <MapPin size={15} className="cr-loc-icon gray" />
-                  <input
-                    type="text"
-                    className="cr-loc-input"
-                    placeholder="Enter destination city"
-                    value={form.endLocation}
-                    onChange={handleChange("endLocation")}
-                  />
+                <div className="cr-stop-card cr-stop-card--start">
+                  <div className="cr-stop-drag" aria-hidden="true">
+                    <GripVertical size={16} />
+                  </div>
+                  <div className="cr-stop-main">
+                    <span className="cr-stop-tag cr-stop-tag--start">Start</span>
+                    <CityAutocomplete
+                      value={form.startLocation}
+                      onChange={handleChange("startLocation")}
+                      placeholder="Enter departure city"
+                      icon={Navigation}
+                      iconColor="green"
+                    />
+                  </div>
+                  <Navigation size={18} className="cr-stop-end-icon" />
                 </div>
+
+                {form.waypoints.map((stop, index) => (
+                  <div className="cr-stop-card" key={`waypoint-${index}`}>
+                    <div className="cr-stop-drag" aria-hidden="true">
+                      <GripVertical size={16} />
+                    </div>
+                    <div className="cr-stop-main">
+                      <span className="cr-stop-tag cr-stop-tag--waypoint">Stop {index + 1}</span>
+                      <CityAutocomplete
+                        value={stop}
+                        onChange={(e) => updateWaypoint(index, e.target.value)}
+                        placeholder="Enter a stop"
+                        icon={MapPin}
+                        iconColor="gray"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      className="cr-stop-remove"
+                      aria-label={`Remove stop ${index + 1}`}
+                      onClick={() => removeWaypoint(index)}
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                ))}
+
+                <div className="cr-stop-card cr-stop-card--destination">
+                  <div className="cr-stop-drag" aria-hidden="true">
+                    <GripVertical size={16} />
+                  </div>
+                  <div className="cr-stop-main">
+                    <span className="cr-stop-tag cr-stop-tag--destination">Destination</span>
+                    <CityAutocomplete
+                      value={form.endLocation}
+                      onChange={handleChange("endLocation")}
+                      placeholder="Enter destination city"
+                      icon={MapPin}
+                      iconColor="gray"
+                    />
+                  </div>
+                  <MapPin size={18} className="cr-stop-end-icon" />
+                </div>
+
+                <button type="button" className="cr-add-stop-btn" onClick={addWaypoint}>
+                  <Plus size={18} />
+                  Add Stop
+                </button>
               </div>
             </>
           ) : (
             <div className="cr-field">
               <label className="cr-label">REGION</label>
               <div className="cr-location-input-box">
-                <MapPin size={15} className="cr-loc-icon gray" />
-                <input
-                  type="text"
-                  className="cr-loc-input"
-                  placeholder="Enter region"
+                <CityAutocomplete
                   value={form.region}
                   onChange={handleChange("region")}
+                  placeholder="Enter region"
+                  icon={MapPin}
+                  iconColor="gray"
                 />
               </div>
             </div>

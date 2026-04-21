@@ -1,111 +1,73 @@
-import API_URL, { getAuthHeaders, handleAuthFailure, parseJson } from "./http";
+import API_URL, { getAuthHeaders, requestJson } from "./http";
 
 export const getNotifications = async () => {
-  const response = await fetch(`${API_URL}/notifications/all`, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    handleAuthFailure(response, data);
-    const error = new Error(data.message || `Server error: ${response.status}`);
-    error.status = response.status;
-    throw error;
-  }
+  const data = await requestJson(
+    `${API_URL}/notifications/all`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(),
+    },
+    { fallbackMessage: "Failed to load notifications", authAware: true }
+  );
 
   return Array.isArray(data?.data) ? data.data : [];
 };
 
 export const createNotification = async (payload) => {
-  const response = await fetch(`${API_URL}/notifications`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(payload),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    handleAuthFailure(response, data);
-    const error = new Error(data.message || `Server error: ${response.status}`);
-    error.status = response.status;
-    throw error;
-  }
-
-  return data;
+  return requestJson(
+    `${API_URL}/notifications`,
+    {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
+    },
+    { fallbackMessage: "Failed to create notification", authAware: true }
+  );
 };
 
 export const deleteNotification = async (notificationId) => {
-  const response = await fetch(`${API_URL}/notifications/${notificationId}`, {
-    method: "DELETE",
-    headers: getAuthHeaders(),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    handleAuthFailure(response, data);
-    const error = new Error(data.message || `Server error: ${response.status}`);
-    error.status = response.status;
-    throw error;
-  }
-
-  return data;
+  return requestJson(
+    `${API_URL}/notifications/${notificationId}`,
+    {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    },
+    { fallbackMessage: "Failed to delete notification", authAware: true }
+  );
 };
 
 export const markNotificationAsRead = async (notificationId) => {
-  const response = await fetch(`${API_URL}/notifications/${notificationId}`, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    handleAuthFailure(response, data);
-    const error = new Error(data.message || `Server error: ${response.status}`);
-    error.status = response.status;
-    throw error;
-  }
+  const data = await requestJson(
+    `${API_URL}/notifications/${notificationId}`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(),
+    },
+    { fallbackMessage: "Failed to read notification", authAware: true }
+  );
 
   return data?.data;
 };
 
 export const markAllNotificationsAsRead = async () => {
-  const response = await fetch(`${API_URL}/notifications/read-all`, {
-    method: "PATCH",
-    headers: getAuthHeaders(),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    handleAuthFailure(response, data);
-    const error = new Error(data.message || `Server error: ${response.status}`);
-    error.status = response.status;
-    throw error;
-  }
-
-  return data;
+  return requestJson(
+    `${API_URL}/notifications/read-all`,
+    {
+      method: "PATCH",
+      headers: getAuthHeaders(),
+    },
+    { fallbackMessage: "Failed to update notifications", authAware: true }
+  );
 };
 
 export const markManyNotificationsAsRead = async (ids) => {
-  const response = await fetch(`${API_URL}/notifications/read-many`, {
-    method: "PATCH",
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ ids }),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    handleAuthFailure(response, data);
-    const error = new Error(data.message || `Server error: ${response.status}`);
-    error.status = response.status;
-    throw error;
-  }
-
-  return data;
+  return requestJson(
+    `${API_URL}/notifications/read-many`,
+    {
+      method: "PATCH",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ ids }),
+    },
+    { fallbackMessage: "Failed to update notifications", authAware: true }
+  );
 };

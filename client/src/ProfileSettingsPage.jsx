@@ -1,6 +1,12 @@
+import { useState } from "react";
 import { logout } from "./services/authService";
 import ThemeToggle from "./ThemeToggle";
 import "./EPPages.css";
+
+const SHOW_ACTIVE_DEVICES = false;
+const SHOW_PRIVACY_POLICY = false;
+const SHOW_HELP_CENTER = false;
+const SUPPORT_EMAIL = "wessellisupport@gmail.com";
 
 function BackIcon() {
   return (
@@ -29,16 +35,25 @@ const settingsGroups = [
     label: "Security",
     items: [
       { label: "Change Password", icon: "lock", action: "forgot" },
-      { label: "Active Devices", icon: "devices", action: "activeDevices" },
-      { label: "Privacy Policy", icon: "privacy" },
+      {
+        label: "Active Devices",
+        icon: "devices",
+        action: "activeDevices",
+        hidden: !SHOW_ACTIVE_DEVICES,
+      },
+      {
+        label: "Privacy Policy",
+        icon: "privacy",
+        hidden: !SHOW_PRIVACY_POLICY,
+      },
     ],
   },
   {
     label: "Support & Info",
     items: [
-      { label: "Help Center", icon: "help" },
-      { label: "Contact Us", icon: "contact" },
-      { label: "About Wesselli", icon: "info" },
+      { label: "Help Center", icon: "help", hidden: !SHOW_HELP_CENTER },
+      { label: "Contact Us", icon: "contact", action: "contact" },
+      { label: "About Wesselli", icon: "info", action: "about" },
       { label: "Logout", icon: "logout", red: true, action: "logout" },
     ],
   },
@@ -102,8 +117,19 @@ function SettingsIcon({ type }) {
 }
 
 export default function ProfileSettingsPage({ onBack, onNavigate }) {
+  const [showContactBox, setShowContactBox] = useState(false);
+
   const handleAction = async (action) => {
     if (!action) return;
+
+    if (action !== "contact") {
+      setShowContactBox(false);
+    }
+
+    if (action === "contact") {
+      setShowContactBox((prev) => !prev);
+      return;
+    }
 
     if (action === "logout") {
       try {
@@ -138,13 +164,22 @@ export default function ProfileSettingsPage({ onBack, onNavigate }) {
               <div key={group.label}>
                 <div className="st-section-label">{group.label}</div>
                 <div className="st-group">
-                  {group.items.map((item) => (
-                    <div className="st-item" key={item.label} onClick={() => handleAction(item.action)}>
-                      <div className={`st-icon${item.red ? " red" : ""}`}>
-                        <SettingsIcon type={item.icon} />
+                  {group.items.filter((item) => !item.hidden).map((item) => (
+                    <div key={item.label}>
+                      <div className="st-item" onClick={() => handleAction(item.action)}>
+                        <div className={`st-icon${item.red ? " red" : ""}`}>
+                          <SettingsIcon type={item.icon} />
+                        </div>
+                        <span className={`st-item-label${item.red ? " red" : ""}`}>{item.label}</span>
+                        {!item.red && <span className="st-chevron"><ChevronRight /></span>}
                       </div>
-                      <span className={`st-item-label${item.red ? " red" : ""}`}>{item.label}</span>
-                      {!item.red && <span className="st-chevron"><ChevronRight /></span>}
+
+                      {item.action === "contact" && showContactBox ? (
+                        <div className="st-contact-box st-contact-box--inline" role="status" aria-live="polite">
+                          <span className="st-contact-label">Support Email</span>
+                          <span className="st-contact-value">{SUPPORT_EMAIL}</span>
+                        </div>
+                      ) : null}
                     </div>
                   ))}
                 </div>

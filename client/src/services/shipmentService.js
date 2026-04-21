@@ -1,98 +1,64 @@
-import API_URL, { getAuthHeaders, handleAuthFailure, parseJson } from "./http";
+import API_URL, { getAuthHeaders, requestJson } from "./http";
 
 export const createShipment = async (payload) => {
-  const response = await fetch(`${API_URL}/shipments`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(payload),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    handleAuthFailure(response, data);
-    throw {
-      status: response.status,
-      message: data.message || `Server error: ${response.status}`,
-    };
-  }
-
-  return data;
+  return requestJson(
+    `${API_URL}/shipments`,
+    {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
+    },
+    { fallbackMessage: "Failed to create shipment", authAware: true }
+  );
 };
 
 export const getShipments = async () => {
-  const response = await fetch(`${API_URL}/shipments`, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    handleAuthFailure(response, data);
-    throw {
-      status: response.status,
-      message: data.message || `Server error: ${response.status}`,
-    };
-  }
+  const data = await requestJson(
+    `${API_URL}/shipments`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(),
+    },
+    { fallbackMessage: "Failed to fetch shipments", authAware: true }
+  );
 
   return Array.isArray(data?.shipments) ? data.shipments : [];
 };
 
 export const getMyShipments = async () => {
-  const response = await fetch(`${API_URL}/shipments/me`, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    handleAuthFailure(response, data);
-    throw {
-      status: response.status,
-      message: data.message || `Server error: ${response.status}`,
-    };
-  }
+  const data = await requestJson(
+    `${API_URL}/shipments/me`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(),
+    },
+    { fallbackMessage: "Failed to fetch shipments", authAware: true }
+  );
 
   return Array.isArray(data?.shipments) ? data.shipments : [];
 };
 
 export const updateShipment = async (payload) => {
-  const response = await fetch(`${API_URL}/shipments`, {
-    method: "PATCH",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(payload),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    handleAuthFailure(response, data);
-    throw {
-      status: response.status,
-      message: data.message || `Server error: ${response.status}`,
-    };
-  }
+  const data = await requestJson(
+    `${API_URL}/shipments`,
+    {
+      method: "PATCH",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
+    },
+    { fallbackMessage: "Failed to update shipment", authAware: true }
+  );
 
   return data?.data || data;
 };
 
 export const deleteShipment = async (shipmentId) => {
-  const response = await fetch(`${API_URL}/shipments/${encodeURIComponent(String(shipmentId))}`, {
-    method: "DELETE",
-    headers: getAuthHeaders(),
-  });
-
-  const data = await parseJson(response);
-
-  if (!response.ok) {
-    handleAuthFailure(response, data);
-    throw {
-      status: response.status,
-      message: data.message || `Server error: ${response.status}`,
-    };
-  }
-
-  return data;
+  return requestJson(
+    `${API_URL}/shipments/${encodeURIComponent(String(shipmentId))}`,
+    {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    },
+    { fallbackMessage: "Failed to delete shipment", authAware: true }
+  );
 };

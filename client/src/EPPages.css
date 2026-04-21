@@ -334,6 +334,62 @@
   background: var(--button-secondary-bg);
 }
 
+.st-contact-box {
+  margin-top: -8px;
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.st-contact-box--inline {
+  margin: 0 10px 10px;
+  border-radius: 10px;
+  animation: st-contact-slide-down 220ms ease-out;
+}
+
+.st-contact-label {
+  color: #166534;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.st-contact-value {
+  color: #14532d;
+  font-size: 14px;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.dark-mode .st-contact-box {
+  background: rgba(22, 163, 74, 0.14);
+  border-color: rgba(34, 197, 94, 0.45);
+}
+
+.dark-mode .st-contact-label {
+  color: #86efac;
+}
+
+.dark-mode .st-contact-value {
+  color: #dcfce7;
+}
+
+@keyframes st-contact-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .st-icon {
   width: 36px;
   height: 36px;

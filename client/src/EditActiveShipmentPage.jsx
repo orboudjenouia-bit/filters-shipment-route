@@ -75,11 +75,20 @@ export default function EditActiveShipmentPage({ shipmentId, onBack, onSaved }) 
     setSuccess(false);
 
     try {
+      const parsedVolume = Number(form.volume);
+      const parsedWeight = Number(form.weight);
+
+      if (!Number.isFinite(parsedVolume) || parsedVolume <= 0 || !Number.isFinite(parsedWeight) || parsedWeight <= 0) {
+        setError("Weight and volume must be positive numbers.");
+        setSaving(false);
+        return;
+      }
+
       await updateShipment({
         shipment_ID: Number(shipmentId),
         ...form,
-        volume: Number(form.volume),
-        weight: Number(form.weight),
+        volume: parsedVolume,
+        weight: parsedWeight,
       });
       setSuccess(true);
       onSaved?.();

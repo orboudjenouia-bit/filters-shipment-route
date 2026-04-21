@@ -284,15 +284,23 @@ const getMyProfile = async (req, res, next) => {
             phone: true,
             type: true,
             role: true,
+            isVerified: true,
+            profile_Photo: true,
+            working_Time: true,
             individual: {
                 select: {
                     full_Name: true,
+                    nin: true,
                     location: true,
                 },
             },
             business: {
                 select: {
                     business_Name: true,
+                    rc_Number: true,
+                    form: true,
+                    nif: true,
+                    nis: true,
                     locations: true,
                 },
             },
@@ -316,12 +324,88 @@ const getMyProfile = async (req, res, next) => {
 
     const displayName =
         user?.individual?.full_Name || user?.business?.business_Name;
+    const hasProfile = Boolean(user?.individual || user?.business);
 
     res.status(StatusCodes.OK).json({
         success: true,
         data: {
             ...user,
             displayName,
+            hasProfile,
+        },
+    });
+};
+
+const getPublicProfile = async (req, res, next) => {
+    
+    const targetUserId = Number.parseInt(req.params.userId, 10);
+
+    const user = await prisma.user.findUnique({
+        where: { id: targetUserId },
+        select: {
+            id: true,
+            email: true,
+            phone: true,
+            type: true,
+            profile_Photo: true,
+            working_Time: true,
+            individual: {
+                select: {
+                    full_Name: true,
+                    location: true,
+                },
+            },
+            business: {
+                select: {
+                    business_Name: true,
+                    locations: true,
+                },
+            },
+        },
+    });
+
+    if (!user) {
+        throw new AppError(
+            'User not found',
+            StatusCodes.NOT_FOUND,
+            'USER_NOT_FOUND'
+        );
+    }
+
+    const hasProfile = Boolean(user.individual || user.business);
+
+    if (!hasProfile) {
+        throw new AppError(
+            'User profile is not available',
+            StatusCodes.NOT_FOUND,
+            'PROFILE_NOT_FOUND'
+        );
+    }
+
+    const displayName =
+        user?.individual?.full_Name || user?.business?.business_Name || 'Unknown User';
+
+    const resolvedLocation =
+        user?.individual?.location ||
+        (Array.isArray(user?.business?.locations)
+            ? user.business.locations
+                  .map((value) => String(value || '').trim())
+                  .filter(Boolean)
+                  .join(', ')
+            : '');
+
+    res.status(StatusCodes.OK).json({
+        success: true,
+        data: {
+            id: user.id,
+            type: user.type,
+            displayName,
+            email: user.email || '',
+            phone: user.phone || '',
+            profile_Photo: user.profile_Photo || '',
+            working_Time: user.working_Time || '',
+            location: resolvedLocation,
+                    
         },
     });
 };
@@ -334,4 +418,5 @@ module.exports = {
     updateVehicle,
     deleteVehicle,
     getMyProfile,
+    getPublicProfile,
 };

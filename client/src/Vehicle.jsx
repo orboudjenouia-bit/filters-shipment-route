@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FiChevronLeft } from "react-icons/fi";
 import ThemeToggle from "./ThemeToggle";
 import { createVehicle } from "./services/profileService";
+import { uploadPhoto } from "./services/uploadService";
 import './Vehicle.css';
 
 const VEHICLE_TYPES = ["Select type", "Car", "Truck"];
@@ -29,14 +30,6 @@ export default function Vehicle({ onBack, onNavigate }) {
     const files = Array.from(event.target.files || []);
     setPhotos(files.slice(0, 5));
   };
-
-  const fileToDataUrl = (file) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result || ""));
-      reader.onerror = () => reject(new Error("Failed to read selected photo."));
-      reader.readAsDataURL(file);
-    });
 
   const handleBack = () => {
     if (typeof onBack === "function") {
@@ -81,7 +74,7 @@ export default function Vehicle({ onBack, onNavigate }) {
       setError(null);
       setSuccess(false);
 
-      const photoData = photos[0] ? await fileToDataUrl(photos[0]) : null;
+      const photoData = photos[0] ? await uploadPhoto(photos[0]) : null;
 
       await createVehicle({
         plate_Number: plateNumber,

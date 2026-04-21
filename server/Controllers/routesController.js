@@ -19,6 +19,8 @@ const listRoutes = async (req, res, next) => {
             },
             user: {
                 select: {
+                    id: true,
+                    profile_Photo: true,
                     individual: {
                         select: {
                             full_Name: true,

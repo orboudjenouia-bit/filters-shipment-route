@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+
+
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "./ThemeContext";
 import LandingPage from "./Getstarted";
@@ -30,11 +32,14 @@ import AdminSubscriptions from "./AdminSubscriptions";
 import EditProfilePage from "./EditProfilePage";
 import ProfileSettingsPage from "./ProfileSettingsPage";
 import ActiveDevicesPage from "./ActiveDevicesPage";
+import AboutUsPage from "./AboutUsPage";
+import PublicProfilePage from "./PublicProfilePage";
 import { getMyProfile } from "./services/profileService";
 import SubscriptionPlans from './SubscriptionPlans';
 import SubscriptionDetailsPage from "./SubscriptionDetailsPage";
 import { getNotifications } from "./services/notificationService";
 import "./App.css";
+
 
 const ADMIN_ROLE = "ADMIN";
 
@@ -50,7 +55,7 @@ const getStoredRole = () => {
   }
 };
 
-const getPathForScreen = (screen, { shipmentId, subscriptionId, activeShipmentId, activeRouteId, routeId, resetToken } = {}) => {
+const getPathForScreen = (screen, { shipmentId, subscriptionId, activeShipmentId, activeRouteId, routeId, publicUserId, resetToken } = {}) => {
   switch (screen) {
     case "landing":
       return "/";
@@ -78,10 +83,16 @@ const getPathForScreen = (screen, { shipmentId, subscriptionId, activeShipmentId
         : "/routes";
     case "profile":
       return "/profile";
+    case "publicProfile":
+      return publicUserId != null
+        ? `/users/${encodeURIComponent(String(publicUserId))}`
+        : "/profile";
     case "editProfile":
       return "/profile/edit";
     case "profileSettings":
       return "/profile/settings";
+    case "about":
+      return "/about";
     case "activeDevices":
       return "/profile/settings/devices";
     case "vehicle":
@@ -137,7 +148,7 @@ const getPathForScreen = (screen, { shipmentId, subscriptionId, activeShipmentId
   }
 };
 
-const hasAuthToken = () => {
+const hasAuthToken = () =>  {  
   try {
     const token = localStorage.getItem("token");
     if (!token) return false;
@@ -164,7 +175,7 @@ const hasAuthToken = () => {
     localStorage.removeItem("user");
     return false;
   }
-};
+}; 
 
 const clearStoredAuth = () => {
   localStorage.removeItem("token");
@@ -229,8 +240,15 @@ const resolveScreenFromPath = (pathname) => {
     }
   }
   if (normalized === "/profile") return { screen: "profile" };
+  if (normalized.startsWith("/users/")) {
+    const publicUserId = decodeURIComponent(normalized.split("/")[2] || "").trim();
+    if (publicUserId) {
+      return { screen: "publicProfile", publicUserId };
+    }
+  }
   if (normalized === "/profile/edit") return { screen: "editProfile" };
   if (normalized === "/profile/settings") return { screen: "profileSettings" };
+  if (normalized === "/about") return { screen: "about" };
   if (normalized === "/profile/settings/devices") return { screen: "activeDevices" };
   if (normalized === "/vehicles/create") return { screen: "vehicle" };
   if (normalized === "/routes/create") return { screen: "createRoute" };
@@ -334,15 +352,20 @@ export default function App() {
   const [selectedRouteId, setSelectedRouteId] = useState(null);
   const [selectedActiveShipmentId, setSelectedActiveShipmentId] = useState(null);
   const [selectedActiveRouteId, setSelectedActiveRouteId] = useState(null);
+  const [selectedPublicUserId, setSelectedPublicUserId] = useState(null);
   const [shipmentDetailsBackScreen, setShipmentDetailsBackScreen] = useState("shipments");
   const [subscriptionDetailsBackScreen, setSubscriptionDetailsBackScreen] = useState("subscription");
   const [routeDetailsBackScreen, setRouteDetailsBackScreen] = useState("routes");
   const [activeShipmentBackScreen, setActiveShipmentBackScreen] = useState("activeShipments");
   const [activeRouteBackScreen, setActiveRouteBackScreen] = useState("activeRoutes");
+  const [publicProfileBackScreen, setPublicProfileBackScreen] = useState("dashboard");
   const [shipmentsRefreshKey, setShipmentsRefreshKey] = useState(0);
   const [displayName, setDisplayName] = useState("User");
   const [userRole, setUserRole] = useState(getStoredRole());
+  const [profileGate, setProfileGate] = useState({ loading: true, hasProfile: true, type: "", isVerified: true });
   const [resetToken, setResetToken] = useState("");
+  const [forgotBackScreen, setForgotBackScreen] = useState("login");
+  const [resetPasswordBackScreen, setResetPasswordBackScreen] = useState("login");
   const [notificationsBackScreen, setNotificationsBackScreen] = useState("dashboard");
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
@@ -377,7 +400,7 @@ export default function App() {
     if (location.pathname !== "/login") {
       routerNavigate("/login", { replace: true });
     }
-  };
+  }, [location.pathname, routerNavigate]);
 
   const clearResetPath = () => {
     routerNavigate("/", { replace: true });
@@ -393,8 +416,12 @@ export default function App() {
     }
 
     if (dir === "back") {
-      const previous = backStackRef.current.pop();
-      resolvedTarget = previous || to || "dashboard";
+      if (to) {
+        resolvedTarget = to;
+      } else {
+        const previous = backStackRef.current.pop();
+        resolvedTarget = previous || "dashboard";
+      }
     }
 
     if (adminOnlyScreens.has(resolvedTarget) && !isAdminRole(userRole)) return;
@@ -404,12 +431,17 @@ export default function App() {
     const nextRouteId = payload.routeId ?? selectedRouteId;
     const nextActiveShipmentId = payload.activeShipmentId ?? selectedActiveShipmentId;
     const nextActiveRouteId = payload.activeRouteId ?? selectedActiveRouteId;
+    const nextPublicUserId = payload.userId ?? selectedPublicUserId;
     const nextResetToken = payload.token ?? resetToken;
 
     if (resolvedTarget === "shipmentDetails") {
       const previousScreen =
         payload.from ||
-        (current === "shipmentDetails" ? shipmentDetailsBackScreen : current) ||
+        (current === "publicProfile"
+          ? publicProfileBackScreen
+          : current === "shipmentDetails"
+          ? shipmentDetailsBackScreen
+          : current) ||
         "shipments";
       setShipmentDetailsBackScreen(previousScreen);
     }
@@ -425,7 +457,11 @@ export default function App() {
     if (resolvedTarget === "routeDetails") {
       const previousScreen =
         payload.from ||
-        (current === "routeDetails" ? routeDetailsBackScreen : current) ||
+        (current === "publicProfile"
+          ? publicProfileBackScreen
+          : current === "routeDetails"
+          ? routeDetailsBackScreen
+          : current) ||
         "routes";
       setRouteDetailsBackScreen(previousScreen);
     }
@@ -433,6 +469,31 @@ export default function App() {
     if (resolvedTarget === "notifications") {
       const previousScreen = payload.from || current || "dashboard";
       setNotificationsBackScreen(previousScreen);
+    }
+
+    if (resolvedTarget === "forgot") {
+      const previousScreen =
+        payload.from ||
+        (current === "forgot" ? forgotBackScreen : current) ||
+        "login";
+      setForgotBackScreen(previousScreen);
+    }
+
+    if (resolvedTarget === "resetPassword") {
+      const previousScreen =
+        payload.from ||
+        (current === "resetPassword" ? resetPasswordBackScreen : current) ||
+        forgotBackScreen ||
+        "login";
+      setResetPasswordBackScreen(previousScreen);
+    }
+
+    if (resolvedTarget === "publicProfile") {
+      const previousScreen =
+        payload.from ||
+        (current === "publicProfile" ? publicProfileBackScreen : current) ||
+        "dashboard";
+      setPublicProfileBackScreen(previousScreen);
     }
 
     if (resolvedTarget === "activeShipmentDetails" || resolvedTarget === "editActiveShipment") {
@@ -457,6 +518,7 @@ export default function App() {
       routeId: nextRouteId,
       activeShipmentId: nextActiveShipmentId,
       activeRouteId: nextActiveRouteId,
+      publicUserId: nextPublicUserId,
       resetToken: nextResetToken,
     });
 
@@ -475,6 +537,9 @@ export default function App() {
     if (payload.activeRouteId != null) {
       setSelectedActiveRouteId(payload.activeRouteId);
     }
+    if (payload.userId != null) {
+      setSelectedPublicUserId(payload.userId);
+    }
     if (resolvedTarget === "resetPassword") {
       setResetToken(nextResetToken || "");
     }
@@ -486,6 +551,10 @@ export default function App() {
   };
 
   useEffect(() => {
+    // Avoid syncing from stale pathname while a screen transition is in progress.
+    if (phase !== "idle") return;
+    if (pendingPathRef.current) return;
+
     const routeState = resolveScreenFromPath(location.pathname);
     const roleFromStorage = getStoredRole();
 
@@ -536,12 +605,16 @@ export default function App() {
       setSelectedActiveRouteId(routeState.activeRouteId ?? null);
     }
 
+    if (routeState.screen === "publicProfile") {
+      setSelectedPublicUserId(routeState.publicUserId ?? null);
+    }
+
     if (routeState.screen !== current) {
       setCurrent(routeState.screen);
       setNext(null);
       setPhase("idle");
     }
-  }, [location.pathname, current, routerNavigate, userRole]);
+  }, [location.pathname, current, routerNavigate, userRole, phase]);
 
   useEffect(() => {
     if (phase === "exit") {
@@ -566,6 +639,7 @@ export default function App() {
 
     if (location.pathname !== pendingPath) {
       routerNavigate(pendingPath);
+      return;
     }
 
     pendingPathRef.current = null;
@@ -598,6 +672,12 @@ export default function App() {
 
         setDisplayName(resolvedName);
         setUserRole(profile?.role || fallbackRole);
+        setProfileGate({
+          loading: false,
+          hasProfile: Boolean(profile?.hasProfile),
+          type: String(profile?.type || "").toUpperCase(),
+          isVerified: Boolean(profile?.isVerified),
+        });
       } catch (err) {
         if (!publicScreens.has(current) && isSessionInvalidError(err)) {
           if (isMounted) forceLogoutToLogin();
@@ -607,6 +687,7 @@ export default function App() {
         if (isMounted) {
           setDisplayName(fallback);
           setUserRole(fallbackRole);
+          setProfileGate((prev) => ({ ...prev, loading: false }));
         }
       }
     };
@@ -616,7 +697,42 @@ export default function App() {
     return () => {
       isMounted = false;
     };
-  }, [current]);
+  }, [current, forceLogoutToLogin]);
+
+  useEffect(() => {
+    if (!hasAuthToken()) {
+      setProfileGate({ loading: false, hasProfile: true, type: "", isVerified: true });
+      return;
+    }
+
+    if (profileGate.loading || profileGate.isVerified) return;
+
+    const routeState = resolveScreenFromPath(location.pathname);
+    const allowedScreens = new Set(["verification", "individual", "business"]);
+    if (allowedScreens.has(routeState.screen)) return;
+
+    if (location.pathname !== "/verification") {
+      routerNavigate("/verification", { replace: true });
+    }
+  }, [profileGate, location.pathname, routerNavigate]);
+
+  useEffect(() => {
+    if (!hasAuthToken()) {
+      setProfileGate({ loading: false, hasProfile: true, type: "", isVerified: true });
+      return;
+    }
+
+    if (profileGate.loading || profileGate.hasProfile) return;
+    if (!profileGate.isVerified) return;
+
+    const routeState = resolveScreenFromPath(location.pathname);
+    if (publicScreens.has(routeState.screen)) return;
+
+    const target = profileGate.type === "BUSINESS" ? "/register/business" : "/register/individual";
+    if (location.pathname !== target) {
+      routerNavigate(target, { replace: true });
+    }
+  }, [profileGate, location.pathname, routerNavigate]);
 
   useEffect(() => {
     const handleAuthLogout = () => {
@@ -628,7 +744,7 @@ export default function App() {
     return () => {
       window.removeEventListener("auth:logout", handleAuthLogout);
     };
-  }, [location.pathname]);
+  }, [location.pathname, forceLogoutToLogin]);
 
   useEffect(() => {
     if (!hasAuthToken() || publicScreens.has(current)) return;
@@ -652,7 +768,7 @@ export default function App() {
       isActive = false;
       clearInterval(intervalId);
     };
-  }, [current]);
+  }, [current, forceLogoutToLogin]);
 
   useEffect(() => {
     if (!hasAuthToken() || publicScreens.has(current)) {
@@ -708,13 +824,30 @@ export default function App() {
             onBack={() => goBack("landing")}
             onCreateAccount={() => goTo("create")}
             onForgotPassword={() => goTo("forgot")}
-            onSuccess={() => goTo("dashboard")}
+            onSuccess={async () => {
+              try {
+                const profile = await getMyProfile();
+                if (profile?.isVerified === true) {
+                  goTo("dashboard");
+                  return;
+                }
+                if (profile?.isVerified === false) {
+                  goTo("verification");
+                  return;
+                }
+              } catch {
+                // fallback below
+              }
+
+              // Safe default: never grant normal access if verification status is unknown.
+              goTo("verification");
+            }}
           />
         )}
 
         {current === "forgot" && (
           <ForgotPassword
-            onBack={() => goBack("login")}
+            onBack={() => goBack(forgotBackScreen || "login")}
             onSuccess={() => goTo("login")}
           />
         )}
@@ -724,11 +857,11 @@ export default function App() {
             token={resetToken}
             onBack={() => {
               clearResetPath();
-              goBack("login");
+              goBack(resetPasswordBackScreen || forgotBackScreen || "login");
             }}
             onSuccess={() => {
               clearResetPath();
-              goTo("login");
+              goBack(resetPasswordBackScreen || forgotBackScreen || "login");
             }}
           />
         )}
@@ -764,7 +897,34 @@ export default function App() {
         {current === "verification" && (
           <Verification
             onBack={() => goBack(role === "Individual" ? "individual" : "business")}
-            onSuccess={() => goTo("dashboard")}
+            onSuccess={async () => {
+              try {
+                const profile = await getMyProfile();
+                const resolvedName =
+                  profile?.displayName ||
+                  (profile?.email ? String(profile.email).split("@")[0] : "User");
+
+                setDisplayName(resolvedName);
+                setUserRole(profile?.role || getStoredRole());
+                setProfileGate({
+                  loading: false,
+                  hasProfile: Boolean(profile?.hasProfile),
+                  type: String(profile?.type || "").toUpperCase(),
+                  isVerified: Boolean(profile?.isVerified),
+                });
+
+                if (profile?.isVerified) {
+                  goTo("dashboard");
+                  return;
+                }
+              } catch {
+                // fall through to optimistic update below
+              }
+
+              // Optimistic fallback to avoid stale unverified state causing redirect loops.
+              setProfileGate((prev) => ({ ...prev, loading: false, isVerified: true }));
+              goTo("dashboard");
+            }}
           />
         )}
 
@@ -812,7 +972,7 @@ export default function App() {
             shipmentId={selectedActiveShipmentId}
             onBack={() => goBack(activeShipmentBackScreen || "activeShipmentDetails")}
             onSaved={() => {
-              goTo("activeShipmentDetails", { activeShipmentId: selectedActiveShipmentId, from: "activeShipments" });
+              goTo("shipmentDetails", { shipmentId: selectedActiveShipmentId, from: "activeShipments" });
             }}
           />
         )}
@@ -831,7 +991,7 @@ export default function App() {
             routeId={selectedRouteId}
             source="all"
             allowActions={false}
-            onBack={() => goBack(routeDetailsBackScreen || "routes")}
+            onBack={() => goBack("routes")}
             onNavigate={(screen, payload) => {
               goTo(screen, payload);
             }}
@@ -862,7 +1022,7 @@ export default function App() {
             routeId={selectedActiveRouteId}
             onBack={() => goBack(activeRouteBackScreen || "activeRouteDetails")}
             onSaved={() => {
-              goTo("activeRouteDetails", { activeRouteId: selectedActiveRouteId, from: "activeRoutes" });
+              goTo("routeDetails", { routeId: selectedActiveRouteId, from: "activeRoutes" });
             }}
           />
         )}
@@ -873,6 +1033,13 @@ export default function App() {
             onNavigate={(screen, payload) => {
               goTo(screen, payload);
             }}
+          />
+        )}
+
+        {current === "publicProfile" && (
+          <PublicProfilePage
+            userId={selectedPublicUserId}
+            onBack={() => goBack(publicProfileBackScreen || "dashboard")}
           />
         )}
 
@@ -888,6 +1055,12 @@ export default function App() {
             onNavigate={(screen, payload) => {
               goTo(screen, payload);
             }}
+          />
+        )}
+
+        {current === "about" && (
+          <AboutUsPage
+            onBack={() => goBack("profileSettings")}
           />
         )}
 
@@ -913,7 +1086,10 @@ export default function App() {
         {current === "shipmentDetails" && (
           <ShipmentDetails
             shipmentId={selectedShipmentId}
-            onBack={() => goBack(shipmentDetailsBackScreen || "shipments")}
+            onBack={() => goBack("shipments")}
+            onNavigate={(screen, payload) => {
+              goTo(screen, payload);
+            }}
           />
         )}
 
@@ -972,6 +1148,9 @@ export default function App() {
         {current === "usersList" && (
           <UsersList
             onBack={() => goBack("adminPanel")}
+            onNavigate={(screen, payload) => {
+              goTo(screen, payload);
+            }}
           />
         )}
 
@@ -987,3 +1166,5 @@ export default function App() {
     </ThemeProvider>
   );
 }
+  
+

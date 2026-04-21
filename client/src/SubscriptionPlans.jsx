@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 import ConfirmDialog from './ConfirmDialog';
 import { createSubscription, deleteSubscription, getMySubscription, updateSubscription } from './services/subscriptionService';
+import { SUBSCRIPTION_PLANS } from './subscriptionPlansData';
 import './SubscriptionPlans.css';
 
 const SubscriptionPlans = ({ onNavigate }) => {
@@ -14,61 +15,7 @@ const SubscriptionPlans = ({ onNavigate }) => {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
-  const plans = useMemo(() => [
-    {
-      name: 'Free',
-      tier: 'Free',
-      subtitle: 'PERSONAL USE',
-      price: '0DA',
-      priceSub: null,
-      priceBelow: '/MO',
-      features: [
-        'Basic shipping features',
-        'Low-priority delivery',
-        '3 active shipment posts'
-      ],
-      buttonText: 'Current Plan',
-      buttonVariant: 'current',
-      recommended: false,
-      isBusiness: false
-    },
-    {
-      name: 'Individual',
-      tier: 'Individual',
-      subtitle: 'REGULAR SHIPPERS',
-      price: '3000DA',
-      priceSub: null,
-      priceBelow: '/MO',
-      features: [
-        'Real-time tracking',
-        'Priority support 24/7',
-        'Unlimited shipment posts',
-        'Advanced route analytics'
-      ],
-      buttonText: 'Select Plan',
-      buttonVariant: 'select',
-      recommended: true,
-      isBusiness: false
-    },
-    {
-      name: 'Business',
-      tier: 'Business',
-      subtitle: 'LOGISTICS MODELS',
-      price: '10000DA',
-      priceSub: null,
-      priceBelow: '/MO',
-      features: [
-        'Fleet management suite',
-        'Bulk shipment tools',
-        'Enterprise API access',
-        'Dedicated account manager'
-      ],
-      buttonText: 'Upgrade to Business',
-      buttonVariant: 'upgrade',
-      recommended: false,
-      isBusiness: true
-    }
-  ], []);
+  const plans = useMemo(() => SUBSCRIPTION_PLANS, []);
 
   const loadMySubscription = async () => {
     setLoading(true);
