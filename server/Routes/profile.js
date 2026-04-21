@@ -20,6 +20,7 @@ const {
 } = require('../Controllers/profileController');
 
 router.get('/me', checkToken,checkActivate, asyncHandler(getMyProfile));
+router.get('/user/:userId', checkToken, checkActivate, asyncHandler(getPublicProfile));
 
 router.post(
     '/individual',

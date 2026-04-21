@@ -2,13 +2,18 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   ArrowLeft,
   CheckCircle,
+  Clock3,
+  CreditCard,
   Loader2,
   MoreVertical,
   PauseCircle,
+  Trash2,
 } from "lucide-react";
 import {
   activateAdminUser,
+  deleteAdminUser,
   getAdminUsers,
+  getUserSubscriptionHistory,
   suspendAdminUser,
 } from "./services/adminService";
 import ThemeToggle from "./ThemeToggle";
@@ -80,6 +85,14 @@ function ContextMenu({ user, onClose, onAction }) {
       <button className="ctx-menu-item" type="button" onClick={() => handleAction("suspend")}>
         <PauseCircle size={16} color="#f59e0b" />
         Suspend
+      </button>
+      <button className="ctx-menu-item" type="button" onClick={() => handleAction("subscriptionHistory")}>
+        <Clock3 size={16} color="#2563eb" />
+        Subscription History
+      </button>
+      <button className="ctx-menu-item ctx-menu-item--danger" type="button" onClick={() => handleAction("delete")}>
+        <Trash2 size={16} color="#dc2626" />
+        Delete
       </button>
     </div>
   );
@@ -165,6 +178,10 @@ export default function UsersList({ onBack, onNavigate }) {
   // Error states
   const [error,           setError]           = useState(null);
   const [actionError,     setActionError]     = useState(null);
+  const [historyOpen,     setHistoryOpen]     = useState(false);
+  const [historyLoading,  setHistoryLoading]  = useState(false);
+  const [historyError,    setHistoryError]    = useState("");
+  const [historyData,     setHistoryData]     = useState(null);
 
   // Close menu on outside click
   useEffect(() => {
@@ -194,6 +211,28 @@ export default function UsersList({ onBack, onNavigate }) {
 
   // ── Actions: active / suspend ──────────────────────────────
   const handleAction = async (action, user) => {
+    if (action === "subscriptionHistory") {
+      setHistoryOpen(true);
+      setHistoryLoading(true);
+      setHistoryError("");
+      setHistoryData(null);
+
+      try {
+        const data = await getUserSubscriptionHistory(user.id);
+        setHistoryData(data);
+      } catch (err) {
+        setHistoryError(err?.message || "Failed to load subscription history.");
+      } finally {
+        setHistoryLoading(false);
+      }
+      return;
+    }
+
+    if (action === "delete") {
+      const ok = window.confirm(`Delete user ${user.name} (ID: ${user.userId})? This cannot be undone.`);
+      if (!ok) return;
+    }
+
     setActionLoadingId(user.id);
     setActionError(null);
 
@@ -202,15 +241,21 @@ export default function UsersList({ onBack, onNavigate }) {
         await activateAdminUser(user.id);
       } else if (action === "suspend") {
         await suspendAdminUser(user.id);
+      } else if (action === "delete") {
+        await deleteAdminUser(user.id);
       }
 
-      setUsers((prev) =>
-        prev.map((u) =>
+      setUsers((prev) => {
+        if (action === "delete") {
+          return prev.filter((u) => u.id !== user.id);
+        }
+
+        return prev.map((u) =>
           u.id === user.id
             ? { ...u, status: action === "active" ? "active" : "suspended" }
             : u
-        )
-      );
+        );
+      });
     } catch (err) {
       setActionError(`Failed to ${action} user: ${err.message}`);
     } finally {
@@ -331,6 +376,62 @@ export default function UsersList({ onBack, onNavigate }) {
         </div>
 
       </div>
+
+      {historyOpen && (
+        <div className="ul-modal-backdrop" role="dialog" aria-modal="true" aria-label="Subscription history">
+          <div className="ul-modal-card">
+            <div className="ul-modal-head">
+              <h3>Subscription History</h3>
+              <button
+                type="button"
+                className="ul-modal-close"
+                onClick={() => setHistoryOpen(false)}
+              >
+                X
+              </button>
+            </div>
+
+            {historyLoading ? (
+              <div className="ul-modal-loading">
+                <Loader2 size={16} className="ul-spin" />
+                <span>Loading history...</span>
+              </div>
+            ) : historyError ? (
+              <p className="ul-modal-error">{historyError}</p>
+            ) : (
+              <>
+                <div className="ul-sub-headline">
+                  <div className="ul-sub-row">
+                    <CreditCard size={15} />
+                    <span>{historyData?.user?.name || "User"}</span>
+                  </div>
+                  <p>
+                    {historyData?.currentSubscription
+                      ? `Current: ${historyData.currentSubscription.tier} (${historyData.currentSubscription.isActive ? "Active" : "Inactive"})`
+                      : "Current: No active subscription"}
+                  </p>
+                </div>
+
+                <div className="ul-history-list">
+                  {Array.isArray(historyData?.history) && historyData.history.length > 0 ? (
+                    historyData.history.map((item) => (
+                      <article key={item.notif_ID} className="ul-history-item">
+                        <p className="ul-history-title">{item.title}</p>
+                        <p className="ul-history-message">{item.message}</p>
+                        <span className="ul-history-time">
+                          {new Date(item.createdAt).toLocaleString()}
+                        </span>
+                      </article>
+                    ))
+                  ) : (
+                    <p className="ul-history-empty">No subscription history events found.</p>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

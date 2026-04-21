@@ -5,6 +5,8 @@ const {
     getUser,
     activateUser,
     suspendUser,
+    deleteUser,
+    getUserSubscriptionHistory,
     getDashboardStats,
     exportUsersCSV,
     exportShipmentsCSV,
@@ -27,6 +29,13 @@ router.patch(
     checkToken,
     checkAdmin,
     asyncHandler(suspendUser)
+);
+router.delete('/users/:id', checkToken, checkAdmin, asyncHandler(deleteUser));
+router.get(
+    '/users/:id/subscriptions/history',
+    checkToken,
+    checkAdmin,
+    asyncHandler(getUserSubscriptionHistory)
 );
 
 // Dashboard

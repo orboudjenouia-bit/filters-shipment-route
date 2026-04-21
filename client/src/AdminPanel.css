@@ -35,8 +35,12 @@
 .ap-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 16px;
+}
+
+.ap-header > div {
+  flex: 1;
 }
 
 .ap-back-btn {

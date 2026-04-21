@@ -585,26 +585,28 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnrea
                       {s.status.toUpperCase()}
                     </span>
                   </div>
-                  {s.ownerId ? (
+                  <div className="sh-card-actions">
+                    {s.ownerId ? (
+                      <button
+                        className="sh-details-btn"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onNavigate("publicProfile", { userId: s.ownerId, from: "shipments" });
+                        }}
+                      >
+                        Profile
+                      </button>
+                    ) : null}
                     <button
                       className="sh-details-btn"
                       onClick={(event) => {
                         event.stopPropagation();
-                        onNavigate("publicProfile", { userId: s.ownerId, from: "shipments" });
+                        onNavigate("shipmentDetails", { shipmentId: s.id });
                       }}
                     >
-                      Profile
+                      Details
                     </button>
-                  ) : null}
-                  <button
-                    className="sh-details-btn"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onNavigate("shipmentDetails", { shipmentId: s.id });
-                    }}
-                  >
-                    Details
-                  </button>
+                  </div>
                 </div>
               </div>
             ))

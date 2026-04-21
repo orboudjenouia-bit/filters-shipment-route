@@ -3,6 +3,7 @@ import ThemeToggle from "./ThemeToggle";
 import "./Businessregscreen.css";
 import { BusinessProfile } from "./services/profileService";
 import { uploadPhoto } from "./services/uploadService";
+import { register } from "./services/authService";
 
 const BackIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -43,6 +44,27 @@ export default function BusinessRegScreen({ onBack, onNext, onLogin }) {
     setSubmitting(true);
 
     try {
+      const existingToken = localStorage.getItem("token");
+
+      if (!existingToken) {
+        const pendingRaw = sessionStorage.getItem("pendingRegistration");
+        if (!pendingRaw) {
+          throw new Error("Missing account setup data. Please complete Step 1 first.");
+        }
+
+        const pending = JSON.parse(pendingRaw);
+        const data = await register(pending.email, pending.password, pending.phone, pending.type);
+
+        if (data?.token) {
+          localStorage.setItem("token", data.token);
+        }
+        if (data?.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
+
+        sessionStorage.removeItem("pendingRegistration");
+      }
+
       const uploadedPhotoPath = photoFile ? await uploadPhoto(photoFile) : undefined;
 
       await BusinessProfile({

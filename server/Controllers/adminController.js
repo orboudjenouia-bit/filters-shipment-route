@@ -118,6 +118,125 @@ const suspendUser = async (req, res, next) => {
     });
 };
 
+const deleteUser = async (req, res, next) => {
+
+    const id = Number.parseInt(req.params.id, 10);
+
+    if (req.user?.id === id) {
+        throw new AppError(
+            'You cannot delete your own admin account',
+            StatusCodes.BAD_REQUEST,
+            'ADMIN_SELF_DELETE_BLOCKED'
+        );
+    }
+
+    const user = await prisma.user.findUnique({
+        where: { id },
+        select: { id: true },
+    });
+
+    if (!user) {
+        throw new AppError(
+            'User Not Found',
+            StatusCodes.NOT_FOUND,
+            'USER_NOT_FOUND'
+        );
+    }
+
+    await prisma.$transaction(async (tx) => { // multiple db operations without partial success
+        await tx.route.deleteMany({
+            where: {
+                OR: [
+                    { user_ID: id },
+                    { vehicle: { user_ID: id } },
+                ],
+            },
+        });
+
+        await tx.shipment.deleteMany({ where: { user_ID: id } });
+        await tx.vehicle.deleteMany({ where: { user_ID: id } });
+        await tx.notification.deleteMany({ where: { user_ID: id } });
+        await tx.subscription.deleteMany({ where: { user_ID: id } });
+        await tx.notificationSettings.deleteMany({ where: { user_ID: id } });
+        await tx.individual.deleteMany({ where: { user_ID: id } });
+        await tx.business.deleteMany({ where: { user_ID: id } });
+        await tx.user.delete({ where: { id } });
+    });
+
+    await createNotifs(
+        req.user.id,
+        'User Deleted',
+        `User ${id} deleted successfully`,
+        'account',
+        undefined,
+        undefined
+    );
+
+    res.status(StatusCodes.OK).json({
+        success: true,
+        msg: `User ${id} deleted successfully`,
+    });
+};
+
+const getUserSubscriptionHistory = async (req, res, next) => {
+    const id = Number.parseInt(req.params.id, 10);
+
+    const user = await prisma.user.findUnique({
+        where: { id },
+        select: {
+            id: true,
+            email: true,
+            individual: { select: { full_Name: true } },
+            business: { select: { business_Name: true } },
+        },
+    });
+
+    if (!user) {
+        throw new AppError(
+            'User Not Found',
+            StatusCodes.NOT_FOUND,
+            'USER_NOT_FOUND'
+        );
+    }
+
+    const [currentSubscription, notificationHistory] = await Promise.all([
+        prisma.subscription.findUnique({ where: { user_ID: id } }),
+        prisma.notification.findMany({
+            where: {
+                user_ID: id,
+                OR: [
+                    { title: { contains: 'Subscription', mode: 'insensitive' } },
+                    { message: { contains: 'Subscription', mode: 'insensitive' } },
+                ],
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 50,
+            select: {
+                notif_ID: true,
+                title: true,
+                message: true,
+                createdAt: true,
+                type: true,
+                entityType: true,
+                entityID: true,
+            },
+        }),
+    ]);
+
+    const displayName =
+        user?.individual?.full_Name || user?.business?.business_Name || user?.email;
+
+    res.status(StatusCodes.OK).json({
+        user: {
+            id: user.id,
+            email: user.email,
+            name: displayName,
+        },
+        currentSubscription,
+        history: notificationHistory,
+    });
+};
+
 /*
     --> For Routes and Shipments management, we will use their specific controllers/routes
 */
@@ -322,6 +441,8 @@ module.exports = {
     getUser,
     activateUser,
     suspendUser,
+    deleteUser,
+    getUserSubscriptionHistory,
     getDashboardStats,
     exportUsersCSV,
     exportShipmentsCSV,

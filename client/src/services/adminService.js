@@ -46,6 +46,28 @@ export const suspendAdminUser = async (id) => {
   );
 };
 
+export const deleteAdminUser = async (id) => {
+  return requestJson(
+    `${API_URL}/admin/users/${encodeURIComponent(String(id))}`,
+    {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    },
+    { fallbackMessage: "Failed to delete user", authAware: true }
+  );
+};
+
+export const getUserSubscriptionHistory = async (id) => {
+  return requestJson(
+    `${API_URL}/admin/users/${encodeURIComponent(String(id))}/subscriptions/history`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(),
+    },
+    { fallbackMessage: "Failed to load subscription history", authAware: true }
+  );
+};
+
 const extractFilename = (contentDisposition, fallback) => {
   const value = String(contentDisposition || "");
   const utf8Match = value.match(/filename\*=UTF-8''([^;]+)/i);

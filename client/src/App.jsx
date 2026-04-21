@@ -1,6 +1,6 @@
 
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "./ThemeContext";
 import LandingPage from "./Getstarted";
@@ -177,23 +177,6 @@ const hasAuthToken = () =>  {
   }
 }; 
 
-const clearStoredAuth = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-};
-
-const isSessionInvalidError = (err) => {
-  const status = Number(err?.status);
-  const code = String(err?.code || "").toUpperCase();
-  const message = String(err?.message || "").toLowerCase();
-
-  if (status === 401) return true;
-  if (status === 404 && code === "USER_NOT_FOUND") return true;
-  if (status === 404 && message.includes("user not found")) return true;
-
-  return false;
-};
-
 const publicScreens = new Set([
   "landing",
   "create",
@@ -362,7 +345,12 @@ export default function App() {
   const [shipmentsRefreshKey, setShipmentsRefreshKey] = useState(0);
   const [displayName, setDisplayName] = useState("User");
   const [userRole, setUserRole] = useState(getStoredRole());
-  const [profileGate, setProfileGate] = useState({ loading: true, hasProfile: true, type: "", isVerified: true });
+  const [accountState, setAccountState] = useState({
+    loading: true,
+    hasProfile: true,
+    isVerified: true,
+    type: "INDIVIDUAL",
+  });
   const [resetToken, setResetToken] = useState("");
   const [forgotBackScreen, setForgotBackScreen] = useState("login");
   const [resetPasswordBackScreen, setResetPasswordBackScreen] = useState("login");
@@ -391,16 +379,6 @@ export default function App() {
       routerNavigate("/login", { replace: true });
     }
   }, [location.pathname, location.search, routerNavigate]);
-
-  const forceLogoutToLogin = useCallback(() => {
-    clearStoredAuth();
-    setCurrent("login");
-    setNext(null);
-    setPhase("idle");
-    if (location.pathname !== "/login") {
-      routerNavigate("/login", { replace: true });
-    }
-  }, [location.pathname, routerNavigate]);
 
   const clearResetPath = () => {
     routerNavigate("/", { replace: true });
@@ -571,16 +549,6 @@ export default function App() {
       return;
     }
 
-    if (!publicScreens.has(routeState.screen) && !hasAuthToken()) {
-      if (location.pathname !== "/login") {
-        routerNavigate("/login", { replace: true });
-      }
-      setCurrent("login");
-      setNext(null);
-      setPhase("idle");
-      return;
-    }
-
     if (routeState.screen === "resetPassword") {
       setResetToken(routeState.resetToken || "");
     }
@@ -658,6 +626,7 @@ export default function App() {
         if (isMounted) {
           setDisplayName(fallback);
           setUserRole(fallbackRole);
+          setAccountState({ loading: false, hasProfile: true, isVerified: true, type: "INDIVIDUAL" });
         }
         return;
       }
@@ -672,22 +641,17 @@ export default function App() {
 
         setDisplayName(resolvedName);
         setUserRole(profile?.role || fallbackRole);
-        setProfileGate({
+        setAccountState({
           loading: false,
           hasProfile: Boolean(profile?.hasProfile),
-          type: String(profile?.type || "").toUpperCase(),
           isVerified: Boolean(profile?.isVerified),
+          type: String(profile?.type || "INDIVIDUAL").toUpperCase(),
         });
       } catch (err) {
-        if (!publicScreens.has(current) && isSessionInvalidError(err)) {
-          if (isMounted) forceLogoutToLogin();
-          return;
-        }
-
         if (isMounted) {
           setDisplayName(fallback);
           setUserRole(fallbackRole);
-          setProfileGate((prev) => ({ ...prev, loading: false }));
+          setAccountState((prev) => ({ ...prev, loading: false }));
         }
       }
     };
@@ -697,78 +661,7 @@ export default function App() {
     return () => {
       isMounted = false;
     };
-  }, [current, forceLogoutToLogin]);
-
-  useEffect(() => {
-    if (!hasAuthToken()) {
-      setProfileGate({ loading: false, hasProfile: true, type: "", isVerified: true });
-      return;
-    }
-
-    if (profileGate.loading || profileGate.isVerified) return;
-
-    const routeState = resolveScreenFromPath(location.pathname);
-    const allowedScreens = new Set(["verification", "individual", "business"]);
-    if (allowedScreens.has(routeState.screen)) return;
-
-    if (location.pathname !== "/verification") {
-      routerNavigate("/verification", { replace: true });
-    }
-  }, [profileGate, location.pathname, routerNavigate]);
-
-  useEffect(() => {
-    if (!hasAuthToken()) {
-      setProfileGate({ loading: false, hasProfile: true, type: "", isVerified: true });
-      return;
-    }
-
-    if (profileGate.loading || profileGate.hasProfile) return;
-    if (!profileGate.isVerified) return;
-
-    const routeState = resolveScreenFromPath(location.pathname);
-    if (publicScreens.has(routeState.screen)) return;
-
-    const target = profileGate.type === "BUSINESS" ? "/register/business" : "/register/individual";
-    if (location.pathname !== target) {
-      routerNavigate(target, { replace: true });
-    }
-  }, [profileGate, location.pathname, routerNavigate]);
-
-  useEffect(() => {
-    const handleAuthLogout = () => {
-      forceLogoutToLogin();
-    };
-
-    window.addEventListener("auth:logout", handleAuthLogout);
-
-    return () => {
-      window.removeEventListener("auth:logout", handleAuthLogout);
-    };
-  }, [location.pathname, forceLogoutToLogin]);
-
-  useEffect(() => {
-    if (!hasAuthToken() || publicScreens.has(current)) return;
-
-    let isActive = true;
-
-    const validateSession = async () => {
-      try {
-        await getMyProfile();
-      } catch (err) {
-        if (isActive && isSessionInvalidError(err)) {
-          forceLogoutToLogin();
-        }
-      }
-    };
-
-    validateSession();
-    const intervalId = setInterval(validateSession, 30000);
-
-    return () => {
-      isActive = false;
-      clearInterval(intervalId);
-    };
-  }, [current, forceLogoutToLogin]);
+  }, [current]);
 
   useEffect(() => {
     if (!hasAuthToken() || publicScreens.has(current)) {
@@ -827,20 +720,24 @@ export default function App() {
             onSuccess={async () => {
               try {
                 const profile = await getMyProfile();
-                if (profile?.isVerified === true) {
-                  goTo("dashboard");
+                const hasProfile = Boolean(profile?.hasProfile);
+                const isVerified = Boolean(profile?.isVerified);
+                const type = String(profile?.type || "INDIVIDUAL").toUpperCase();
+
+                if (!hasProfile) {
+                  goTo(type === "BUSINESS" ? "business" : "individual");
                   return;
                 }
-                if (profile?.isVerified === false) {
+
+                if (!isVerified) {
                   goTo("verification");
                   return;
                 }
               } catch {
-                // fallback below
+                // fall through to dashboard guard
               }
 
-              // Safe default: never grant normal access if verification status is unknown.
-              goTo("verification");
+              goTo("dashboard");
             }}
           />
         )}
@@ -900,41 +797,73 @@ export default function App() {
             onSuccess={async () => {
               try {
                 const profile = await getMyProfile();
-                const resolvedName =
-                  profile?.displayName ||
-                  (profile?.email ? String(profile.email).split("@")[0] : "User");
+                const hasProfile = Boolean(profile?.hasProfile);
+                const type = String(profile?.type || "INDIVIDUAL").toUpperCase();
 
-                setDisplayName(resolvedName);
-                setUserRole(profile?.role || getStoredRole());
-                setProfileGate({
-                  loading: false,
-                  hasProfile: Boolean(profile?.hasProfile),
-                  type: String(profile?.type || "").toUpperCase(),
-                  isVerified: Boolean(profile?.isVerified),
-                });
-
-                if (profile?.isVerified) {
-                  goTo("dashboard");
+                if (!hasProfile) {
+                  goTo(type === "BUSINESS" ? "business" : "individual");
                   return;
                 }
               } catch {
-                // fall through to optimistic update below
+                // fall through to dashboard guard
               }
 
-              // Optimistic fallback to avoid stale unverified state causing redirect loops.
-              setProfileGate((prev) => ({ ...prev, loading: false, isVerified: true }));
               goTo("dashboard");
             }}
           />
         )}
 
         {current === "dashboard" && (
-          <Dashboard
-            onNavigate={(screen) => goTo(screen)}
-            userName={displayName}
-            userRole={userRole}
-            hasUnreadNotifications={hasUnreadNotifications}
-          />
+          !hasAuthToken() ? (
+            <div className="app-auth-guard-screen">
+              <div className="app-auth-guard-card" role="alert" aria-live="polite">
+                <div className="app-auth-guard-icon" aria-hidden="true">X</div>
+                <p className="app-auth-guard-title">You are not registered, Please Register</p>
+                <button
+                  type="button"
+                  className="app-auth-guard-btn"
+                  onClick={() => goTo("login")}
+                >
+                  Login
+                </button>
+              </div>
+            </div>
+          ) : accountState.loading ? (
+            <div className="app-auth-guard-screen">
+              <div className="app-auth-guard-card" role="status" aria-live="polite">
+                <p className="app-auth-guard-title">Checking account setup...</p>
+              </div>
+            </div>
+          ) : (!accountState.hasProfile || !accountState.isVerified) ? (
+            <div className="app-auth-guard-screen">
+              <div className="app-auth-guard-card" role="alert" aria-live="polite">
+                <div className="app-auth-guard-icon" aria-hidden="true">X</div>
+                <p className="app-auth-guard-title">Complete account setup first (Profile and Email Verification).</p>
+                <button
+                  type="button"
+                  className="app-auth-guard-btn"
+                  onClick={() => {
+                    if (!accountState.hasProfile) {
+                      goTo(accountState.type === "BUSINESS" ? "business" : "individual");
+                      return;
+                    }
+                    if (!accountState.isVerified) {
+                      goTo("verification");
+                    }
+                  }}
+                >
+                  Continue Setup
+                </button>
+              </div>
+            </div>
+          ) : (
+            <Dashboard
+              onNavigate={(screen) => goTo(screen)}
+              userName={displayName}
+              userRole={userRole}
+              hasUnreadNotifications={hasUnreadNotifications}
+            />
+          )
         )}
 
         {current === "shipments" && (

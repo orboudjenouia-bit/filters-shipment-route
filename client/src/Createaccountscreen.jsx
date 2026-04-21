@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import ThemeToggle from "./ThemeToggle";
 import "./Createaccount.css";
-import { register } from "./services/authService";
 
 const BackIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -80,18 +79,18 @@ export default function CreateAccountScreen({ onBack, onNext, onLogin }) {
       const mappedType = form.role === "Business" ? "BUSINESS" : "INDIVIDUAL";
       const cleanPhone = form.phone.replace(/\D/g, "");
 
-      const data = await register(form.email, form.password, cleanPhone, mappedType);
+      const pendingRegistration = {
+        email: form.email.trim(),
+        password: form.password,
+        phone: cleanPhone,
+        type: mappedType,
+      };
 
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-      }
-      if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-      }
+      sessionStorage.setItem("pendingRegistration", JSON.stringify(pendingRegistration));
 
       if (onNext) onNext(form.role);
-    } catch (err) {
-      setSubmitError(err.message || "Registration failed. Please try again.");
+    } catch {
+      setSubmitError("Failed to keep registration data. Please try again.");
     } finally {
       setSubmitting(false);
     }
