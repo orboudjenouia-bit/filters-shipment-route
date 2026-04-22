@@ -3,6 +3,7 @@ import ThemeToggle from "./ThemeToggle";
 import logoSvg from "./photo/Logo.svg";
 import "./Shipments.css";
 import { getShipments } from "./services/shipmentService";
+import { toastError } from "./services/toastService";
 import { resolveMediaUrl } from "./utils/media";
 
 const algerianCities = [
@@ -234,6 +235,11 @@ export default function Shipments({ onNavigate, onBack, refreshKey = 0, hasUnrea
     afterDate: "",
     beforeDate: ""
   });
+
+  useEffect(() => {
+    if (!error) return;
+    toastError(error);
+  }, [error]);
 
   useEffect(() => {
     let isMounted = true;

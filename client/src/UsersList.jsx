@@ -16,6 +16,7 @@ import {
   getUserSubscriptionHistory,
   suspendAdminUser,
 } from "./services/adminService";
+import { toastError, toastSuccess } from "./services/toastService";
 import ThemeToggle from "./ThemeToggle";
 import { resolveMediaUrl } from "./utils/media";
 import "./UsersList.css";
@@ -209,6 +210,21 @@ export default function UsersList({ onBack, onNavigate }) {
     fetchInitialUsers();
   }, [fetchInitialUsers]);
 
+  useEffect(() => {
+    if (!error) return;
+    toastError(error);
+  }, [error]);
+
+  useEffect(() => {
+    if (!actionError) return;
+    toastError(actionError);
+  }, [actionError]);
+
+  useEffect(() => {
+    if (!historyError) return;
+    toastError(historyError);
+  }, [historyError]);
+
   // ── Actions: active / suspend ──────────────────────────────
   const handleAction = async (action, user) => {
     if (action === "subscriptionHistory") {
@@ -239,10 +255,13 @@ export default function UsersList({ onBack, onNavigate }) {
     try {
       if (action === "active") {
         await activateAdminUser(user.id);
+        toastSuccess("User activated");
       } else if (action === "suspend") {
         await suspendAdminUser(user.id);
+        toastSuccess("User suspended");
       } else if (action === "delete") {
         await deleteAdminUser(user.id);
+        toastSuccess("User deleted");
       }
 
       setUsers((prev) => {
@@ -321,14 +340,6 @@ export default function UsersList({ onBack, onNavigate }) {
 
         {/* Scrollable content */}
         <div className="ul-content">
-
-          {/* Action error banner */}
-          {actionError && (
-            <div className="ul-error-banner">
-              {actionError}
-              <button onClick={() => setActionError(null)} className="ul-error-close">✕</button>
-            </div>
-          )}
 
           {/* Initial loading skeleton */}
           {initialLoading ? (

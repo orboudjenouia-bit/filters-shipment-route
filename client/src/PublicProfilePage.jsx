@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import ThemeToggle from "./ThemeToggle";
 import { getPublicProfile } from "./services/profileService";
+import { toastError } from "./services/toastService";
 import { resolveMediaUrl } from "./utils/media";
 import "./Shipmentdetails.css";
 import "./PublicProfilePage.css";
@@ -34,6 +35,11 @@ export default function PublicProfilePage({ userId, onBack }) {
     const timer = setTimeout(() => setMounted(true), 30);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!error) return;
+    toastError(error);
+  }, [error]);
 
   useEffect(() => {
     let isMounted = true;

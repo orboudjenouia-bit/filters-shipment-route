@@ -3,10 +3,10 @@ import { ArrowLeft, Mail } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import "./Forgotpassword.css";
 import { forgotPassword } from "./services/authService";
+import { toastError, toastSuccess } from "./services/toastService";
 
 export default function ForgotPassword({ onBack, onSuccess }) {
   const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [previewResetLink, setPreviewResetLink] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,8 +18,7 @@ export default function ForgotPassword({ onBack, onSuccess }) {
   }, []);
 
   const showError = (msg) => {
-    setError(msg);
-    setTimeout(() => setError(""), 3000);
+    toastError(msg);
   };
 
   const handleSubmit = async (e) => {
@@ -31,12 +30,12 @@ export default function ForgotPassword({ onBack, onSuccess }) {
 
     try {
       setLoading(true);
-      setError("");
 
       const data = await forgotPassword(email);
 
       setPreviewResetLink(data?.resetLink || "");
       setSuccess(true);
+      toastSuccess("Reset code sent", { description: "Check your email for password reset instructions." });
 
     } catch (err) {
       console.error(err);
@@ -88,8 +87,6 @@ export default function ForgotPassword({ onBack, onSuccess }) {
                 />
               </div>
             </div>
-
-            {error && <div className="fp-error">{error}</div>}
 
             <button className="fp-btn" type="submit" disabled={loading}>
               {loading ? "Sending..." : "Send Reset Code"}

@@ -4,11 +4,11 @@ import ThemeToggle from "./ThemeToggle";
 import "./Login.css";
 import { login } from "./services/authService";
 import API_URL from "./services/http";
+import { toastError, toastInfo, toastSuccess } from "./services/toastService";
 
 export default function Login({ onBack, onSuccess, onCreateAccount, onForgotPassword }) {
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState("");
   const [mounted, setMounted] = useState(false);
@@ -44,8 +44,7 @@ export default function Login({ onBack, onSuccess, onCreateAccount, onForgotPass
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   const showError = (msg) => {
-    setError(msg);
-    setTimeout(() => setError(""), 3000);
+    toastError(msg);
   };
 
   const handleSubmit = async (e) => {
@@ -60,10 +59,11 @@ export default function Login({ onBack, onSuccess, onCreateAccount, onForgotPass
     }
 
     try {
-      setLoading(true); setError("");
+      setLoading(true);
       const data = await login(form.email, form.password);
       if (data.token) localStorage.setItem("token", data.token);
       if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
+      toastSuccess("Logged in successfully", { description: "Welcome back to Wesselli." });
       if (onSuccess) onSuccess();
     } catch (err) {
       console.error(err);
@@ -95,6 +95,7 @@ export default function Login({ onBack, onSuccess, onCreateAccount, onForgotPass
   const handleAppleLogin = async () => {
     try {
       setSocialLoading("apple");
+      toastInfo("Apple login is coming soon", { description: "Please use email/password or Google for now." });
       showError("Apple login is not available yet.");
     } catch (err) {
       console.error(err);
@@ -156,8 +157,6 @@ export default function Login({ onBack, onSuccess, onCreateAccount, onForgotPass
               Forgot Password?
             </button>
           </div>
-
-          {error && <div className="login-msg-error">{error}</div>}
 
           <button className="login-btn" type="submit" disabled={loading}>
             {loading ? "Signing in..." : "Login"}

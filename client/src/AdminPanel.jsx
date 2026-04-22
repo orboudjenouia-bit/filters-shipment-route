@@ -16,6 +16,7 @@ import {
   exportUsersCsv,
   getAdminDashboardStats,
 } from "./services/adminService";
+import { toastError, toastSuccess } from "./services/toastService";
 import ThemeToggle from "./ThemeToggle";
 import "./AdminPanel.css";
 
@@ -74,12 +75,23 @@ export default function AdminPanel({ onNavigate, onBack }) {
     try {
       const { blob, filename } = await exporter();
       triggerDownload(blob, filename);
+      toastSuccess("Export completed", { description: `${filename} has been downloaded.` });
     } catch (err) {
       setExportError(err?.message || "Failed to export data.");
     } finally {
       setExporting((prev) => ({ ...prev, [key]: false }));
     }
   };
+
+  useEffect(() => {
+    if (!error) return;
+    toastError(error);
+  }, [error]);
+
+  useEffect(() => {
+    if (!exportError) return;
+    toastError(exportError);
+  }, [exportError]);
 
   const loadAdminStats = useCallback(async () => {
     setLoading(true);

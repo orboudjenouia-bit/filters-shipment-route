@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
 import "./App.css";
 import "./Regestration.css";
+import { toastError, toastSuccess } from "./services/toastService";
 
 import myIcon from "./photo/Icon.svg";
 import mysender from "./photo/Icon(2).svg";
@@ -14,7 +15,7 @@ export default function Regestration() {
 
   async function Send() {
     if (!selectedRole) {
-      alert("Choose one of the two roles or click Skip");
+      toastError("Choose one of the two roles or click Skip");
       return;
     }
 
@@ -26,13 +27,14 @@ export default function Regestration() {
       });
 
       if (res.ok) {
+        toastSuccess("Role sent successfully");
         navigate("/ramzi");
       } else {
-        alert("Error sending role");
+        toastError("Error sending role");
       }
     } catch (err) {
       console.error(err);
-      alert("Server error");
+      toastError("Server error");
     }
   }
 

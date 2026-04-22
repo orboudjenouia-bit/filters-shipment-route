@@ -11,3 +11,33 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.toast-card {
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.toast-title {
+  font-weight: 700;
+}
+
+.toast-description {
+  opacity: 0.95;
+}
+
+.toast-action,
+.toast-cancel {
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+/* Keep the toast rail aligned with the app content area, not the viewport edge. */
+.app-toaster[data-x-position="right"] {
+  right: max(12px, calc((100vw - 900px) / 2 + 12px));
+}
+
+@media (max-width: 1140px) {
+  .app-toaster[data-x-position="right"] {
+    right: 12px;
+  }
+}

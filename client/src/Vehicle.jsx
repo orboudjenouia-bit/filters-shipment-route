@@ -3,6 +3,7 @@ import { FiChevronLeft } from "react-icons/fi";
 import ThemeToggle from "./ThemeToggle";
 import { createVehicle } from "./services/profileService";
 import { uploadPhoto } from "./services/uploadService";
+import { toastError, toastInfo, toastSuccess } from "./services/toastService";
 import './Vehicle.css';
 
 const VEHICLE_TYPES = ["Select type", "Car", "Truck"];
@@ -18,12 +19,10 @@ export default function Vehicle({ onBack, onNavigate }) {
   });
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
   const updateField = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
-    setError(null);
   };
 
   const handlePhotosChange = (event) => {
@@ -38,6 +37,7 @@ export default function Vehicle({ onBack, onNavigate }) {
   };
 
   const skip_now = () => {
+    toastInfo("Skipped for now", { description: "You can add your vehicle later from your profile." });
     if (typeof onNavigate === "function") {
       onNavigate("profile");
     }
@@ -46,7 +46,7 @@ export default function Vehicle({ onBack, onNavigate }) {
   const handleAddVehicle = async () => {
     const isValid = form.type && form.model && form.color && form.year && form.plate && form.capacity;
     if (!isValid) {
-      setError("Please fill in all fields.");
+      toastError("Please fill in all fields.");
       return;
     }
 
@@ -55,23 +55,22 @@ export default function Vehicle({ onBack, onNavigate }) {
     const year = Number(form.year);
 
     if (!Number.isInteger(plateNumber) || plateNumber <= 0) {
-      setError("Plate number must be a valid number.");
+      toastError("Plate number must be a valid number.");
       return;
     }
 
     if (!Number.isFinite(capacity) || capacity <= 0) {
-      setError("Capacity must be a valid number.");
+      toastError("Capacity must be a valid number.");
       return;
     }
 
     if (!Number.isInteger(year) || year < 1900) {
-      setError("Year must be a valid number.");
+      toastError("Year must be a valid number.");
       return;
     }
 
     try {
       setLoading(true);
-      setError(null);
       setSuccess(false);
 
       const photoData = photos[0] ? await uploadPhoto(photos[0]) : null;
@@ -87,6 +86,7 @@ export default function Vehicle({ onBack, onNavigate }) {
       });
 
       setSuccess(true);
+      toastSuccess("Vehicle added", { description: "Your vehicle was added to your profile." });
       setForm({ type: "", model: "", color: "", year: "", plate: "", capacity: "" });
       setPhotos([]);
 
@@ -94,7 +94,8 @@ export default function Vehicle({ onBack, onNavigate }) {
         setTimeout(() => onNavigate("profile"), 700);
       }
     } catch (err) {
-      setError(err?.message || "Something went wrong. Please try again.");
+      const message = err?.message || "Something went wrong. Please try again.";
+      toastError(message);
     } finally {
       setLoading(false);
     }
@@ -209,7 +210,6 @@ export default function Vehicle({ onBack, onNavigate }) {
           </div>
         </main>
 
-        {error && <div className="alert alert-error">{error}</div>}
         {success && <div className="alert alert-success">Vehicle added successfully!</div>}
 
         <footer className="page-footer">

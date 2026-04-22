@@ -8,6 +8,7 @@ import {
   getSubscriptionById,
   updateSubscription,
 } from "./services/subscriptionService";
+import { toastError, toastSuccess } from "./services/toastService";
 import { SUBSCRIPTION_PLANS } from "./subscriptionPlansData";
 import "./SubscriptionDetailsPage.css";
 
@@ -136,6 +137,16 @@ export default function SubscriptionDetailsPage({ subId, isAdmin = false, onBack
   useEffect(() => {
     loadDetails();
   }, [subId]);
+
+  useEffect(() => {
+    if (!error) return;
+    toastError(error);
+  }, [error]);
+
+  useEffect(() => {
+    if (!successMessage) return;
+    toastSuccess(successMessage);
+  }, [successMessage]);
 
   const handleUpdate = async () => {
     if (!isAdmin) return;

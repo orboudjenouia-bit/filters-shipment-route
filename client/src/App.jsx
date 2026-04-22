@@ -38,7 +38,9 @@ import { getMyProfile } from "./services/profileService";
 import SubscriptionPlans from './SubscriptionPlans';
 import SubscriptionDetailsPage from "./SubscriptionDetailsPage";
 import { getNotifications } from "./services/notificationService";
+import GlobalToaster from "./GlobalToaster";
 import "./App.css";
+import "sonner/dist/styles.css";
 
 
 const ADMIN_ROLE = "ADMIN";
@@ -704,6 +706,7 @@ export default function App() {
   return (
     <ThemeProvider>
       <div className={`app-wrapper ${cls}`}>
+        <GlobalToaster />
         
         {current === "landing" && (
           <LandingPage

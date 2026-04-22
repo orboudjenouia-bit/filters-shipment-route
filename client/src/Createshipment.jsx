@@ -3,6 +3,7 @@ import ThemeToggle from "./ThemeToggle";
 import "./Createshipment.css";
 import { createShipment } from "./services/shipmentService";
 import { uploadPhoto } from "./services/uploadService";
+import { toastError, toastSuccess } from "./services/toastService";
 
 const categories = ["Electronics", "Furniture", "Apparel", "Food & Beverages", "Machinery", "Documents", "Other"];
 const priorities = ["Normal", "High", "Urgent"];
@@ -126,10 +127,13 @@ export default function CreateShipment({ onBack, onCreated }) {
     pickup: "", delivery: "", date: "", time: "", priority: "Normal", description: "",
   });
   const [photos, setPhotos] = useState([]);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  const showError = (message) => {
+    toastError(message);
+  };
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 30);
@@ -138,7 +142,6 @@ export default function CreateShipment({ onBack, onCreated }) {
 
   const handleChange = (field, value) => {
     setForm(p => ({ ...p, [field]: value }));
-    setError("");
   };
 
   const handlePhotosChange = (event) => {
@@ -167,17 +170,17 @@ export default function CreateShipment({ onBack, onCreated }) {
       form.priority;
 
     if (!isValid) {
-      setError("Please fill in all fields.");
+      showError("Please fill in all fields.");
       return;
     }
 
     if (!isValidCity(form.pickup)) {
-      setError(`"${form.pickup}" is not a valid Algerian city. Please choose from the list.`);
+      showError(`"${form.pickup}" is not a valid Algerian city. Please choose from the list.`);
       return;
     }
 
     if (!isValidCity(form.delivery)) {
-      setError(`"${form.delivery}" is not a valid Algerian city. Please choose from the list.`);
+      showError(`"${form.delivery}" is not a valid Algerian city. Please choose from the list.`);
       return;
     }
     
@@ -187,7 +190,7 @@ export default function CreateShipment({ onBack, onCreated }) {
     
     const token = localStorage.getItem("token");
     if (!token) {
-      setError("Please login first.");
+      showError("Please login first.");
       return;
     }
 
@@ -199,13 +202,12 @@ export default function CreateShipment({ onBack, onCreated }) {
       weight <= 0 ||
       price <= 0
     ) {
-      setError("Weight, volume, and price must be positive numbers.");
+      showError("Weight, volume, and price must be positive numbers.");
       return;
     }
 
     try {
       setLoading(true);
-      setError("");
       setSuccess(false);
 
       const photoData = photos[0] ? await uploadPhoto(photos[0]) : null;
@@ -228,6 +230,7 @@ export default function CreateShipment({ onBack, onCreated }) {
       const createdShipment = await createShipment(payload);
 
       setSuccess(true);
+      toastSuccess("Shipment created", { description: "Your shipment is now available in the list." });
       setForm({
         title: "", category: "", weight: "", volume: "", price: "",
         pickup: "", delivery: "", date: "", time: "", priority: "Normal", description: "",
@@ -239,7 +242,7 @@ export default function CreateShipment({ onBack, onCreated }) {
         onCreated(createdId);
       }
     } catch (err) {
-      setError(err.message || "Something went wrong. Please try again.");
+      showError(err.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -444,7 +447,6 @@ export default function CreateShipment({ onBack, onCreated }) {
         </div>
 
         <div className="cs-footer">
-          {error && <div className="cs-feedback cs-feedback--error">{error}</div>}
           {success && <div className="cs-feedback cs-feedback--success">Shipment posted successfully!</div>}
 
           <button className="cs-submit-btn" onClick={handleSubmit} disabled={loading}>

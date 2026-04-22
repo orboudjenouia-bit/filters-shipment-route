@@ -3,6 +3,7 @@ import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import ConfirmDialog from "./ConfirmDialog";
 import { deleteShipment, getShipments } from "./services/shipmentService";
+import { toastError, toastSuccess } from "./services/toastService";
 import "./ActiveManage.css";
 
 export default function ActiveShipmentDetailsPage({ shipmentId, onBack, onNavigate }) {
@@ -11,6 +12,11 @@ export default function ActiveShipmentDetailsPage({ shipmentId, onBack, onNaviga
   const [error, setError] = useState("");
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    if (!error) return;
+    toastError(error);
+  }, [error]);
 
   useEffect(() => {
     const load = async () => {
@@ -36,6 +42,7 @@ export default function ActiveShipmentDetailsPage({ shipmentId, onBack, onNaviga
     setDeleting(true);
     try {
       await deleteShipment(item.shipment_ID || item.id);
+      toastSuccess("Shipment deleted");
       onNavigate?.("activeShipments");
     } catch (err) {
       setError(err?.message || "Failed to delete shipment.");

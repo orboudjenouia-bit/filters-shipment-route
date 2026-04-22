@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import ThemeToggle from "./ThemeToggle";
 import "./Shipmentdetails.css";
 import { getShipments } from "./services/shipmentService";
+import { toastError } from "./services/toastService";
 import { resolveMediaUrl } from "./utils/media";
 
 const fallbackTimeline = [
@@ -26,6 +27,11 @@ export default function ShipmentDetails({ onBack, onNavigate, shipmentId }) {
   const [shipment, setShipment] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!error) return;
+    toastError(error);
+  }, [error]);
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 30);

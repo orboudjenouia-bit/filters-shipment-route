@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { getShipments, updateShipment } from "./services/shipmentService";
+import { toastError, toastSuccess } from "./services/toastService";
 import "./Createshipment.css";
 
 const categories = ["Electronics", "Furniture", "Apparel", "Food & Beverages", "Machinery", "Documents", "Other"];
@@ -10,7 +11,6 @@ export default function EditActiveShipmentPage({ shipmentId, onBack, onSaved }) 
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [form, setForm] = useState({
     title: "",
@@ -34,12 +34,11 @@ export default function EditActiveShipmentPage({ shipmentId, onBack, onSaved }) 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      setError("");
       try {
         const list = await getShipments();
         const found = list.find((it) => String(it?.shipment_ID || it?.id) === String(shipmentId));
         if (!found) {
-          setError("Shipment not found.");
+          toastError("Shipment not found.");
           return;
         }
 
@@ -57,7 +56,8 @@ export default function EditActiveShipmentPage({ shipmentId, onBack, onSaved }) 
           status: found.status || "In-Stock",
         });
       } catch (err) {
-        setError(err?.message || "Failed to load shipment.");
+        const message = err?.message || "Failed to load shipment.";
+        toastError(message);
       } finally {
         setLoading(false);
       }
@@ -71,7 +71,6 @@ export default function EditActiveShipmentPage({ shipmentId, onBack, onSaved }) 
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
-    setError("");
     setSuccess(false);
 
     try {
@@ -79,7 +78,7 @@ export default function EditActiveShipmentPage({ shipmentId, onBack, onSaved }) 
       const parsedWeight = Number(form.weight);
 
       if (!Number.isFinite(parsedVolume) || parsedVolume <= 0 || !Number.isFinite(parsedWeight) || parsedWeight <= 0) {
-        setError("Weight and volume must be positive numbers.");
+        toastError("Weight and volume must be positive numbers.");
         setSaving(false);
         return;
       }
@@ -91,9 +90,11 @@ export default function EditActiveShipmentPage({ shipmentId, onBack, onSaved }) 
         weight: parsedWeight,
       });
       setSuccess(true);
+      toastSuccess("Shipment updated", { description: "Shipment changes were saved successfully." });
       onSaved?.();
     } catch (err) {
-      setError(err?.message || "Failed to update shipment.");
+      const message = err?.message || "Failed to update shipment.";
+      toastError(message);
     } finally {
       setSaving(false);
     }
@@ -205,7 +206,6 @@ export default function EditActiveShipmentPage({ shipmentId, onBack, onSaved }) 
         </form>
 
         <div className="cs-footer">
-          {error ? <div className="cs-feedback cs-feedback--error">{error}</div> : null}
           {success ? <div className="cs-feedback cs-feedback--success">Shipment updated successfully!</div> : null}
           <button className="cs-submit-btn" type="button" onClick={handleSave} disabled={saving || loading}>
             {saving ? "Saving..." : "Save Changes"}

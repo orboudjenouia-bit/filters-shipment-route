@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 import ConfirmDialog from './ConfirmDialog';
 import { createSubscription, deleteSubscription, getMySubscription, updateSubscription } from './services/subscriptionService';
+import { toastError, toastSuccess } from './services/toastService';
 import { SUBSCRIPTION_PLANS } from './subscriptionPlansData';
 import './SubscriptionPlans.css';
 
@@ -36,6 +37,11 @@ const SubscriptionPlans = ({ onNavigate }) => {
     loadMySubscription();
   }, []);
 
+  useEffect(() => {
+    if (!error) return;
+    toastError(error);
+  }, [error]);
+
   const handleBack = () => {
     if (onNavigate) {
       onNavigate('dashboard');
@@ -53,6 +59,7 @@ const SubscriptionPlans = ({ onNavigate }) => {
       if (!mySub) {
         const created = await createSubscription({ tier: plan.tier, isActive: true });
         setMySub(created);
+        toastSuccess('Subscription created');
       } else {
         const updated = await updateSubscription(mySub.sub_ID, {
           tier: plan.tier,
@@ -60,6 +67,7 @@ const SubscriptionPlans = ({ onNavigate }) => {
           endDate: mySub.endDate || null,
         });
         setMySub(updated);
+        toastSuccess('Subscription updated');
       }
     } catch (err) {
       setError(err?.message || 'Failed to update subscription.');
@@ -77,6 +85,7 @@ const SubscriptionPlans = ({ onNavigate }) => {
     try {
       await deleteSubscription(mySub.sub_ID);
       setMySub(null);
+      toastSuccess('Subscription deleted');
     } catch (err) {
       setError(err?.message || 'Failed to delete subscription.');
     } finally {

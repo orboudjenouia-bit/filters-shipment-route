@@ -3,6 +3,7 @@ import { ArrowLeft, Eye, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import ConfirmDialog from "./ConfirmDialog";
 import { deleteRoute, getMyRoutes } from "./services/routeService";
+import { toastError, toastSuccess } from "./services/toastService";
 import "./Routes.css";
 import "./ActiveManage.css";
 
@@ -26,6 +27,11 @@ export default function ActiveRoutesPage({ onBack, onNavigate }) {
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!error) return;
+    toastError(error);
+  }, [error]);
 
   useEffect(() => {
     const load = async () => {
@@ -58,6 +64,7 @@ export default function ActiveRoutesPage({ onBack, onNavigate }) {
       await deleteRoute(confirmTarget.id);
       setItems((prev) => prev.filter((item) => item.id !== confirmTarget.id));
       setConfirmTarget(null);
+      toastSuccess("Route deleted");
     } catch (err) {
       setError(err?.message || "Failed to delete route.");
     } finally {

@@ -17,6 +17,7 @@ import {
 import { createRoute } from "./services/routeService";
 import { getVehicles } from "./services/profileService";
 import { uploadPhoto } from "./services/uploadService";
+import { toastError, toastSuccess } from "./services/toastService";
 import "./Createroute.css";
 
 const algerianCities = [
@@ -154,7 +155,6 @@ export default function CreateRoute() {
     description: "",
   });
   const [photos, setPhotos] = useState([]);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [vehicles, setVehicles] = useState([]);
@@ -233,8 +233,7 @@ export default function CreateRoute() {
   };
 
   const showError = (msg) => {
-    setError(msg);
-    setTimeout(() => setError(""), 2000);
+    toastError(msg);
   };
 
   const isValidCity = (city) => {
@@ -328,7 +327,6 @@ export default function CreateRoute() {
 
     try {
       setLoading(true);
-      setError("");
 
       const photoData = photos[0] ? await uploadPhoto(photos[0]) : null;
 
@@ -351,6 +349,7 @@ export default function CreateRoute() {
       const data = await createRoute(payload);
       console.log("Success:", data);
       setSuccess(true);
+      toastSuccess("Route created", { description: "Your route has been published successfully." });
       setPhotos([]);
       setForm({
         routeName: "",
@@ -638,7 +637,6 @@ export default function CreateRoute() {
             </div>
           )}
 
-          {error && <div className="cr-msg-error">{error}</div>}
           {success && <div className="cr-msg-success">Route posted! Redirecting...</div>}
 
           <button className="cr-submit-btn" type="submit" disabled={loading}>

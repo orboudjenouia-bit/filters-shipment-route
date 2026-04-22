@@ -7,6 +7,7 @@ import {
   markAllNotificationsAsRead,
   markManyNotificationsAsRead,
 } from "./services/notificationService";
+import { toastError, toastSuccess } from "./services/toastService";
 import "./Notifications.css";
 
 const BackIcon = () => (
@@ -149,7 +150,9 @@ export default function Notifications({ onNavigate, onBack, onNotificationsChang
         setNotifications(normalized);
       } catch (err) {
         if (isMounted) {
-          setError(err.message || "Failed to load notifications");
+          const message = err.message || "Failed to load notifications";
+          setError(message);
+          toastError(message);
         }
       } finally {
         if (isMounted) {
@@ -197,8 +200,10 @@ export default function Notifications({ onNavigate, onBack, onNotificationsChang
       setNotifications(prev => prev.filter(n => n.notif_ID !== id));
       setSelectedIds(prev => prev.filter(selectedId => selectedId !== id));
       setMenuOpen(null);
+      toastSuccess("Notification deleted");
     } catch (err) {
       console.error("Error deleting notification:", err);
+      toastError(err?.message || "Failed to delete notification.");
     }
   };
 
@@ -207,8 +212,10 @@ export default function Notifications({ onNavigate, onBack, onNotificationsChang
       await markNotificationAsRead(id);
       setNotifications(prev => prev.map(n => (n.notif_ID === id ? { ...n, isRead: true } : n)));
       setMenuOpen(null);
+      toastSuccess("Notification marked as read");
     } catch (err) {
       console.error("Error marking notification as read:", err);
+      toastError(err?.message || "Failed to mark notification as read.");
     }
   };
 
@@ -220,8 +227,10 @@ export default function Notifications({ onNavigate, onBack, onNotificationsChang
       setSelectedIds([]);
       setHeaderMenuOpen(false);
       setMenuOpen(null);
+      toastSuccess("All notifications marked as read");
     } catch (err) {
       console.error("Error marking all notifications as read:", err);
+      toastError(err?.message || "Failed to mark all notifications as read.");
     }
   };
 
@@ -249,8 +258,10 @@ export default function Notifications({ onNavigate, onBack, onNotificationsChang
       setSelectedIds([]);
       setSelectionMode(false);
       setHeaderMenuOpen(false);
+      toastSuccess("Selected notifications marked as read");
     } catch (err) {
       console.error("Error marking selected notifications as read:", err);
+      toastError(err?.message || "Failed to mark selected notifications as read.");
     }
   };
 

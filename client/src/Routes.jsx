@@ -3,6 +3,7 @@ import ThemeToggle from "./ThemeToggle";
 import logoSvg from "./photo/Logo.svg";
 import "./Routes.css";
 import { getRoutes } from "./services/routeService";
+import { toastError } from "./services/toastService";
 import { resolveMediaUrl } from "./utils/media";
 
 const algerianCities = [
@@ -225,6 +226,11 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
     afterDate: "",
     beforeDate: ""
   });
+
+  useEffect(() => {
+    if (!error) return;
+    toastError(error);
+  }, [error]);
 
   useEffect(() => {
     let isMounted = true;

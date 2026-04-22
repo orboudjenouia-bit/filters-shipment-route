@@ -8,6 +8,7 @@ import {
   listSubscriptions,
   updateSubscription,
 } from "./services/subscriptionService";
+import { toastError, toastSuccess } from "./services/toastService";
 import "./AdminSubscriptions.css";
 
 const FILTERS = ["all", "active", "inactive", "free", "individual", "business", "expiring", "expired"];
@@ -85,6 +86,11 @@ export default function AdminSubscriptions({ onBack, onNavigate }) {
     loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    if (!error) return;
+    toastError(error);
+  }, [error]);
+
   const normalizedItems = useMemo(() => {
     return items.map((sub) => {
       const tierKey = toTierKey(sub?.tier);
@@ -151,6 +157,7 @@ export default function AdminSubscriptions({ onBack, onNavigate }) {
       });
 
       setItems((prev) => prev.map((item) => (item.sub_ID === sub.sub_ID ? updated : item)));
+      toastSuccess("Subscription updated");
     } catch (err) {
       setError(err?.message || "Failed to update subscription.");
     } finally {
@@ -168,6 +175,7 @@ export default function AdminSubscriptions({ onBack, onNavigate }) {
       await deleteSubscription(confirmTarget.sub_ID);
       setItems((prev) => prev.filter((item) => item.sub_ID !== confirmTarget.sub_ID));
       setConfirmTarget(null);
+      toastSuccess("Subscription deleted");
     } catch (err) {
       setError(err?.message || "Failed to delete subscription.");
     } finally {

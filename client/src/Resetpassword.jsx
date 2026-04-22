@@ -3,6 +3,7 @@ import { ArrowLeft, Eye, EyeOff, Lock } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import "./Resetpassword.css";
 import { resetPassword } from "./services/authService";
+import { toastError, toastSuccess } from "./services/toastService";
 
 export default function ResetPassword({ token, onBack, onSuccess }) {
   const [password, setPassword] = useState("");
@@ -10,14 +11,12 @@ export default function ResetPassword({ token, onBack, onSuccess }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
   const isTokenValid = useMemo(() => typeof token === "string" && token.trim().length > 0, [token]);
 
   const showError = (message) => {
-    setError(message);
-    setTimeout(() => setError(""), 3000);
+    toastError(message);
   };
 
   const handleSubmit = async (event) => {
@@ -45,9 +44,9 @@ export default function ResetPassword({ token, onBack, onSuccess }) {
 
     try {
       setLoading(true);
-      setError("");
       await resetPassword(token, password);
       setSuccess(true);
+      toastSuccess("Password updated", { description: "You can now sign in with your new password." });
       if (onSuccess) {
         setTimeout(() => onSuccess(), 1000);
       }
@@ -112,8 +111,6 @@ export default function ResetPassword({ token, onBack, onSuccess }) {
                 </button>
               </div>
             </div>
-
-            {error && <div className="rp-error">{error}</div>}
 
             <button className="rp-btn" type="submit" disabled={loading}>
               {loading ? "Updating..." : "Update Password"}

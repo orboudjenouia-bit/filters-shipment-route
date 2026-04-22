@@ -3,6 +3,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import ConfirmDialog from "./ConfirmDialog";
 import { deleteRoute, getMyRoutes, getRoutes } from "./services/routeService";
+import { toastError, toastSuccess } from "./services/toastService";
 import { resolveMediaUrl } from "./utils/media";
 import "./Shipmentdetails.css";
 import "./ActiveManage.css";
@@ -29,6 +30,11 @@ export default function ActiveRouteDetailsPage({ routeId, onBack, onNavigate, so
     const t = setTimeout(() => setMounted(true), 30);
     return () => clearTimeout(t);
   }, []);
+
+  useEffect(() => {
+    if (!error) return;
+    toastError(error);
+  }, [error]);
 
   useEffect(() => {
     const load = async () => {
@@ -92,6 +98,7 @@ export default function ActiveRouteDetailsPage({ routeId, onBack, onNavigate, so
     setDeleting(true);
     try {
       await deleteRoute(item.route_ID || item.id);
+      toastSuccess("Route deleted");
       onNavigate?.("activeRoutes");
     } catch (err) {
       setError(err?.message || "Failed to delete route.");

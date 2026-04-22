@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Save, Plus, Trash2 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { getRoutes, updateRoute } from "./services/routeService";
+import { toastError, toastSuccess } from "./services/toastService";
 import "./Createroute.css";
 
 export default function EditActiveRoutePage({ routeId, onBack, onSaved }) {
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [form, setForm] = useState({
     name: "",
@@ -33,12 +33,11 @@ export default function EditActiveRoutePage({ routeId, onBack, onSaved }) {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      setError("");
       try {
         const list = await getRoutes();
         const found = list.find((it) => String(it?.route_ID || it?.id) === String(routeId));
         if (!found) {
-          setError("Route not found.");
+          toastError("Route not found.");
           return;
         }
 
@@ -57,7 +56,8 @@ export default function EditActiveRoutePage({ routeId, onBack, onSaved }) {
           status: found.status || "Active",
         });
       } catch (err) {
-        setError(err?.message || "Failed to load route.");
+        const message = err?.message || "Failed to load route.";
+        toastError(message);
       } finally {
         setLoading(false);
       }
@@ -93,7 +93,6 @@ export default function EditActiveRoutePage({ routeId, onBack, onSaved }) {
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
-    setError("");
     setSuccess(false);
 
     try {
@@ -107,9 +106,11 @@ export default function EditActiveRoutePage({ routeId, onBack, onSaved }) {
         vehicle_plate: form.vehicle_plate ? Number(form.vehicle_plate) : undefined,
       });
       setSuccess(true);
+      toastSuccess("Route updated", { description: "Route changes were saved successfully." });
       onSaved?.();
     } catch (err) {
-      setError(err?.message || "Failed to update route.");
+      const message = err?.message || "Failed to update route.";
+      toastError(message);
     } finally {
       setSaving(false);
     }
@@ -243,7 +244,6 @@ export default function EditActiveRoutePage({ routeId, onBack, onSaved }) {
             </>
           ) : null}
 
-          {error ? <div className="cr-msg-error">{error}</div> : null}
           {success ? <div className="cr-msg-success">Route updated successfully!</div> : null}
 
           <button className="cr-submit-btn" type="submit" disabled={saving || loading}>

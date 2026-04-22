@@ -3,11 +3,11 @@ import ThemeToggle from "./ThemeToggle";
 import "./Verification.css";
 import myemail from "./photo/mail.svg";
 import { verifyCode, resendVerificationCode } from "./services/verificationService";
+import { toastError, toastSuccess } from "./services/toastService";
 
 export default function Verification({ onBack, onSuccess }) {
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [timeLeft, setTimeLeft] = useState(60);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -32,8 +32,7 @@ export default function Verification({ onBack, onSuccess }) {
   }, [timeLeft]);
 
   const showError = (msg) => {
-    setError(msg);
-    setTimeout(() => setError(""), 2500);
+    toastError(msg);
   };
 
   const handleSubmit = async () => {
@@ -49,6 +48,7 @@ export default function Verification({ onBack, onSuccess }) {
       const data = await verifyCode(codeStr);
       setLoading(false);
       if (data?.success === true) {
+        toastSuccess("Email verified", { description: "Your account is now verified." });
         if (onSuccess) onSuccess();
       } else {
         showError(data?.msg || data?.message || "Invalid code. Please try again.");
@@ -107,8 +107,7 @@ export default function Verification({ onBack, onSuccess }) {
       if (data?.success) {
         setTimeLeft(60);
         setCode(["", "", "", "", "", ""]);
-        setError("");
-        showError("Code resent successfully!");
+        toastSuccess("Code resent", { description: "A new verification code has been sent." });
         setTimeout(() => inputsRef.current[0]?.focus(), 100);
       } else {
         showError(data?.message || "Failed to resend code");
@@ -169,8 +168,6 @@ export default function Verification({ onBack, onSuccess }) {
             />
           ))}
         </div>
-
-        <div className={`vf-error ${error ? "vf-error--show" : ""}`}>{error}</div>
 
         <div className="vf-timer-row">
           <div className="vf-timer-box">

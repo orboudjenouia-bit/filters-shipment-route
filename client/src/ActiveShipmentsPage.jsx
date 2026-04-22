@@ -3,6 +3,7 @@ import { ArrowLeft, Eye, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import ConfirmDialog from "./ConfirmDialog";
 import { deleteShipment, getMyShipments } from "./services/shipmentService";
+import { toastError, toastSuccess } from "./services/toastService";
 import "./Shipments.css";
 import "./ActiveManage.css";
 
@@ -29,6 +30,11 @@ export default function ActiveShipmentsPage({ onBack, onNavigate }) {
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!error) return;
+    toastError(error);
+  }, [error]);
 
   useEffect(() => {
     const load = async () => {
@@ -63,6 +69,7 @@ export default function ActiveShipmentsPage({ onBack, onNavigate }) {
       await deleteShipment(confirmTarget.id);
       setItems((prev) => prev.filter((item) => item.id !== confirmTarget.id));
       setConfirmTarget(null);
+      toastSuccess("Shipment deleted");
     } catch (err) {
       setError(err?.message || "Failed to delete shipment.");
     } finally {
