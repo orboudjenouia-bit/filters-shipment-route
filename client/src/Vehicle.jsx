@@ -22,6 +22,16 @@ export default function Vehicle({ onBack, onNavigate }) {
   const [success, setSuccess] = useState(false);
 
   const updateField = (field, value) => {
+    if (field === "plate") {
+      const digitsOnly = value.replace(/\D/g, "").slice(0, 10);
+      const first = digitsOnly.slice(0, 5);
+      const second = digitsOnly.slice(5, 8);
+      const third = digitsOnly.slice(8, 10);
+      const formatted = [first, second, third].filter(Boolean).join("-");
+      setForm((prev) => ({ ...prev, [field]: formatted }));
+      return;
+    }
+
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -50,12 +60,12 @@ export default function Vehicle({ onBack, onNavigate }) {
       return;
     }
 
-    const plateNumber = Number(form.plate);
+    const plateNumber = form.plate.trim();
     const capacity = Number(form.capacity);
     const year = Number(form.year);
 
-    if (!Number.isInteger(plateNumber) || plateNumber <= 0) {
-      toastError("Plate number must be a valid number.");
+    if (!/^\d{5}-\d{3}-\d{2}$/.test(plateNumber)) {
+      toastError("Plate number must match 12345-123-12.");
       return;
     }
 
@@ -172,10 +182,12 @@ export default function Vehicle({ onBack, onNavigate }) {
               <label className="field-label">Plate Number</label>
               <input
                 className="field-input"
-                type="number"
-                placeholder="e.g. 12345"
+                type="text"
+                placeholder="e.g. 12345-123-12"
                 value={form.plate}
                 onChange={(e) => updateField("plate", e.target.value)}
+                inputMode="numeric"
+                maxLength={12}
               />
             </div>
 

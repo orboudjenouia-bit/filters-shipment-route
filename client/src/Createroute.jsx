@@ -308,8 +308,8 @@ export default function CreateRoute() {
       return;
     }
 
-    const vehiclePlate = Number(form.vehicle);
-    if (!Number.isInteger(vehiclePlate)) {
+    const vehiclePlate = String(form.vehicle || "").trim();
+    if (!/^\d{5}-\d{3}-\d{2}$/.test(vehiclePlate)) {
       showError("Please select a valid vehicle.");
       return;
     }

@@ -161,6 +161,19 @@ export default function PublicProfilePage({ userId, onBack }) {
                   <p className="pp-info-value">{profile.location || "Not shared"}</p>
                 </div>
 
+                {String(profile?.type || "").toUpperCase() === "BUSINESS" && Array.isArray(profile?.additional_locations) && profile.additional_locations.length > 0 ? (
+                  <div className="pp-info-card pp-info-card--wide">
+                    <div className="pp-info-top">
+                      <span className="pp-info-label">OTHER LOCATIONS</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 22s7-7.75 7-13a7 7 0 1 0-14 0c0 5.25 7 13 7 13z" stroke="currentColor" strokeWidth="2" />
+                        <circle cx="12" cy="9" r="2.5" stroke="currentColor" strokeWidth="2" />
+                      </svg>
+                    </div>
+                    <p className="pp-info-value">{profile.additional_locations.join(" • ")}</p>
+                  </div>
+                ) : null}
+
                 <div className="pp-info-card">
                   <div className="pp-info-top">
                     <span className="pp-info-label">WORKING TIME</span>

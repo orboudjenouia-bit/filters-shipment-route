@@ -1,9 +1,123 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ThemeToggle from "./ThemeToggle";
 import "./individualregscreen.css";
 import { IndividualProfile } from "./services/profileService";
 import { uploadPhoto } from "./services/uploadService";
 import { register } from "./services/authService";
+
+const ALGERIAN_CITIES = [
+  "Adrar", "Chlef", "Laghouat", "Oum El Bouaghi", "Batna", "Bejaia", "Biskra", "Bechar", "Blida", "Bouira",
+  "Tamanrasset", "Tebessa", "Tlemcen", "Tiaret", "Tizi Ouzou", "Algiers", "Djelfa", "Jijel", "Setif", "Saida",
+  "Skikda", "Sidi Bel Abbes", "Annaba", "Guelma", "Constantine", "Medea", "Mostaganem", "M'Sila", "Mascara",
+  "Ouargla", "Oran", "El Bayadh", "Illizi", "Bordj Bou Arreridj", "Boumerdes", "El Tarf", "Tindouf", "Tissemsilt",
+  "El Oued", "Khenchela", "Souk Ahras", "Tipaza", "Mila", "Ain Defla", "Naama", "Ain Temouchent", "Ghardaia",
+  "Relizane", "Timimoun", "Bordj Badji Mokhtar", "Ouled Djellal", "Beni Abbes", "In Salah", "In Guezzam",
+  "Touggourt", "Djanet", "El M'Ghair", "El Menia"
+];
+
+function CityAutocompleteField({ value, onChange, placeholder, inputClassName = "" }) {
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredCities = (query) =>
+    ALGERIAN_CITIES
+      .filter((city) => city.toLowerCase().includes(query.toLowerCase()))
+      .slice(0, 8);
+
+  const handleInputChange = (nextValue) => {
+    onChange(nextValue);
+    setSelectedIndex(-1);
+
+    if (!nextValue.trim()) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    setSuggestions(filteredCities(nextValue));
+    setShowSuggestions(true);
+  };
+
+  const selectCity = (city) => {
+    onChange(city);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    setSelectedIndex(-1);
+  };
+
+  const handleKeyDown = (event) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setSelectedIndex((prev) => (prev + 1) % suggestions.length);
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setSelectedIndex((prev) => (prev - 1 + suggestions.length) % suggestions.length);
+      return;
+    }
+
+    if (event.key === "Enter" && selectedIndex >= 0) {
+      event.preventDefault();
+      selectCity(suggestions[selectedIndex]);
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setShowSuggestions(false);
+    }
+  };
+
+  return (
+    <div className="ir-city-autocomplete" ref={wrapperRef}>
+      <input
+        className={inputClassName}
+        type="text"
+        placeholder={placeholder}
+        value={value}
+        onChange={(event) => handleInputChange(event.target.value)}
+        onFocus={() => {
+          if (value.trim()) {
+            setSuggestions(filteredCities(value));
+            setShowSuggestions(true);
+          }
+        }}
+        onKeyDown={handleKeyDown}
+        autoComplete="off"
+      />
+
+      {showSuggestions && suggestions.length > 0 ? (
+        <ul className="ir-city-suggestions">
+          {suggestions.map((city, index) => (
+            <li
+              key={city}
+              className={`ir-city-suggestion-item ${index === selectedIndex ? "selected" : ""}`}
+              onMouseDown={() => selectCity(city)}
+            >
+              {city}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
 
 const BackIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -27,8 +141,13 @@ export default function IndividualRegScreen({ onBack, onNext, onLogin }) {
   const validate = () => {
     const e = {};
     if (!form.fullName.trim()) e.fullName = "Full name is required.";
-    if (!form.nationalId || form.nationalId.replace(/\D/g, "").length !== 10)
-      e.nationalId = "National ID must contain exactly 10 digits.";
+    if (!/^\d{18}$/.test(form.nationalId))
+      e.nationalId = "NIN must contain exactly 18 digits.";
+    if (!form.location.trim()) {
+      e.location = "Location is required.";
+    } else if (!ALGERIAN_CITIES.some((city) => city.toLowerCase() === form.location.trim().toLowerCase())) {
+      e.location = "Please select a valid location from the list.";
+    }
     return e;
   };
 
@@ -66,7 +185,7 @@ export default function IndividualRegScreen({ onBack, onNext, onLogin }) {
       await IndividualProfile({
         full_Name: form.fullName.trim(),
         nin: form.nationalId.replace(/\D/g, ""),
-        location: form.location.trim() || "Not provided",
+        location: form.location.trim(),
         photo: uploadedPhotoPath,
       });
 
@@ -134,20 +253,23 @@ export default function IndividualRegScreen({ onBack, onNext, onLogin }) {
         <div className="ir-field-group">
           <label className="ir-label">National Identification Number</label>
           <input className={`ir-input ${errors.nationalId ? "ir-input--error" : ""}`}
-            type="text" placeholder="e.g. 1000024568997503"
-            value={form.nationalId} onChange={e => handleChange("nationalId", e.target.value)} maxLength={24}/>
+            type="text" placeholder="e.g. 100002456899750301"
+            value={form.nationalId}
+            onChange={e => handleChange("nationalId", e.target.value.replace(/\D/g, "").slice(0, 18))}
+            maxLength={18}
+            inputMode="numeric"/>
           {errors.nationalId && <span className="ir-error ir-error--show">{errors.nationalId}</span>}
         </div>
 
         <div className="ir-field-group">
           <label className="ir-label">Location</label>
-          <input
-            className="ir-input"
-            type="text"
-            placeholder="e.g. Algiers, Algeria"
+          <CityAutocompleteField
+            inputClassName={`ir-input ${errors.location ? "ir-input--error" : ""}`}
+            placeholder="Select a city"
             value={form.location}
-            onChange={e => handleChange("location", e.target.value)}
+            onChange={(nextValue) => handleChange("location", nextValue)}
           />
+          {errors.location && <span className="ir-error ir-error--show">{errors.location}</span>}
         </div>
 
         <div className="ir-field-group">

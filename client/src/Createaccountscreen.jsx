@@ -39,7 +39,7 @@ const BusinessIcon = () => (
   </svg>
 );
 
-export default function CreateAccountScreen({ onBack, onNext, onLogin }) {
+export default function CreateAccountScreen({ onBack, onNext, onLogin, typeOnly = false }) {
   const [form, setForm] = useState({
     phone: "", email: "", password: "", confirmPassword: "", role: "Individual"
   });
@@ -56,6 +56,8 @@ export default function CreateAccountScreen({ onBack, onNext, onLogin }) {
   }, []);
 
   const validate = () => {
+    if (typeOnly) return {};
+
     const e = {};
     if (!form.phone || form.phone.replace(/\D/g, "").length !== 10)
       e.phone = "Phone number must be exactly 10 digits.";
@@ -76,17 +78,19 @@ export default function CreateAccountScreen({ onBack, onNext, onLogin }) {
     setSubmitting(true);
 
     try {
-      const mappedType = form.role === "Business" ? "BUSINESS" : "INDIVIDUAL";
-      const cleanPhone = form.phone.replace(/\D/g, "");
+      if (!typeOnly) {
+        const mappedType = form.role === "Business" ? "BUSINESS" : "INDIVIDUAL";
+        const cleanPhone = form.phone.replace(/\D/g, "");
 
-      const pendingRegistration = {
-        email: form.email.trim(),
-        password: form.password,
-        phone: cleanPhone,
-        type: mappedType,
-      };
+        const pendingRegistration = {
+          email: form.email.trim(),
+          password: form.password,
+          phone: cleanPhone,
+          type: mappedType,
+        };
 
-      sessionStorage.setItem("pendingRegistration", JSON.stringify(pendingRegistration));
+        sessionStorage.setItem("pendingRegistration", JSON.stringify(pendingRegistration));
+      }
 
       if (onNext) onNext(form.role);
     } catch {
@@ -108,62 +112,70 @@ export default function CreateAccountScreen({ onBack, onNext, onLogin }) {
 
         <div className="ca-header">
           <button className="ca-back-btn" onClick={onBack} type="button"><BackIcon /></button>
-          <span className="ca-step-label">Step 1 of 3</span>
+          <span className="ca-step-label">{typeOnly ? "Google setup" : "Step 1 of 3"}</span>
           <ThemeToggle />
         </div>
 
         <div className="ca-section-tag">
-          Account Setup <span className="ca-step-tag">STEP 1 OF 3</span>
+          Account Setup <span className="ca-step-tag">{typeOnly ? "GOOGLE" : "STEP 1 OF 3"}</span>
         </div>
 
         <div className="ca-progress-track">
-          <div className="ca-progress-bar" style={{ width: mounted ? "33%" : "0%" }} />
+          <div className="ca-progress-bar" style={{ width: mounted ? (typeOnly ? "50%" : "33%") : "0%" }} />
         </div>
 
-        <h1 className="ca-title">Create Account</h1>
-        <p className="ca-subtitle">Join Wesselli today. Enter your details to get started with fast deliveries.</p>
+        <h1 className="ca-title">{typeOnly ? "Choose Account Type" : "Create Account"}</h1>
+        <p className="ca-subtitle">
+          {typeOnly
+            ? "Select Individual or Business to complete your Google account setup."
+            : "Join Wesselli today. Enter your details to get started with fast deliveries."}
+        </p>
 
-        <div className="ca-field-group">
-          <label className="ca-label">Phone Number</label>
-          <input className={`ca-input ${errors.phone ? "ca-input--error" : ""}`}
-            type="tel" placeholder="e.g. 0561 89 24 36"
-            value={form.phone} onChange={e => handleChange("phone", e.target.value)} maxLength={14}/>
-          {errors.phone && <span className="ca-error ca-error--show">{errors.phone}</span>}
-        </div>
+        {!typeOnly ? (
+          <>
+            <div className="ca-field-group">
+              <label className="ca-label">Phone Number</label>
+              <input className={`ca-input ${errors.phone ? "ca-input--error" : ""}`}
+                type="tel" placeholder="e.g. 0561 89 24 36"
+                value={form.phone} onChange={e => handleChange("phone", e.target.value)} maxLength={14}/>
+              {errors.phone && <span className="ca-error ca-error--show">{errors.phone}</span>}
+            </div>
 
-        <div className="ca-field-group">
-          <label className="ca-label">Email Address</label>
-          <input className={`ca-input ${errors.email ? "ca-input--error" : ""}`}
-            type="email" placeholder="name@example.com"
-            value={form.email} onChange={e => handleChange("email", e.target.value)}/>
-          {errors.email && <span className="ca-error ca-error--show">{errors.email}</span>}
-        </div>
+            <div className="ca-field-group">
+              <label className="ca-label">Email Address</label>
+              <input className={`ca-input ${errors.email ? "ca-input--error" : ""}`}
+                type="email" placeholder="name@example.com"
+                value={form.email} onChange={e => handleChange("email", e.target.value)}/>
+              {errors.email && <span className="ca-error ca-error--show">{errors.email}</span>}
+            </div>
 
-        <div className="ca-field-group">
-          <label className="ca-label">Password</label>
-          <div className="ca-input-wrap">
-            <input className={`ca-input ca-input--icon ${errors.password ? "ca-input--error" : ""}`}
-              type={showPassword ? "text" : "password"} placeholder="Create a strong password"
-              value={form.password} onChange={e => handleChange("password", e.target.value)}/>
-            <button className="ca-eye-btn" onClick={() => setShowPassword(v => !v)} type="button">
-              {showPassword ? <EyeOnIcon /> : <EyeOffIcon />}
-            </button>
-          </div>
-          {errors.password && <span className="ca-error ca-error--show">{errors.password}</span>}
-        </div>
+            <div className="ca-field-group">
+              <label className="ca-label">Password</label>
+              <div className="ca-input-wrap">
+                <input className={`ca-input ca-input--icon ${errors.password ? "ca-input--error" : ""}`}
+                  type={showPassword ? "text" : "password"} placeholder="Create a strong password"
+                  value={form.password} onChange={e => handleChange("password", e.target.value)}/>
+                <button className="ca-eye-btn" onClick={() => setShowPassword(v => !v)} type="button">
+                  {showPassword ? <EyeOnIcon /> : <EyeOffIcon />}
+                </button>
+              </div>
+              {errors.password && <span className="ca-error ca-error--show">{errors.password}</span>}
+            </div>
 
-        <div className="ca-field-group">
-          <label className="ca-label">Confirm Password</label>
-          <div className="ca-input-wrap">
-            <input className={`ca-input ca-input--icon ${errors.confirmPassword ? "ca-input--error" : ""}`}
-              type={showConfirm ? "text" : "password"} placeholder="Repeat your password"
-              value={form.confirmPassword} onChange={e => handleChange("confirmPassword", e.target.value)}/>
-            <button className="ca-eye-btn" onClick={() => setShowConfirm(v => !v)} type="button">
-              {showConfirm ? <EyeOnIcon /> : <EyeOffIcon />}
-            </button>
-          </div>
-          {errors.confirmPassword && <span className="ca-error ca-error--show">{errors.confirmPassword}</span>}
-        </div>
+            <div className="ca-field-group">
+              <label className="ca-label">Confirm Password</label>
+              <div className="ca-input-wrap">
+                <input className={`ca-input ca-input--icon ${errors.confirmPassword ? "ca-input--error" : ""}`}
+                  type={showConfirm ? "text" : "password"} placeholder="Repeat your password"
+                  value={form.confirmPassword} onChange={e => handleChange("confirmPassword", e.target.value)}/>
+                <button className="ca-eye-btn" onClick={() => setShowConfirm(v => !v)} type="button">
+                  {showConfirm ? <EyeOnIcon /> : <EyeOffIcon />}
+                </button>
+              </div>
+              {errors.confirmPassword && <span className="ca-error ca-error--show">{errors.confirmPassword}</span>}
+            </div>
+          </>
+        ) : null}
 
         <div className="ca-field-group">
           <label className="ca-label">Select Role</label>
@@ -185,10 +197,12 @@ export default function CreateAccountScreen({ onBack, onNext, onLogin }) {
           {submitting ? "Creating..." : "Next"}
         </button>
 
-        <p className="ca-login-text">
-          Already have an account?{" "}
-          <button type="button" className="ca-login-link" onClick={onLogin}>Log in</button>
-        </p>
+        {!typeOnly ? (
+          <p className="ca-login-text">
+            Already have an account?{" "}
+            <button type="button" className="ca-login-link" onClick={onLogin}>Log in</button>
+          </p>
+        ) : null}
 
       </div>
     </div>

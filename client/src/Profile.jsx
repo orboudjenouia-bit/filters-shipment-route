@@ -102,10 +102,12 @@ export default function Profile({ onNavigate, hasUnreadNotifications = false }) 
   const [activeNav, setActiveNav] = useState("profile");
   const [selectedTruck, setSelectedTruck] = useState(null);
   const [userData, setUserData] = useState({
+    type: "",
     verified: false,
     subscriptionTier: "Free",
     name: "",
     location: "",
+    additionalLocations: [],
     rating: 0,
     reviews: 0,
     email: "",
@@ -193,14 +195,16 @@ export default function Profile({ onNavigate, hasUnreadNotifications = false }) 
         const businessLocations = Array.isArray(profile?.business?.locations)
           ? profile.business.locations.map((value) => String(value || "").trim()).filter(Boolean)
           : [];
-        const businessLocationText =
-          businessLocations.length > 1 ? businessLocations.join(", ") : businessLocations[0] || "";
+        const mainBusinessLocation = businessLocations[0] || "";
+        const additionalBusinessLocations = businessLocations.slice(1);
 
         setUserData({
+          type: String(profile?.type || ""),
           verified: Boolean(profile?.individual || profile?.business),
           subscriptionTier: profile?.subscription?.tier || "Free",
           name: profile?.displayName || "",
-          location: profile?.individual?.location || businessLocationText,
+          location: profile?.individual?.location || mainBusinessLocation,
+          additionalLocations: profile?.individual ? [] : additionalBusinessLocations,
           rating: Number(profile?.rating ?? 0),
           reviews: Number(profile?.reviews ?? 0),
           email: profile?.email || "",
@@ -578,12 +582,25 @@ export default function Profile({ onNavigate, hasUnreadNotifications = false }) 
           {[
             { icon: <Mail size={16} color="#22c55e" />, value: userData.email || "No email" },
             { icon: <Phone size={16} color="#22c55e" />, value: userData.phone || "No phone" },
+            { icon: <MapPin size={16} color="#22c55e" />, value: userData.location || "No location" },
           ].map((item, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", padding: "12px 0", borderTop: "1px solid var(--border-color)", gap: 12 }}>
               <div style={{ width: 34, height: 34, background: "rgba(34,197,94,0.2)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>{item.icon}</div>
               <span style={{ fontSize: 14, color: "var(--text-primary)" }}>{item.value}</span>
             </div>
           ))}
+
+          {String(userData.type).toUpperCase() === "BUSINESS" && Array.isArray(userData.additionalLocations) && userData.additionalLocations.length > 0 ? (
+            <div style={{ padding: "12px 0", borderTop: "1px solid var(--border-color)" }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 6 }}>Other Locations</div>
+              {userData.additionalLocations.map((value, index) => (
+                <div key={`extra-location-${index}`} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <MapPin size={14} color="#22c55e" />
+                  <span style={{ fontSize: 13, color: "var(--text-primary)" }}>{value}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         <div style={{ height: 10 }} />

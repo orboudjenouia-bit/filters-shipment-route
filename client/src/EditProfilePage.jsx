@@ -51,7 +51,7 @@ export default function EditProfilePage({ onBack }) {
     legalForm: "",
     nif: "",
     nis: "",
-    businessLocation: "",
+    businessLocations: [""],
     workingTime: "",
   });
   const [loading, setLoading] = useState(true);
@@ -100,10 +100,6 @@ export default function EditProfilePage({ onBack }) {
         const businessLocations = Array.isArray(profile?.business?.locations)
           ? profile.business.locations
           : [];
-        const businessLocationText = businessLocations
-          .map((value) => String(value || "").trim())
-          .filter(Boolean)
-          .join(", ");
 
         setMeta({
           id: Number(profile?.id) || null,
@@ -116,14 +112,17 @@ export default function EditProfilePage({ onBack }) {
           fullName: profile?.individual?.full_Name || "",
           phone: profile?.phone || "",
           email: profile?.email || "",
-          location: profile?.individual?.location || businessLocationText || businessLocations[0] || "",
+          location: profile?.individual?.location || businessLocations[0] || "",
           nin: profile?.individual?.nin || "",
           businessName: profile?.business?.business_Name || "",
           rcNumber: profile?.business?.rc_Number || "",
           legalForm: profile?.business?.form || "",
           nif: profile?.business?.nif != null ? String(profile.business.nif) : "",
           nis: profile?.business?.nis != null ? String(profile.business.nis) : "",
-          businessLocation: businessLocationText || businessLocations[0] || "",
+          businessLocations:
+            businessLocations.length > 0
+              ? businessLocations.map((value) => String(value || ""))
+              : [""],
           workingTime: profile?.working_Time || "",
         });
       } catch {
@@ -156,16 +155,50 @@ export default function EditProfilePage({ onBack }) {
         return;
       }
 
-      const businessLocation = form.businessLocation.trim();
+      const normalizedBusinessLocations = Array.isArray(form.businessLocations)
+        ? form.businessLocations.map((value) => String(value || "").trim()).filter(Boolean)
+        : [];
+
+      if (selectedType === "BUSINESS") {
+        if (form.nif && !/^\d{15}$/.test(form.nif)) {
+          setStatus({ kind: "error", text: "NIF must contain exactly 15 digits" });
+          setSaving(false);
+          return;
+        }
+
+        if (form.nis && !/^\d{15}$/.test(form.nis)) {
+          setStatus({ kind: "error", text: "NIS must contain exactly 15 digits" });
+          setSaving(false);
+          return;
+        }
+
+        if (form.rcNumber && !/^\d{2}-[AB]-\d{7}$/i.test(form.rcNumber.trim())) {
+          setStatus({ kind: "error", text: "RC Number format must be 00-A-0000000 or 00-B-0000000" });
+          setSaving(false);
+          return;
+        }
+
+        if (normalizedBusinessLocations.length === 0) {
+          setStatus({ kind: "error", text: "At least one business location is required" });
+          setSaving(false);
+          return;
+        }
+      }
+
+      if (selectedType === "INDIVIDUAL" && form.nin && !/^\d{18}$/.test(form.nin)) {
+        setStatus({ kind: "error", text: "NIN must contain exactly 18 digits" });
+        setSaving(false);
+        return;
+      }
 
       const profilePayload = selectedType === "BUSINESS"
         ? {
             ...(form.businessName ? { business_Name: form.businessName } : {}),
-            ...(form.rcNumber ? { rc_Number: form.rcNumber } : {}),
+            ...(form.rcNumber ? { rc_Number: form.rcNumber.trim().toUpperCase() } : {}),
             ...(form.legalForm ? { form: form.legalForm } : {}),
-            ...(form.nif ? { nif: Number(form.nif) } : {}),
-            ...(form.nis ? { nis: Number(form.nis) } : {}),
-            ...(businessLocation ? { locations: [businessLocation] } : {}),
+            ...(form.nif ? { nif: form.nif } : {}),
+            ...(form.nis ? { nis: form.nis } : {}),
+            ...(normalizedBusinessLocations.length > 0 ? { locations: normalizedBusinessLocations } : {}),
           }
         : {
             ...(form.fullName ? { full_Name: form.fullName } : {}),
@@ -275,9 +308,8 @@ export default function EditProfilePage({ onBack }) {
                     { label: "Business Name", key: "businessName", placeholder: "e.g. Wesselli Logistics" },
                     { label: "RC Number", key: "rcNumber", placeholder: "e.g. RC-123456" },
                     { label: "Legal Form", key: "legalForm", placeholder: "e.g. SARL" },
-                    { label: "NIF", key: "nif", placeholder: "e.g. 123456789" },
-                    { label: "NIS", key: "nis", placeholder: "e.g. 987654321" },
-                    { label: "Location", key: "businessLocation", placeholder: "e.g. Algiers" },
+                    { label: "NIF", key: "nif", placeholder: "15-digit NIF" },
+                    { label: "NIS", key: "nis", placeholder: "15-digit NIS" },
                   ].map((f) => (
                     <div className="ep-field" key={f.key}>
                       <label>{f.label}</label>
@@ -285,10 +317,65 @@ export default function EditProfilePage({ onBack }) {
                         type="text"
                         placeholder={f.placeholder}
                         value={form[f.key]}
-                        onChange={(e) => setForm((p) => ({ ...p, [f.key]: e.target.value }))}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (f.key === "nif" || f.key === "nis") {
+                            setForm((p) => ({ ...p, [f.key]: value.replace(/\D/g, "").slice(0, 15) }));
+                            return;
+                          }
+
+                          if (f.key === "rcNumber") {
+                            setForm((p) => ({ ...p, [f.key]: value.toUpperCase() }));
+                            return;
+                          }
+
+                          setForm((p) => ({ ...p, [f.key]: value }));
+                        }}
                       />
                     </div>
                   ))}
+
+                  <div className="ep-field">
+                    <label>Business Locations</label>
+                    {form.businessLocations.map((location, index) => (
+                      <div className="ep-row" key={`business-location-${index}`}>
+                        <input
+                          type="text"
+                          placeholder={index === 0 ? "Main location" : `Location ${index + 1}`}
+                          value={location}
+                          onChange={(e) => {
+                            const next = form.businessLocations.map((item, i) =>
+                              i === index ? e.target.value : item
+                            );
+                            setForm((p) => ({ ...p, businessLocations: next }));
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="ep-mini-btn"
+                          onClick={() => {
+                            const next = form.businessLocations.filter((_, i) => i !== index);
+                            setForm((p) => ({
+                              ...p,
+                              businessLocations: next.length > 0 ? next : [""],
+                            }));
+                          }}
+                          disabled={form.businessLocations.length === 1}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="ep-mini-btn ep-mini-btn--add"
+                      onClick={() => {
+                        setForm((p) => ({ ...p, businessLocations: [...p.businessLocations, ""] }));
+                      }}
+                    >
+                      Add Location
+                    </button>
+                  </div>
                 </>
               ) : (
                 <>
@@ -303,7 +390,14 @@ export default function EditProfilePage({ onBack }) {
                         type="text"
                         placeholder={f.placeholder}
                         value={form[f.key]}
-                        onChange={(e) => setForm((p) => ({ ...p, [f.key]: e.target.value }))}
+                        onChange={(e) => {
+                          if (f.key === "nin") {
+                            setForm((p) => ({ ...p, nin: e.target.value.replace(/\D/g, "").slice(0, 18) }));
+                            return;
+                          }
+
+                          setForm((p) => ({ ...p, [f.key]: e.target.value }));
+                        }}
                       />
                     </div>
                   ))}

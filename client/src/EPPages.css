@@ -166,6 +166,34 @@
   border-color: #22c55e;
 }
 
+.ep-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.ep-mini-btn {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 10px 12px;
+}
+
+.ep-mini-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ep-mini-btn--add {
+  margin-top: 4px;
+}
+
 .ep-segmented {
   display: flex;
   gap: 8px;

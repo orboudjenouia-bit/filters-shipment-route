@@ -103,7 +103,7 @@ export default function EditActiveRoutePage({ routeId, onBack, onSaved }) {
           form.post_type === "REGION"
             ? []
             : form.waypoints.map((stop) => stop.trim()).filter(Boolean),
-        vehicle_plate: form.vehicle_plate ? Number(form.vehicle_plate) : undefined,
+        vehicle_plate: form.vehicle_plate ? String(form.vehicle_plate).trim() : undefined,
       });
       setSuccess(true);
       toastSuccess("Route updated", { description: "Route changes were saved successfully." });

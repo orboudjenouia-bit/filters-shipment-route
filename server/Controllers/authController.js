@@ -178,6 +178,7 @@ const IndividualProfile = async (req, res, next) => {
 
     const userId = req.user.id;
     const { full_Name, nin, location, photo } = req.body;
+    const normalizedNin = String(nin || '').trim();
 
     const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -192,7 +193,20 @@ const IndividualProfile = async (req, res, next) => {
         );
     }
 
-    if (user.type !== 'INDIVIDUAL') {
+    const [existingIndividual, existingBusiness] = await Promise.all([
+        prisma.individual.findUnique({
+            where: { user_ID: userId },
+            select: { user_ID: true },
+        }),
+        prisma.business.findUnique({
+            where: { user_ID: userId },
+            select: { user_ID: true },
+        }),
+    ]);
+
+    const hasAnyProfile = Boolean(existingIndividual || existingBusiness);
+
+    if (user.type !== 'INDIVIDUAL' && hasAnyProfile) {
         throw new AppError(
             'This account is not an individual account',
             StatusCodes.BAD_REQUEST,
@@ -200,12 +214,7 @@ const IndividualProfile = async (req, res, next) => {
         );
     }
 
-    const existing = await prisma.individual.findUnique({
-        where: { user_ID: userId },
-        select: { user_ID: true },
-    });
-
-    if (existing) {
+    if (existingIndividual) {
         throw new AppError(
             'Individual profile already exists',
             StatusCodes.CONFLICT,
@@ -217,14 +226,15 @@ const IndividualProfile = async (req, res, next) => {
         prisma.individual.create({
             data: {
                 user_ID: userId,
-                full_Name,
-                nin,
-                location,
+                full_Name: String(full_Name || '').trim(),
+                nin: normalizedNin,
+                location: String(location || '').trim(),
             },
         }),
         prisma.user.update({
             where: { id: userId },
             data: {
+                type: 'INDIVIDUAL',
                 ...(photo ? { profile_Photo: String(photo).trim() } : {}),
             },
         }),
@@ -258,6 +268,10 @@ const BusinessProfile = async (req, res, next) => {
 
     const userId = req.user.id;
     const { business_Name, rc_Number, form, nif, nis, locations, photo } = req.body;
+    const normalizedLocations = Array.isArray(locations)
+        ? locations.map((value) => String(value || '').trim()).filter(Boolean)
+        : [];
+    const normalizedRc = String(rc_Number || '').trim().toUpperCase();
 
     const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -272,7 +286,20 @@ const BusinessProfile = async (req, res, next) => {
         );
     }
 
-    if (user.type !== 'BUSINESS') {
+    const [existingIndividual, existingBusiness] = await Promise.all([
+        prisma.individual.findUnique({
+            where: { user_ID: userId },
+            select: { user_ID: true },
+        }),
+        prisma.business.findUnique({
+            where: { user_ID: userId },
+            select: { user_ID: true },
+        }),
+    ]);
+
+    const hasAnyProfile = Boolean(existingIndividual || existingBusiness);
+
+    if (user.type !== 'BUSINESS' && hasAnyProfile) {
         throw new AppError(
             'This account is not a business account',
             StatusCodes.BAD_REQUEST,
@@ -280,12 +307,7 @@ const BusinessProfile = async (req, res, next) => {
         );
     }
 
-    const existing = await prisma.business.findUnique({
-        where: { user_ID: userId },
-        select: { user_ID: true },
-    });
-
-    if (existing) {
+    if (existingBusiness) {
         throw new AppError(
             'Business profile already exists',
             StatusCodes.CONFLICT,
@@ -297,17 +319,18 @@ const BusinessProfile = async (req, res, next) => {
         prisma.business.create({
             data: {
                 user_ID: userId,
-                business_Name,
-                rc_Number,
-                form,
-                nif,
-                nis,
-                locations,
+                business_Name: String(business_Name || '').trim(),
+                rc_Number: normalizedRc,
+                form: String(form || '').trim(),
+                nif: String(nif || '').trim(),
+                nis: String(nis || '').trim(),
+                locations: normalizedLocations,
             },
         }),
         prisma.user.update({
             where: { id: userId },
             data: {
+                type: 'BUSINESS',
                 ...(photo ? { profile_Photo: String(photo).trim() } : {}),
             },
         }),
@@ -363,6 +386,36 @@ const updateProfile = async (req, res, next) => {
         user: { id, type, email, ...userData } = {},
         profile: { user_ID, ...profileData } = {},
     } = req.body;
+
+    if (type === 'BUSINESS') {
+        if (profileData.rc_Number != null) {
+            profileData.rc_Number = String(profileData.rc_Number).trim().toUpperCase();
+        }
+
+        if (profileData.nif != null) {
+            profileData.nif = String(profileData.nif).trim();
+        }
+
+        if (profileData.nis != null) {
+            profileData.nis = String(profileData.nis).trim();
+        }
+
+        if (Array.isArray(profileData.locations)) {
+            profileData.locations = profileData.locations
+                .map((value) => String(value || '').trim())
+                .filter(Boolean);
+        }
+    }
+
+    if (type === 'INDIVIDUAL') {
+        if (profileData.nin != null) {
+            profileData.nin = String(profileData.nin).trim();
+        }
+
+        if (profileData.location != null) {
+            profileData.location = String(profileData.location).trim();
+        }
+    }
 
     if (id !== req.user.id) {
         throw new AppError(

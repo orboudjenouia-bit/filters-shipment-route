@@ -72,14 +72,19 @@ router.patch(
             .optional()
             .matches(/^\d{1,2}:\d{2}-\d{1,2}:\d{2}$/),
         check('profile.full_Name').optional().isString(), //individual
-        check('profile.nin').optional().isString(),
+        check('profile.nin')
+            .optional()
+            .matches(/^\d{18}$/),
         check('profile.location').optional().isString(),
         check('profile.business_Name').optional().isString(), //business
-        check('profile.rc_Number').optional().isString(),
+        check('profile.rc_Number')
+            .optional()
+            .matches(/^\d{2}-[AB]-\d{7}$/i),
         check('profile.form').optional().isString(),
-        check('profile.nif').optional().isInt(),
-        check('profile.nis').optional().isInt(),
+        check('profile.nif').optional().matches(/^\d{15}$/),
+        check('profile.nis').optional().matches(/^\d{15}$/),
         check('profile.locations').optional().isArray({ min: 1 }),
+        check('profile.locations.*').optional().isString().trim().notEmpty(),
     ],
     asyncHandler(updateProfile)
 );

@@ -67,6 +67,8 @@ const getPathForScreen = (screen, { shipmentId, subscriptionId, activeShipmentId
       return "/forgot-password";
     case "create":
       return "/create-account";
+    case "chooseType":
+      return "/register/type";
     case "individual":
       return "/register/individual";
     case "business":
@@ -182,6 +184,7 @@ const hasAuthToken = () =>  {
 const publicScreens = new Set([
   "landing",
   "create",
+  "chooseType",
   "login",
   "verification",
   "forgot",
@@ -207,6 +210,9 @@ const resolveScreenFromPath = (pathname) => {
   }
   if (normalized === "/create-account") {
     return { screen: "create" };
+  }
+  if (normalized === "/register/type") {
+    return { screen: "chooseType" };
   }
   if (normalized === "/register/individual") {
     return { screen: "individual" };
@@ -368,6 +374,7 @@ export default function App() {
 
     try {
       localStorage.setItem("token", token);
+      sessionStorage.setItem("oauthSetupFlow", "google");
 
       if (userEncoded) {
         const user = JSON.parse(decodeURIComponent(userEncoded));
@@ -666,6 +673,30 @@ export default function App() {
   }, [current]);
 
   useEffect(() => {
+    if (phase !== "idle") return;
+    if (current !== "dashboard") return;
+    if (!hasAuthToken()) return;
+    if (accountState.loading) return;
+    if (accountState.hasProfile) return;
+
+    const oauthSetupFlow = sessionStorage.getItem("oauthSetupFlow") === "google";
+
+    if (oauthSetupFlow) {
+      goTo("chooseType");
+      return;
+    }
+
+    goTo(accountState.type === "BUSINESS" ? "business" : "individual");
+  }, [current, accountState.loading, accountState.hasProfile, accountState.type, phase]);
+
+  useEffect(() => {
+    if (accountState.loading) return;
+    if (accountState.hasProfile) {
+      sessionStorage.removeItem("oauthSetupFlow");
+    }
+  }, [accountState.loading, accountState.hasProfile]);
+
+  useEffect(() => {
     if (!hasAuthToken() || publicScreens.has(current)) {
       setHasUnreadNotifications(false);
       return;
@@ -778,19 +809,48 @@ export default function App() {
           />
         )}
 
+        {current === "chooseType" && (
+          <CreateAccountScreen
+            typeOnly
+            onBack={() => goBack("login")}
+            onLogin={() => goTo("login")}
+            onNext={(selectedRole) => {
+              setRole(selectedRole);
+              if (selectedRole === "Individual") goTo("individual");
+              else goTo("business");
+            }}
+          />
+        )}
+
         {current === "individual" && (
           <IndividualRegScreen
-            onBack={() => goBack("create")}
+            onBack={() => goBack(sessionStorage.getItem("oauthSetupFlow") === "google" ? "chooseType" : "create")}
             onLogin={() => goTo("login")}
-            onNext={() => goTo("verification")}
+            onNext={() => {
+              if (sessionStorage.getItem("oauthSetupFlow") === "google") {
+                sessionStorage.removeItem("oauthSetupFlow");
+                goTo("dashboard");
+                return;
+              }
+
+              goTo("verification");
+            }}
           />
         )}
 
         {current === "business" && (
           <BusinessRegScreen
-            onBack={() => goBack("create")}
+            onBack={() => goBack(sessionStorage.getItem("oauthSetupFlow") === "google" ? "chooseType" : "create")}
             onLogin={() => goTo("login")}
-            onNext={() => goTo("verification")}
+            onNext={() => {
+              if (sessionStorage.getItem("oauthSetupFlow") === "google") {
+                sessionStorage.removeItem("oauthSetupFlow");
+                goTo("dashboard");
+                return;
+              }
+
+              goTo("verification");
+            }}
           />
         )}
 

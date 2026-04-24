@@ -42,6 +42,7 @@ const dashboardRouter = require('./Routes/dashboard');
 const notificationsRouter = require('./Routes/notifications')
 const subscriptionsRouter = require('./Routes/subscriptions')
 const uploadsRouter = require('./Routes/uploads')
+const filtersRouter = require('./Routes/filters')
 
 const errorHandler = require('./Middlewares/errorHandler');
 
@@ -58,6 +59,7 @@ app.use('/api/admin', adminRouter);
 app.use('/api/notifications', notificationsRouter)
 app.use('/api/subscriptions', subscriptionsRouter)
 app.use('/api/uploads', uploadsRouter)
+app.use('/api/filter', filtersRouter)
 
 app.use(errorHandler);
 

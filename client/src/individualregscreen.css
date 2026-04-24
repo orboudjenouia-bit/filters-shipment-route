@@ -153,6 +153,40 @@
   box-shadow: 0 0 0 3px rgba(239,68,68,0.1) !important;
 }
 
+.ir-city-autocomplete {
+  position: relative;
+}
+
+.ir-city-suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  box-shadow: var(--shadow-sm);
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.ir-city-suggestion-item {
+  padding: 9px 10px;
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ir-city-suggestion-item:hover,
+.ir-city-suggestion-item.selected {
+  background: var(--button-secondary-bg);
+}
+
 .ir-file-input {
   position: absolute;
   width: 0;

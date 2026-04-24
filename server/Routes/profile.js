@@ -27,7 +27,9 @@ router.post(
     checkToken,
     [
         check('full_Name', 'Full name is required').notEmpty().isString(),
-        check('nin', 'National ID is required').notEmpty().isString(),
+        check('nin', 'NIN must be exactly 18 digits')
+            .notEmpty()
+            .matches(/^\d{18}$/),
         check('location', 'Location is required').notEmpty().isString(),
     ],checkActivate,
     asyncHandler(IndividualProfile)
@@ -40,13 +42,22 @@ router.post(
         check('business_Name', 'Business name is required')
             .notEmpty()
             .isString(),
-        check('rc_Number', 'RC number is required').notEmpty().isString(),
+        check(
+            'rc_Number',
+            'RC Number must match format WW-A-ddddddd or WW-B-ddddddd'
+        )
+            .notEmpty()
+            .matches(/^\d{2}-[AB]-\d{7}$/i),
         check('form', 'Legal form is required').notEmpty().isString(),
-        check('nif', 'NIF must be a number').isInt(),
-        check('nis', 'NIS must be a number').isInt(),
+        check('nif', 'NIF must be exactly 15 digits').matches(/^\d{15}$/),
+        check('nis', 'NIS must be exactly 15 digits').matches(/^\d{15}$/),
         check('locations', 'Locations must be a non-empty array').isArray({
             min: 1,
         }),
+        check('locations.*', 'Each location must be a non-empty string')
+            .isString()
+            .trim()
+            .notEmpty(),
     ],checkActivate,
     asyncHandler(BusinessProfile)
 );
@@ -61,9 +72,9 @@ router.post(
     checkToken,
     requireProfile,
     [
-        check('plate_Number', 'Plate number is required and must be numeric')
+        check('plate_Number', 'Plate number must match 12345-123-12')
             .notEmpty()
-            .isNumeric(),
+            .matches(/^\d{5}-\d{3}-\d{2}$/),
         check('type', 'Vehicle type is required').notEmpty().isString(),
         check('vehicle_Name', 'Vehicle name is required').notEmpty().isString(),
         check('color', 'Color must be a string').optional().isString(),
@@ -81,9 +92,9 @@ router.patch(
     checkToken,
     requireProfile,
     [
-        check('plate_Number', 'Plate number is required and must be numeric')
+        check('plate_Number', 'Plate number must match 12345-123-12')
             .notEmpty()
-            .isNumeric(),
+            .matches(/^\d{5}-\d{3}-\d{2}$/),
         check('type', 'Vehicle type must be a string').optional().isString(),
         check('vehicle_Name', 'Vehicle name must be a string')
             .optional()
@@ -101,9 +112,9 @@ router.delete(
     checkToken,
     requireProfile,
     [
-        check('plate_Number', 'Plate number is required and must be numeric')
+        check('plate_Number', 'Plate number must match 12345-123-12')
             .notEmpty()
-            .isNumeric(),
+            .matches(/^\d{5}-\d{3}-\d{2}$/),
     ],
     checkActivate,
 

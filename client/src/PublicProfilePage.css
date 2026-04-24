@@ -41,6 +41,11 @@
   justify-content: space-between;
 }
 
+.pp-info-card--wide {
+  grid-column: 1 / -1;
+  min-height: 82px;
+}
+
 .pp-info-top {
   display: flex;
   align-items: center;

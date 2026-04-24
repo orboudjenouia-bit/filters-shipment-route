@@ -45,7 +45,7 @@ router.post(
             .matches(/^\d{4}-\d{2}-\d{2}$/),
         check('vehicle_plate', 'Vehicle plate number is required')
             .notEmpty()
-            .isNumeric(),
+            .matches(/^\d{5}-\d{3}-\d{2}$/),
         check('post_type', 'Post type must be REGION or ORIGIN_DESTINATION')
             .optional()
             .isIn(['REGION', 'ORIGIN_DESTINATION']),
@@ -88,9 +88,9 @@ router.patch(
         check('date', 'Date must be YYYY-MM-DD or YYYY-MM-DD to YYYY-MM-DD')
             .optional()
             .matches(/^\d{4}-\d{2}-\d{2}(\s+to\s+\d{4}-\d{2}-\d{2})?$/),
-        check('vehicle_plate', 'Vehicle plate must be numeric')
+        check('vehicle_plate', 'Vehicle plate must match 12345-123-12')
             .optional()
-            .isNumeric(),
+            .matches(/^\d{5}-\d{3}-\d{2}$/),
         check('post_type', 'Post type must be REGION or ORIGIN_DESTINATION')
             .optional()
             .isIn(['REGION', 'ORIGIN_DESTINATION']),
