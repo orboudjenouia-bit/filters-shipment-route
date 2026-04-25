@@ -16,8 +16,40 @@ const algerianCities = [
   "Touggourt", "Djanet", "El M'Ghair", "El Menia"
 ];
 
-const CityAutocomplete = ({ value, onChange, placeholder }) => {
-  const [inputValue, setInputValue] = useState(value || "");
+const VEHICLE_TYPES = [
+  { vehicle: "Small Van",          vehicleFr: "Camionnette",       icon: "🚐" },
+  { vehicle: "Fourgon",            vehicleFr: "Fourgon",           icon: "🚚" },
+  { vehicle: "Closed Box Van",     vehicleFr: "Fourgon Fermé",     icon: "🚛" },
+  { vehicle: "Refrigerated Truck", vehicleFr: "Frigo",             icon: "❄️" },
+  { vehicle: "Open-Slat Truck",    vehicleFr: "Maraîcher",         icon: "🌿" },
+  { vehicle: "Dropside Truck",     vehicleFr: "Camion à ridelles", icon: "🏗️" },
+  { vehicle: "Semi-trailer",       vehicleFr: "Semi-remorque",     icon: "🚜" },
+  { vehicle: "Tanker",             vehicleFr: "Citerne",           icon: "🛢️" },
+  { vehicle: "Livestock Carrier",  vehicleFr: "Camion à Bétail",   icon: "🐄" },
+  { vehicle: "Tow Truck",          vehicleFr: "Dépanneuse",        icon: "🔧" },
+  { vehicle: "Flatbed Truck",      vehicleFr: "Plateau",           icon: "🛻" },
+  { vehicle: "Tipper Truck",       vehicleFr: "Benne",             icon: "⛏️" },
+  { vehicle: "Crane Truck",        vehicleFr: "Camion Grue",       icon: "🏗️" },
+  { vehicle: "Concrete Mixer",     vehicleFr: "Toupie / Malaxeur", icon: "🔄" },
+  { vehicle: "Car Transporter",    vehicleFr: "Porte-voiture",     icon: "🚗" },
+  { vehicle: "Motorcycle Courier", vehicleFr: "Coursier Moto",     icon: "🏍️" },
+  { vehicle: "Pickup Truck",       vehicleFr: "Pick-up",           icon: "🛻" },
+  { vehicle: "Container Truck",    vehicleFr: "Porte-conteneur",   icon: "📦" },
+  { vehicle: "Bulk Carrier",       vehicleFr: "Vrac",              icon: "⚙️" },
+  { vehicle: "Medical Transport",  vehicleFr: "Transport Médical", icon: "🏥" },
+];
+
+const SORT_OPTIONS = [
+  { value: "price",    label: "Price" },
+  { value: "created",  label: "Date created" },
+  { value: "shipment", label: "Shipment date" },
+  { value: "shipping", label: "Shipping date" },
+];
+
+// ─── CityAutocomplete ────────────────────────────────────────────────────────
+
+const CityAutocomplete = ({ onSelect, placeholder, excludes = [] }) => {
+  const [inputValue, setInputValue] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -25,14 +57,9 @@ const CityAutocomplete = ({ value, onChange, placeholder }) => {
   const inputRef = useRef(null);
 
   useEffect(() => {
-    setInputValue(value || "");
-  }, [value]);
-
-  useEffect(() => {
     const handleClickOutside = (event) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target))
         setShowSuggestions(false);
-      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -43,23 +70,21 @@ const CityAutocomplete = ({ value, onChange, placeholder }) => {
     setInputValue(newValue);
     setSelectedIndex(-1);
     if (newValue.length > 0) {
-      const filtered = algerianCities.filter((city) =>
-        city.toLowerCase().includes(newValue.toLowerCase())
-      );
+      const filtered = algerianCities
+        .filter((city) => city.toLowerCase().includes(newValue.toLowerCase()) && !excludes.includes(city));
       setSuggestions(filtered.slice(0, 10));
       setShowSuggestions(true);
     } else {
       setSuggestions([]);
       setShowSuggestions(false);
     }
-    onChange(newValue);
   };
 
   const handleSelectCity = (city) => {
-    setInputValue(city);
+    onSelect(city);
+    setInputValue("");
     setSuggestions([]);
     setShowSuggestions(false);
-    onChange(city);
     inputRef.current?.focus();
   };
 
@@ -81,17 +106,23 @@ const CityAutocomplete = ({ value, onChange, placeholder }) => {
 
   return (
     <div className="routes-filter-autocomplete" ref={wrapperRef}>
-      <input
-        ref={inputRef}
-        type="text"
-        className="routes-filter-input"
-        placeholder={placeholder}
-        value={inputValue}
-        onChange={handleInputChange}
-        onKeyDown={handleKeyDown}
-        onFocus={() => inputValue.length > 0 && setShowSuggestions(true)}
-        autoComplete="off"
-      />
+      <div className="routes-city-search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2"/>
+          <path d="M21 21l-4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+        <input
+          ref={inputRef}
+          type="text"
+          className="routes-city-search-input"
+          placeholder={placeholder}
+          value={inputValue}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onFocus={() => inputValue.length > 0 && setShowSuggestions(true)}
+          autoComplete="off"
+        />
+      </div>
       {showSuggestions && suggestions.length > 0 && (
         <ul className="routes-filter-suggestions">
           {suggestions.map((city, index) => (
@@ -112,6 +143,8 @@ const CityAutocomplete = ({ value, onChange, placeholder }) => {
     </div>
   );
 };
+
+// ─── Icons ───────────────────────────────────────────────────────────────────
 
 const BellIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -147,6 +180,8 @@ const ProfileIcon = ({ active }) => (
   </svg>
 );
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 const normalizeStatus = (status) => {
   const raw = String(status || "").toLowerCase().trim();
   if (raw.includes("pending")) return "pending";
@@ -164,13 +199,8 @@ const parseDateInput = (value) => {
     const month = Number(isoMatch[2]);
     const day = Number(isoMatch[3]);
     const date = new Date(year, month - 1, day);
-    if (
-      date.getFullYear() === year &&
-      date.getMonth() === month - 1 &&
-      date.getDate() === day
-    ) {
+    if (date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day)
       return date;
-    }
     return null;
   }
 
@@ -182,34 +212,40 @@ const parseDateInput = (value) => {
   const year = Number(dmyMatch[3]);
   const date = new Date(year, month - 1, day);
 
-  if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
-  ) {
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day)
     return null;
-  }
 
   return date;
 };
 
 const parseItemDateValue = (value) => {
   if (!value) return null;
-
-  if (value instanceof Date) {
-    return Number.isNaN(value.getTime()) ? null : value.getTime();
-  }
-
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value.getTime();
   if (typeof value === "string") {
     const parsed = parseDateInput(value);
     if (parsed) return parsed.getTime();
   }
-
   const date = new Date(value);
   if (!Number.isNaN(date.getTime())) return date.getTime();
-
   return null;
 };
+
+const DEFAULT_FILTERS = {
+  origins: [],
+  destinations: [],
+  waypoints: [],
+  region: "",
+  status: "",
+  afterDate: "",
+  beforeDate: "",
+  vehicleTypes: [],
+  capacityMin: "",
+  capacityMax: "",
+  sortBy: "created",
+  sortDir: "desc",
+};
+
+// ─── Main Screen ─────────────────────────────────────────────────────────────
 
 export default function RoutesScreen({ onNavigate, hasUnreadNotifications = false }) {
   const [activeTab, setActiveTab] = useState("all");
@@ -218,14 +254,7 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [filters, setFilters] = useState({
-    origin: "",
-    destination: "",
-    region: "",
-    status: "",
-    afterDate: "",
-    beforeDate: ""
-  });
+  const [filters, setFilters] = useState({ ...DEFAULT_FILTERS });
 
   useEffect(() => {
     if (!error) return;
@@ -242,7 +271,6 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
         const now = new Date();
         const diffMs = now - date;
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        
         if (diffDays === 0) return "Today";
         if (diffDays === 1) return "Yesterday";
         if (diffDays < 7) return `${diffDays} days ago`;
@@ -257,15 +285,21 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
       id: item?.route_ID || item?.id || `${index}-${item?.date || "route"}`,
       ownerId: item?.user?.id || null,
       ownerPhoto: item?.user?.profile_Photo || "",
-      userName: item?.user?.individual?.full_Name ||
+      userName:
+        item?.user?.individual?.full_Name ||
         item?.user?.business?.business_Name ||
         (item?.user?.email ? String(item.user.email).split("@")[0] : "Unknown user"),
       name: item?.name || item?.route_Name || "Route",
-      time: item?.date_type === "INTERVAL"
-        ? `${item?.interval_start || "-"} to ${item?.interval_end || "-"}`
-        : item?.date || item?.createdAtLabel || formatCreatedAt(item?.createdAt),
+      time:
+        item?.date_type === "INTERVAL"
+          ? `${item?.interval_start || "-"} to ${item?.interval_end || "-"}`
+          : item?.date || item?.createdAtLabel || formatCreatedAt(item?.createdAt),
       dateValue: parseItemDateValue(item?.date || item?.interval_start || item?.createdAt),
+      createdAtValue: parseItemDateValue(item?.createdAt),
+      shipmentDateValue: parseItemDateValue(item?.shipment_date || item?.shipmentDate),
+      shippingDateValue: parseItemDateValue(item?.shipping_date || item?.shippingDate),
       price: item?.priceLabel || (item?.price != null ? `${item.price} DA` : ""),
+      priceRaw: item?.price ?? null,
       postType: item?.post_type || "ORIGIN_DESTINATION",
       origin: item?.origin || "",
       destination: item?.destination || "",
@@ -282,11 +316,9 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
     const fetchRoutes = async () => {
       setIsLoading(true);
       setError("");
-
       try {
         const token = localStorage.getItem("token");
         const list = await getRoutes(token);
-
         if (!isMounted) return;
         setRoutes(list.map(normalizeRoute));
       } catch {
@@ -294,21 +326,21 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
         setError("Could not load routes right now.");
         setRoutes([]);
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        if (isMounted) setIsLoading(false);
       }
     };
 
     fetchRoutes();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
 
   const filteredRoutes = useMemo(() => {
     let filtered = routes;
+
+    // Tab filter
+    if (activeTab !== "all")
+      filtered = filtered.filter((r) => r.status === activeTab);
+
     const afterDate = parseDateInput(filters.afterDate);
     const beforeDate = parseDateInput(filters.beforeDate);
     const afterDateMs = afterDate
@@ -317,43 +349,82 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
     const beforeDateMs = beforeDate
       ? new Date(beforeDate.getFullYear(), beforeDate.getMonth(), beforeDate.getDate(), 23, 59, 59, 999).getTime()
       : null;
-    
-    if (filters.status) {
-      filtered = filtered.filter((route) => route.status === filters.status);
-    }
-    
-    if (filters.origin) {
-      filtered = filtered.filter((route) => 
-        route.origin && route.origin.toLowerCase().includes(filters.origin.toLowerCase())
+
+    if (filters.status)
+      filtered = filtered.filter((r) => r.status === filters.status);
+
+    // Multi-origin filter
+    if (filters.origins.length > 0)
+      filtered = filtered.filter((r) =>
+        filters.origins.some((o) => r.origin && r.origin.toLowerCase().includes(o.toLowerCase()))
       );
-    }
-    
-    if (filters.destination) {
-      filtered = filtered.filter((route) => 
-        route.destination && route.destination.toLowerCase().includes(filters.destination.toLowerCase())
+
+    // Multi-destination filter
+    if (filters.destinations.length > 0)
+      filtered = filtered.filter((r) =>
+        filters.destinations.some((d) => r.destination && r.destination.toLowerCase().includes(d.toLowerCase()))
       );
-    }
-    
-    if (filters.region) {
-      filtered = filtered.filter((route) => 
-        route.region && route.region.toLowerCase().includes(filters.region.toLowerCase())
-      );
+
+    // Waypoints: all must appear somewhere in the route
+    if (filters.waypoints.length > 0) {
+      filtered = filtered.filter((r) => {
+        const haystack = [r.origin, r.destination, r.region, r.description]
+          .join(" ")
+          .toLowerCase();
+        return filters.waypoints.every((wp) => haystack.includes(wp.trim().toLowerCase()));
+      });
     }
 
-    if (afterDateMs != null) {
-      filtered = filtered.filter(
-        (route) => route.dateValue != null && route.dateValue >= afterDateMs
+    if (filters.region)
+      filtered = filtered.filter((r) =>
+        r.region && r.region.toLowerCase().includes(filters.region.toLowerCase())
       );
+
+    if (afterDateMs != null)
+      filtered = filtered.filter((r) => r.dateValue != null && r.dateValue >= afterDateMs);
+
+    if (beforeDateMs != null)
+      filtered = filtered.filter((r) => r.dateValue != null && r.dateValue <= beforeDateMs);
+
+    // Vehicle type filter
+    if (filters.vehicleTypes.length > 0)
+      filtered = filtered.filter((r) =>
+        filters.vehicleTypes.some((vt) =>
+          r.vehicleName && r.vehicleName.toLowerCase().includes(vt.toLowerCase())
+        )
+      );
+
+    // Capacity filter (capacity stored in kg)
+    if (filters.capacityMin !== "") {
+      const minKg = parseFloat(filters.capacityMin) * 1000;
+      if (!isNaN(minKg))
+        filtered = filtered.filter((r) => r.capacity != null && r.capacity >= minKg);
+    }
+    if (filters.capacityMax !== "") {
+      const maxKg = parseFloat(filters.capacityMax) * 1000;
+      if (!isNaN(maxKg))
+        filtered = filtered.filter((r) => r.capacity != null && r.capacity <= maxKg);
     }
 
-    if (beforeDateMs != null) {
-      filtered = filtered.filter(
-        (route) => route.dateValue != null && route.dateValue <= beforeDateMs
-      );
-    }
-    
+    // Sorting
+    const dir = filters.sortDir === "desc" ? -1 : 1;
+    filtered = [...filtered].sort((a, b) => {
+      switch (filters.sortBy) {
+        case "price":
+          return dir * ((a.priceRaw ?? 0) - (b.priceRaw ?? 0));
+        case "created":
+          return dir * ((a.createdAtValue ?? 0) - (b.createdAtValue ?? 0));
+        case "shipment":
+          return dir * ((a.shipmentDateValue ?? 0) - (b.shipmentDateValue ?? 0));
+        case "shipping":
+          return dir * ((a.shippingDateValue ?? 0) - (b.shippingDateValue ?? 0));
+        default:
+          return 0;
+      }
+    });
+
     return filtered;
-  }, [routes, filters]);
+  }, [routes, filters, activeTab]);
 
   const handleNav = (tab) => {
     setActiveNav(tab);
@@ -362,47 +433,59 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
     if (tab === "profile") onNavigate("profile");
   };
 
-  const openFilterModal = () => {
-    setShowFilterModal(true);
-  };
-
-  const closeFilterModal = () => {
-    setShowFilterModal(false);
-  };
-
-  const applyFilters = () => {
-    closeFilterModal();
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      origin: "",
-      destination: "",
-      region: "",
-      status: "",
-      afterDate: "",
-      beforeDate: ""
-    });
-  };
+  const openFilterModal = () => setShowFilterModal(true);
+  const closeFilterModal = () => setShowFilterModal(false);
+  const applyFilters = () => closeFilterModal();
+  const clearFilters = () => setFilters({ ...DEFAULT_FILTERS });
 
   const hasActiveFilters =
-    filters.origin ||
-    filters.destination ||
+    filters.origins.length > 0 ||
+    filters.destinations.length > 0 ||
+    filters.waypoints.length > 0 ||
     filters.region ||
     filters.status ||
     filters.afterDate ||
-    filters.beforeDate;
+    filters.beforeDate ||
+    filters.vehicleTypes.length > 0 ||
+    filters.capacityMin !== "" ||
+    filters.capacityMax !== "";
+
+  // ── City chip helpers ─────────────────────────────────────────────────────
+  const addCity = (field, city) => {
+    setFilters((prev) => {
+      if (prev[field].includes(city)) return prev;
+      return { ...prev, [field]: [...prev[field], city] };
+    });
+  };
+
+  const removeCity = (field, city) => {
+    setFilters((prev) => ({ ...prev, [field]: prev[field].filter((c) => c !== city) }));
+  };
+
+  // ── Vehicle type toggle ───────────────────────────────────────────────────
+  const toggleVehicleType = (vehicleName) => {
+    setFilters((prev) => {
+      const exists = prev.vehicleTypes.includes(vehicleName);
+      return {
+        ...prev,
+        vehicleTypes: exists
+          ? prev.vehicleTypes.filter((v) => v !== vehicleName)
+          : [...prev.vehicleTypes, vehicleName],
+      };
+    });
+  };
 
   const statusOptions = [
-    { value: "", label: "All Status" },
+    { value: "", label: "All" },
     { value: "active", label: "Active" },
     { value: "pending", label: "Pending" },
-    { value: "completed", label: "Completed" }
   ];
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="sh-screen">
       <div className="sh-container">
+        {/* Header */}
         <div className="sh-header">
           <div className="sh-logo-row">
             <div className="sh-logo-box">
@@ -420,6 +503,7 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
         </div>
 
         <div className="sh-body">
+          {/* Tabs */}
           <div className="sh-tabs">
             {[
               { value: "all", label: "All Routes" },
@@ -437,16 +521,9 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
             ))}
           </div>
 
+          {/* CTA Card */}
           <div className="sh-cta-card" style={{ padding: 0, overflow: "hidden" }}>
-            <div
-              style={{
-                height: "120px",
-                backgroundImage: "url('/Routes.svg')",
-                backgroundSize: "cover",
-                backgroundPosition: "center 85%",
-                borderBottom: "1px solid rgba(34, 197, 94, 0.25)",
-              }}
-            />
+            <div style={{ height: "120px", backgroundImage: "url('/Routes.svg')", backgroundSize: "cover", backgroundPosition: "center 85%", borderBottom: "1px solid rgba(34,197,94,0.25)" }} />
             <div style={{ padding: "16px 18px 18px" }}>
               <h3 className="sh-cta-title">Have a route to plan?</h3>
               <p className="sh-cta-sub">Create a new route and optimize your logistics.</p>
@@ -456,17 +533,52 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
             </div>
           </div>
 
+          {/* Section row — title + inline sort + filter */}
           <div className="sh-section-row">
             <h2 className="sh-section-title">Explore Available Truckers</h2>
-            <button className="sh-filter-btn" type="button" aria-label="Filter routes" onClick={openFilterModal}>
-              Filter
-              {hasActiveFilters && <span className="routes-filter-active-dot"></span>}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </button>
+            <div className="sh-inline-controls">
+              <select
+                className="sh-sort-select"
+                value={filters.sortBy}
+                onChange={(e) => setFilters((prev) => ({ ...prev, sortBy: e.target.value }))}
+                aria-label="Sort by"
+              >
+                {SORT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+              <button
+                className="sh-sort-dir-btn"
+                type="button"
+                aria-label="Toggle sort direction"
+                onClick={() => setFilters((prev) => ({ ...prev, sortDir: prev.sortDir === "asc" ? "desc" : "asc" }))}
+              >
+                {filters.sortDir === "asc" ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 4v16M4 12l8-8 8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 20V4M4 12l8 8 8-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                )}
+              </button>
+              <button
+                className="sh-filter-btn"
+                type="button"
+                aria-label="Filter routes"
+                onClick={openFilterModal}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                Filter
+                {hasActiveFilters && <span className="routes-filter-active-dot" />}
+              </button>
+            </div>
           </div>
 
+          {/* Route list */}
           {isLoading ? (
             <div className="sh-empty-state">Loading routes...</div>
           ) : error ? (
@@ -481,18 +593,10 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
                     className="sh-avatar"
                     type="button"
                     aria-label="Open user profile"
-                    onClick={() => {
-                      if (route.ownerId) {
-                        onNavigate("publicProfile", { userId: route.ownerId, from: "routes" });
-                      }
-                    }}
+                    onClick={() => route.ownerId && onNavigate("publicProfile", { userId: route.ownerId, from: "routes" })}
                   >
                     {route.ownerPhoto ? (
-                      <img
-                        src={resolveMediaUrl(route.ownerPhoto)}
-                        alt={route.userName}
-                        style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover" }}
-                      />
+                      <img src={resolveMediaUrl(route.ownerPhoto)} alt={route.userName} style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover" }} />
                     ) : (
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                         <circle cx="12" cy="8" r="4" stroke="#9ca3af" strokeWidth="2" />
@@ -506,11 +610,7 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
                         type="button"
                         className="sh-card-name"
                         style={{ background: "none", border: "none", padding: 0, textAlign: "left", cursor: route.ownerId ? "pointer" : "default" }}
-                        onClick={() => {
-                          if (route.ownerId) {
-                            onNavigate("publicProfile", { userId: route.ownerId, from: "routes" });
-                          }
-                        }}
+                        onClick={() => route.ownerId && onNavigate("publicProfile", { userId: route.ownerId, from: "routes" })}
                       >
                         {route.userName}
                       </button>
@@ -531,9 +631,7 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
                   {route.price && <span className="sh-card-price">{route.price}</span>}
                 </div>
 
-                <p className="sh-card-description">
-                  {route.description || "No description provided."}
-                </p>
+                <p className="sh-card-description">{route.description || "No description provided."}</p>
 
                 <div className="sh-card-route">
                   {route.postType === "REGION" ? (
@@ -576,20 +674,12 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
                       {route.status.toUpperCase()}
                     </span>
                   </div>
-                  {route.ownerId ? (
-                    <button
-                      className="sh-details-btn"
-                      type="button"
-                      onClick={() => onNavigate("publicProfile", { userId: route.ownerId, from: "routes" })}
-                    >
+                  {route.ownerId && (
+                    <button className="sh-details-btn" type="button" onClick={() => onNavigate("publicProfile", { userId: route.ownerId, from: "routes" })}>
                       Profile
                     </button>
-                  ) : null}
-                  <button
-                    className="sh-details-btn"
-                    type="button"
-                    onClick={() => onNavigate("routeDetails", { routeId: route.id, from: "routes" })}
-                  >
+                  )}
+                  <button className="sh-details-btn" type="button" onClick={() => onNavigate("routeDetails", { routeId: route.id, from: "routes" })}>
                     Details
                   </button>
                 </div>
@@ -598,44 +688,51 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
           )}
         </div>
 
+        {/* FAB */}
         <button className="sh-fab" type="button" aria-label="Create route" onClick={() => onNavigate("createRoute")}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M12 5v14M5 12h14" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
           </svg>
         </button>
 
+        {/* Bottom nav */}
         <div className="sh-bottom-nav">
           <button className={`sh-nav-item ${activeNav === "home" ? "sh-nav-item--active" : ""}`} onClick={() => handleNav("home")}>
-            <HomeIcon active={activeNav === "home"} />
-            <span>HOME</span>
+            <HomeIcon active={activeNav === "home"} /><span>HOME</span>
           </button>
           <button className={`sh-nav-item ${activeNav === "shipments" ? "sh-nav-item--active" : ""}`} onClick={() => handleNav("shipments")}>
-            <TruckIcon active={activeNav === "shipments"} />
-            <span>SHIPMENTS</span>
+            <TruckIcon active={activeNav === "shipments"} /><span>SHIPMENTS</span>
           </button>
           <button className={`sh-nav-item ${activeNav === "routes" ? "sh-nav-item--active" : ""}`} onClick={() => handleNav("routes")}>
-            <RouteIcon active={activeNav === "routes"} />
-            <span>ROUTES</span>
+            <RouteIcon active={activeNav === "routes"} /><span>ROUTES</span>
           </button>
           <button className={`sh-nav-item ${activeNav === "profile" ? "sh-nav-item--active" : ""}`} onClick={() => handleNav("profile")}>
-            <ProfileIcon active={activeNav === "profile"} />
-            <span>PROFILE</span>
+            <ProfileIcon active={activeNav === "profile"} /><span>PROFILE</span>
           </button>
         </div>
       </div>
 
+      {/* ── Filter Modal ─────────────────────────────────────────────────────── */}
       {showFilterModal && (
         <div className="routes-filter-overlay" onClick={closeFilterModal}>
           <div className="routes-filter-modal" onClick={(e) => e.stopPropagation()}>
+
+            {/* Header */}
             <div className="routes-filter-header">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ color: "#22c55e", flexShrink: 0 }}>
+                <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
               <h3 className="routes-filter-title">Filter Routes</h3>
               <button className="routes-filter-close" onClick={closeFilterModal}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                   <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
               </button>
             </div>
+
             <div className="routes-filter-body">
+
+              {/* ── Status ── */}
               <div className="routes-filter-group">
                 <label className="routes-filter-label">Status</label>
                 <div className="routes-status-options">
@@ -643,37 +740,99 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
                     <button
                       key={option.value}
                       className={`routes-status-btn ${filters.status === option.value ? "active" : ""}`}
-                      onClick={() => setFilters(prev => ({ ...prev, status: option.value }))}
+                      onClick={() => setFilters((prev) => ({ ...prev, status: option.value }))}
                     >
                       {option.label}
                     </button>
                   ))}
                 </div>
               </div>
+
+              {/* ── Origin Cities ── */}
               <div className="routes-filter-group">
-                <label className="routes-filter-label">Origin City</label>
+                <label className="routes-filter-label">Origin Cities</label>
                 <CityAutocomplete
-                  value={filters.origin}
-                  onChange={(value) => setFilters(prev => ({ ...prev, origin: value }))}
-                  placeholder="Search origin city"
+                  onSelect={(city) => addCity("origins", city)}
+                  placeholder="Search and add a city..."
+                  excludes={filters.origins}
                 />
+                {filters.origins.length > 0 && (
+                  <div className="routes-chips-row">
+                    {filters.origins.map((city) => (
+                      <span key={city} className="routes-chip routes-chip--origin">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="10" r="3" stroke="currentColor" strokeWidth="2"/>
+                          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" strokeWidth="2"/>
+                        </svg>
+                        {city}
+                        <button className="routes-chip-remove" onClick={() => removeCity("origins", city)}>
+                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none">
+                            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+                          </svg>
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
+
+              {/* ── Destination Cities ── */}
               <div className="routes-filter-group">
-                <label className="routes-filter-label">Destination City</label>
+                <label className="routes-filter-label">Destination Cities</label>
                 <CityAutocomplete
-                  value={filters.destination}
-                  onChange={(value) => setFilters(prev => ({ ...prev, destination: value }))}
-                  placeholder="Search destination city"
+                  onSelect={(city) => addCity("destinations", city)}
+                  placeholder="Search and add a city..."
+                  excludes={filters.destinations}
                 />
+                {filters.destinations.length > 0 && (
+                  <div className="routes-chips-row">
+                    {filters.destinations.map((city) => (
+                      <span key={city} className="routes-chip routes-chip--dest">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="10" r="3" stroke="currentColor" strokeWidth="2"/>
+                          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" strokeWidth="2"/>
+                        </svg>
+                        {city}
+                        <button className="routes-chip-remove" onClick={() => removeCity("destinations", city)}>
+                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none">
+                            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+                          </svg>
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
+
+              {/* ── Waypoints / Stops ── */}
               <div className="routes-filter-group">
-                <label className="routes-filter-label">Region</label>
+                <label className="routes-filter-label">Waypoints / Stops</label>
                 <CityAutocomplete
-                  value={filters.region}
-                  onChange={(value) => setFilters(prev => ({ ...prev, region: value }))}
-                  placeholder="Search region"
+                  onSelect={(city) => addCity("waypoints", city)}
+                  placeholder="Search and add a city..."
+                  excludes={filters.waypoints}
                 />
+                {filters.waypoints.length > 0 && (
+                  <div className="routes-chips-row">
+                    {filters.waypoints.map((city) => (
+                      <span key={city} className="routes-chip routes-chip--waypoint">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="10" r="3" stroke="currentColor" strokeWidth="2"/>
+                          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" strokeWidth="2"/>
+                        </svg>
+                        {city}
+                        <button className="routes-chip-remove" onClick={() => removeCity("waypoints", city)}>
+                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none">
+                            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+                          </svg>
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
+
+              {/* ── Date Range ── */}
               <div className="routes-filter-group">
                 <label className="routes-filter-label">Date Range</label>
                 <div className="routes-date-range">
@@ -685,9 +844,6 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
                       value={filters.afterDate}
                       onChange={(e) => setFilters((prev) => ({ ...prev, afterDate: e.target.value }))}
                     />
-                    <span className="routes-date-field-value">
-                      {filters.afterDate || "Not selected"}
-                    </span>
                   </div>
                   <div className="routes-date-field">
                     <span className="routes-date-field-label">Before</span>
@@ -697,20 +853,77 @@ export default function RoutesScreen({ onNavigate, hasUnreadNotifications = fals
                       value={filters.beforeDate}
                       onChange={(e) => setFilters((prev) => ({ ...prev, beforeDate: e.target.value }))}
                     />
-                    <span className="routes-date-field-value">
-                      {filters.beforeDate || "Not selected"}
-                    </span>
                   </div>
                 </div>
               </div>
+
+              {/* ── Available Capacity ── */}
+              <div className="routes-filter-group">
+                <label className="routes-filter-label">Available Capacity (tonnes)</label>
+                <div className="routes-capacity-row">
+                  <div className="routes-capacity-box">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ color: "#22c55e", flexShrink: 0 }}>
+                      <path d="M12 2a4 4 0 0 1 4 4H8a4 4 0 0 1 4-4zM6 6h12l1 14H5L6 6z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      className="routes-capacity-input"
+                      placeholder="Min"
+                      value={filters.capacityMin}
+                      onChange={(e) => setFilters((prev) => ({ ...prev, capacityMin: e.target.value }))}
+                    />
+                  </div>
+                  <span className="routes-capacity-sep">–</span>
+                  <div className="routes-capacity-box">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ color: "#22c55e", flexShrink: 0 }}>
+                      <path d="M12 2a4 4 0 0 1 4 4H8a4 4 0 0 1 4-4zM6 6h12l1 14H5L6 6z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      className="routes-capacity-input"
+                      placeholder="Max"
+                      value={filters.capacityMax}
+                      onChange={(e) => setFilters((prev) => ({ ...prev, capacityMax: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Vehicle Types ── */}
+              <div className="routes-filter-group">
+                <label className="routes-filter-label">
+                  Category
+                  {filters.vehicleTypes.length > 0 && (
+                    <span className="routes-filter-count">{filters.vehicleTypes.length} selected</span>
+                  )}
+                </label>
+                <div className="routes-vehicle-grid">
+                  {VEHICLE_TYPES.map((v) => {
+                    const isSelected = filters.vehicleTypes.includes(v.vehicle);
+                    return (
+                      <button
+                        key={v.vehicle}
+                        className={`routes-vehicle-chip ${isSelected ? "active" : ""}`}
+                        onClick={() => toggleVehicleType(v.vehicle)}
+                      >
+                        <span className="routes-vehicle-chip-icon">{v.icon}</span>
+                        <span className="routes-vehicle-chip-label">{v.vehicleFr}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
             </div>
+
+            {/* Footer */}
             <div className="routes-filter-footer">
-              <button className="routes-filter-clear" onClick={clearFilters}>
-                Clear All
-              </button>
-              <button className="routes-filter-apply" onClick={applyFilters}>
-                Apply Filters
-              </button>
+              <button className="routes-filter-clear" onClick={clearFilters}>Clear All</button>
+              <button className="routes-filter-apply" onClick={applyFilters}>Apply Filters</button>
             </div>
           </div>
         </div>

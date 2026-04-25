@@ -1,7 +1,7 @@
-/* Createshipment.css - Dark mode compatible */
+/* AddVehicle.css - Dark mode compatible */
 
 /* ── Screen / Container ───────────────────────────────────────────────────────*/
-.cs-screen {
+.av-screen {
   min-height: 100vh;
   background: var(--bg-primary);
   display: flex;
@@ -9,7 +9,7 @@
   transition: background-color 0.3s ease;
 }
 
-.cs-container {
+.av-container {
   width: 100%;
   max-width: 430px;
   min-height: 100vh;
@@ -22,13 +22,13 @@
   transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.cs-container--visible {
+.av-container--visible {
   opacity: 1;
   transform: translateX(0);
 }
 
 /* ── Header ───────────────────────────────────────────────────────────────────*/
-.cs-header {
+.av-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -41,7 +41,7 @@
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-.cs-back-btn {
+.av-back-btn {
   width: 36px;
   height: 36px;
   background: var(--button-secondary-bg);
@@ -55,17 +55,17 @@
   color: var(--text-primary);
 }
 
-.cs-back-btn:hover  { background: var(--button-secondary-hover); }
-.cs-back-btn:active { transform: scale(0.92); }
+.av-back-btn:hover  { background: var(--button-secondary-hover); }
+.av-back-btn:active { transform: scale(0.92); }
 
-.cs-title {
+.av-title {
   font-size: 17px;
   font-weight: 700;
   color: var(--text-primary);
   transition: color 0.3s ease;
 }
 
-.cs-more-btn {
+.av-more-btn {
   width: 36px;
   height: 36px;
   background: none;
@@ -78,17 +78,17 @@
   transition: background 0.15s ease;
   color: var(--text-secondary);
 }
-.cs-more-btn:hover { background: var(--button-secondary-bg); }
+.av-more-btn:hover { background: var(--button-secondary-bg); }
 
 /* ── Body ─────────────────────────────────────────────────────────────────────*/
-.cs-body {
+.av-body {
   flex: 1;
   overflow-y: auto;
   padding: 20px 20px 0;
 }
 
 /* ── Section Headers ──────────────────────────────────────────────────────────*/
-.cs-section-header {
+.av-section-header {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -96,7 +96,7 @@
   margin-top: 8px;
 }
 
-.cs-section-dot {
+.av-section-dot {
   width: 8px;
   height: 8px;
   background: #22c55e;
@@ -104,7 +104,7 @@
   flex-shrink: 0;
 }
 
-.cs-section-label {
+.av-section-label {
   font-size: 11px;
   font-weight: 800;
   color: var(--text-primary);
@@ -113,11 +113,11 @@
 }
 
 /* ── Fields ───────────────────────────────────────────────────────────────────*/
-.cs-field        { margin-bottom: 16px; }
-.cs-field-row    { display: flex; gap: 12px; }
-.cs-field--half  { flex: 1; }
+.av-field        { margin-bottom: 16px; }
+.av-field-row    { display: flex; gap: 12px; }
+.av-field--half  { flex: 1; }
 
-.cs-label {
+.av-label {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
@@ -128,7 +128,7 @@
   transition: color 0.3s ease;
 }
 
-.cs-label-hint {
+.av-label-hint {
   font-size: 10px;
   font-weight: 500;
   color: var(--text-secondary);
@@ -137,7 +137,7 @@
 }
 
 /* ── Inputs ───────────────────────────────────────────────────────────────────*/
-.cs-input {
+.av-input {
   width: 100%;
   border: 1.5px solid var(--border-color);
   border-radius: 10px;
@@ -151,28 +151,28 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.3s ease;
 }
 
-.cs-input::placeholder {
+.av-input::placeholder {
   color: var(--text-secondary);
   opacity: 0.7;
 }
 
-.cs-input:focus {
+.av-input:focus {
   border-color: #22c55e;
   background: var(--bg-secondary);
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
 }
 
-.dark-mode .cs-input:focus {
+.dark-mode .av-input:focus {
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
 }
 
-.cs-textarea {
+.av-textarea {
   resize: vertical;
   min-height: 96px;
 }
 
 /* ── File Upload ──────────────────────────────────────────────────────────────*/
-.cs-file-input {
+.av-file-input {
   position: absolute;
   opacity: 0;
   pointer-events: none;
@@ -180,7 +180,7 @@
   height: 0;
 }
 
-.cs-upload-box {
+.av-upload-box {
   border: 1.5px dashed var(--border-color);
   border-radius: 10px;
   padding: 12px 14px;
@@ -192,19 +192,19 @@
   transition: border-color 0.2s ease, background 0.2s ease;
 }
 
-.cs-upload-box:hover {
+.av-upload-box:hover {
   border-color: #22c55e;
   background: var(--bg-secondary);
 }
 
-.cs-upload-main     { font-size: 14px; font-weight: 600; color: var(--text-primary); }
-.cs-upload-sub      { font-size: 12px; color: var(--text-secondary); }
-.cs-upload-selected { margin-top: 6px; font-size: 12px; font-weight: 600; color: #22c55e; }
+.av-upload-main     { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.av-upload-sub      { font-size: 12px; color: var(--text-secondary); }
+.av-upload-selected { margin-top: 6px; font-size: 12px; font-weight: 600; color: #22c55e; }
 
 /* ── Select ───────────────────────────────────────────────────────────────────*/
-.cs-select-wrap { position: relative; }
+.av-select-wrap { position: relative; }
 
-.cs-select {
+.av-select {
   width: 100%;
   border: 1.5px solid var(--border-color);
   border-radius: 10px;
@@ -220,16 +220,16 @@
   transition: border-color 0.2s ease, background 0.2s ease, color 0.3s ease;
 }
 
-.cs-select:focus {
+.av-select:focus {
   border-color: #22c55e;
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
 }
 
-.dark-mode .cs-select:focus {
+.dark-mode .av-select:focus {
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
 }
 
-.cs-select-arrow {
+.av-select-arrow {
   position: absolute;
   right: 14px;
   top: 50%;
@@ -239,9 +239,9 @@
 }
 
 /* ── Input with Suffix ────────────────────────────────────────────────────────*/
-.cs-input-suffix-wrap { position: relative; }
+.av-input-suffix-wrap { position: relative; }
 
-.cs-suffix {
+.av-suffix {
   position: absolute;
   right: 12px;
   top: 50%;
@@ -254,9 +254,9 @@
 }
 
 /* ── Input with Icon ──────────────────────────────────────────────────────────*/
-.cs-input-icon-wrap { position: relative; }
+.av-input-icon-wrap { position: relative; }
 
-.cs-input-icon {
+.av-input-icon {
   position: absolute;
   left: 12px;
   top: 50%;
@@ -265,10 +265,10 @@
   color: var(--text-secondary);
 }
 
-.cs-input--with-icon { padding-left: 38px; }
+.av-input--with-icon { padding-left: 38px; }
 
 /* ── Schedule Card ────────────────────────────────────────────────────────────*/
-.cs-schedule-card {
+.av-schedule-card {
   background: rgba(34, 197, 94, 0.1);
   border-radius: 14px;
   padding: 16px;
@@ -277,29 +277,29 @@
   transition: background 0.3s ease, border-color 0.3s ease;
 }
 
-.dark-mode .cs-schedule-card {
+.dark-mode .av-schedule-card {
   background: rgba(34, 197, 94, 0.05);
   border-color: rgba(34, 197, 94, 0.25);
 }
 
-.cs-schedule-header {
+.av-schedule-header {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 14px;
 }
 
-.cs-schedule-title {
+.av-schedule-title {
   font-size: 14px;
   font-weight: 700;
   color: var(--text-primary);
   transition: color 0.3s ease;
 }
 
-.cs-schedule-row   { display: flex; gap: 12px; }
-.cs-schedule-field { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.av-schedule-row   { display: flex; gap: 12px; }
+.av-schedule-field { flex: 1; display: flex; flex-direction: column; gap: 6px; }
 
-.cs-schedule-label {
+.av-schedule-label {
   font-size: 10px;
   font-weight: 700;
   color: var(--text-secondary);
@@ -307,7 +307,7 @@
   transition: color 0.3s ease;
 }
 
-.cs-schedule-input {
+.av-schedule-input {
   background: var(--bg-secondary);
   border: 1.5px solid var(--border-color);
   border-radius: 8px;
@@ -320,17 +320,17 @@
   transition: border-color 0.2s ease, background 0.2s ease, color 0.3s ease;
 }
 
-.cs-schedule-input:focus {
+.av-schedule-input:focus {
   border-color: #22c55e;
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
 }
 
-.dark-mode .cs-schedule-input:focus {
+.dark-mode .av-schedule-input:focus {
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
 }
 
 /* ── Route Preview ────────────────────────────────────────────────────────────*/
-.cs-route-preview {
+.av-route-preview {
   position: relative;
   height: 100px;
   border-radius: 14px;
@@ -343,7 +343,7 @@
   transition: background-color 0.3s ease;
 }
 
-.cs-route-label {
+.av-route-label {
   position: absolute;
   bottom: 10px;
   left: 50%;
@@ -358,7 +358,7 @@
 }
 
 /* ── Footer ───────────────────────────────────────────────────────────────────*/
-.cs-footer {
+.av-footer {
   padding: 16px 20px 36px;
   border-top: 1px solid var(--border-color);
   background: var(--bg-secondary);
@@ -367,7 +367,7 @@
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-.cs-feedback {
+.av-feedback {
   margin-bottom: 10px;
   border-radius: 10px;
   padding: 10px 12px;
@@ -375,31 +375,31 @@
   font-weight: 600;
 }
 
-.cs-feedback--error {
+.av-feedback--error {
   color: #b91c1c;
   background: #fef2f2;
   border: 1px solid #fecaca;
 }
 
-.dark-mode .cs-feedback--error {
+.dark-mode .av-feedback--error {
   color: #f87171;
   background: rgba(185, 28, 28, 0.2);
   border-color: rgba(185, 28, 28, 0.3);
 }
 
-.cs-feedback--success {
+.av-feedback--success {
   color: #166534;
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
 }
 
-.dark-mode .cs-feedback--success {
+.dark-mode .av-feedback--success {
   color: #86efac;
   background: rgba(34, 197, 94, 0.1);
   border-color: rgba(34, 197, 94, 0.3);
 }
 
-.cs-submit-btn {
+.av-submit-btn {
   width: 100%;
   background: linear-gradient(135deg, #22c55e, #16a34a);
   color: #fff;
@@ -418,14 +418,14 @@
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.cs-submit-btn:hover {
+.av-submit-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
 }
 
-.cs-submit-btn:active  { transform: scale(0.98); }
+.av-submit-btn:active  { transform: scale(0.98); }
 
-.cs-submit-btn:disabled {
+.av-submit-btn:disabled {
   opacity: 0.65;
   cursor: not-allowed;
   transform: none;
@@ -433,9 +433,9 @@
 }
 
 /* ── City Autocomplete ────────────────────────────────────────────────────────*/
-.city-autocomplete-cs { position: relative; width: 100%; }
+.city-autocomplete-av { position: relative; width: 100%; }
 
-.city-suggestions-cs {
+.city-suggestions-av {
   position: absolute;
   top: 100%;
   left: 0;
@@ -452,7 +452,7 @@
   padding: 0;
 }
 
-.city-suggestion-item-cs {
+.city-suggestion-item-av {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -463,23 +463,23 @@
   color: var(--text-primary);
 }
 
-.city-suggestion-item-cs:hover,
-.city-suggestion-item-cs.selected { background: var(--bg-primary); }
+.city-suggestion-item-av:hover,
+.city-suggestion-item-av.selected { background: var(--bg-primary); }
 
-.city-suggestion-icon-cs { color: var(--text-secondary); flex-shrink: 0; }
-.city-suggestion-item-cs span { flex: 1; }
+.city-suggestion-icon-av { color: var(--text-secondary); flex-shrink: 0; }
+.city-suggestion-item-av span { flex: 1; }
 
 /* ═══════════════════════════════════════════════════════════════════
    CHIP GRID — Product Type & Vehicle Type
    ═══════════════════════════════════════════════════════════════════ */
 
-.cs-chip-grid {
+.av-chip-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 10px;
 }
 
-.cs-chip {
+.av-chip {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -497,7 +497,7 @@
 }
 
 /* green left accent bar */
-.cs-chip::before {
+.av-chip::before {
   content: "";
   position: absolute;
   left: 0; top: 0; bottom: 0;
@@ -506,56 +506,56 @@
   transition: background 0.18s ease;
 }
 
-.cs-chip:hover {
+.av-chip:hover {
   border-color: #22c55e;
   background: rgba(34, 197, 94, 0.05);
 }
 
-.cs-chip--active {
+.av-chip--active {
   border-color: #22c55e;
   background: rgba(34, 197, 94, 0.10);
 }
 
-.cs-chip--active::before { background: #22c55e; }
+.av-chip--active::before { background: #22c55e; }
 
-.cs-chip-icon {
+.av-chip-icon {
   font-size: 18px;
   line-height: 1;
   display: block;
   margin-bottom: 2px;
 }
 
-.cs-chip-label {
+.av-chip-label {
   font-size: 12px;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1.2;
 }
 
-.cs-chip--active .cs-chip-label { color: #16a34a; }
+.av-chip--active .av-chip-label { color: #16a34a; }
 
-.cs-chip-sub {
+.av-chip-sub {
   font-size: 10px;
   font-weight: 500;
   color: var(--text-secondary);
   line-height: 1;
 }
 
-.cs-chip-check {
+.av-chip-check {
   position: absolute;
   top: 8px;
   right: 8px;
 }
 
 /* ── Selected Vehicle Tags ────────────────────────────────────────────────────*/
-.cs-selected-vehicles {
+.av-selected-vehicles {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 6px;
 }
 
-.cs-vehicle-tag {
+.av-vehicle-tag {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -568,7 +568,7 @@
   color: #16a34a;
 }
 
-.cs-vehicle-tag-remove {
+.av-vehicle-tag-remove {
   background: none;
   border: none;
   cursor: pointer;
@@ -581,4 +581,4 @@
   font-family: inherit;
 }
 
-.cs-vehicle-tag-remove:hover { opacity: 1; }
+.av-vehicle-tag-remove:hover { opacity: 1; }

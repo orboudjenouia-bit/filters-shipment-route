@@ -34,6 +34,7 @@ import ProfileSettingsPage from "./ProfileSettingsPage";
 import ActiveDevicesPage from "./ActiveDevicesPage";
 import AboutUsPage from "./AboutUsPage";
 import PublicProfilePage from "./PublicProfilePage";
+import AddVehicle from "./AddVehicle";
 import { getMyProfile } from "./services/profileService";
 import SubscriptionPlans from './SubscriptionPlans';
 import SubscriptionDetailsPage from "./SubscriptionDetailsPage";
@@ -1063,11 +1064,8 @@ export default function App() {
         )}
 
         {current === "vehicle" && (
-          <Vehicle
+          <AddVehicle
             onBack={() => goBack("profile")}
-            onNavigate={(screen, payload) => {
-              goTo(screen, payload);
-            }}
           />
         )}
 
